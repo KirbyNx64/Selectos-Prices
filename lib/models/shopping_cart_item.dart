@@ -2,6 +2,29 @@ import 'dart:convert';
 
 import 'package:super_selectos/models/product.dart';
 
+class QuantityPromotion {
+  final int quantity;
+  final double price;
+
+  const QuantityPromotion({required this.quantity, required this.price});
+
+  static QuantityPromotion? tryParse(String? label) {
+    if (label == null || label.trim().isEmpty) return null;
+
+    final match = RegExp(r'(\d+)\s*[xX]\s*\$\s*(\d+(?:[\.,]\d+)?)')
+        .firstMatch(label);
+    if (match == null) return null;
+
+    final quantity = int.tryParse(match.group(1)!);
+    final price = double.tryParse(match.group(2)!.replaceAll(',', '.'));
+    if (quantity == null || quantity <= 0 || price == null || price < 0) {
+      return null;
+    }
+
+    return QuantityPromotion(quantity: quantity, price: price);
+  }
+}
+
 class ShoppingCartItem {
   final String key;
   final Product product;
@@ -15,7 +38,29 @@ class ShoppingCartItem {
 
   double get unitPrice => product.precioFinal ?? product.precio ?? 0;
 
-  double get subtotal => unitPrice * quantity;
+  QuantityPromotion? get quantityPromotion =>
+      QuantityPromotion.tryParse(product.promocion);
+
+  int get appliedPromotionBundles {
+    final promotion = quantityPromotion;
+    return promotion == null ? 0 : quantity ~/ promotion.quantity;
+  }
+
+  double get regularSubtotal => unitPrice * quantity;
+
+  double get subtotal {
+    final promotion = quantityPromotion;
+    if (promotion == null) return regularSubtotal;
+
+    final bundles = quantity ~/ promotion.quantity;
+    final remainingUnits = quantity % promotion.quantity;
+    return (bundles * promotion.price) + (remainingUnits * unitPrice);
+  }
+
+  double get promotionSavings {
+    final savings = regularSubtotal - subtotal;
+    return savings > 0 ? savings : 0;
+  }
 
   Map<String, Object?> toMap() {
     return {

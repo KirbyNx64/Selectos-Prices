@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:super_selectos/models/product.dart';
@@ -24,8 +25,10 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   final FocusNode _searchFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
   final SuperSelectosService _service = SuperSelectosService();
+  final Connectivity _connectivity = Connectivity();
 
   bool _isLoading = false;
+  bool _isOffline = false;
   String? _errorMessage;
   SearchResponse? _searchResponse;
   int _paginaActual = 1;
@@ -70,11 +73,14 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
       _isLoading = true;
+      _isOffline = false;
       _errorMessage = null;
       _paginaActual = pagina;
       _currentCategoryCode = code;
       _currentCategoryNombre = nombre;
     });
+
+    if (!await _verificarConexion()) return;
 
     try {
       final response = await _service.buscarPorCategoria(
@@ -88,6 +94,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
       setState(() {
         _searchResponse = response;
         _isLoading = false;
+        _isOffline = false;
         if (response.error != null) {
           _errorMessage = response.error;
         }
@@ -103,12 +110,12 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
           curve: Curves.easeOut,
         );
       }
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _errorMessage =
-            'Ocurrió un error inesperado al cargar la categoría: $e';
+        _isOffline = false;
+        _errorMessage = 'category_search_failed';
       });
     }
   }
@@ -120,11 +127,14 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
       _isLoading = true;
+      _isOffline = false;
       _errorMessage = null;
       _paginaActual = pagina;
       _currentQuery = queryLimpio;
       _currentCategoryCode = null;
     });
+
+    if (!await _verificarConexion()) return;
 
     try {
       final response = await _service.buscarProductosDetallado(
@@ -137,6 +147,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
       setState(() {
         _searchResponse = response;
         _isLoading = false;
+        _isOffline = false;
         if (response.error != null) {
           _errorMessage = response.error;
         }
@@ -152,13 +163,48 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
           curve: Curves.easeOut,
         );
       }
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Ocurrió un error inesperado al buscar: $e';
+        _isOffline = false;
+        _errorMessage = 'product_search_failed';
       });
     }
+  }
+
+  Future<bool> _verificarConexion() async {
+    try {
+      final connections = await _connectivity.checkConnectivity();
+      final hasConnection = connections.any(
+        (connection) => connection != ConnectivityResult.none,
+      );
+      if (hasConnection) return true;
+
+      if (!mounted) return false;
+      setState(() {
+        _isLoading = false;
+        _isOffline = true;
+        _errorMessage = 'Conéctate a una red Wi-Fi o activa los datos móviles para buscar productos.';
+      });
+      return false;
+    } catch (_) {
+      // Si el sistema no puede informar el tipo de red, dejamos que la
+      // solicitud determine si existe conexión.
+      return true;
+    }
+  }
+
+  void _reintentarBusqueda() {
+    if (_currentCategoryCode != null && _currentCategoryCode!.isNotEmpty) {
+      _ejecutarBusquedaCategoria(
+        _currentCategoryCode!,
+        _currentCategoryNombre ?? '',
+        pagina: _paginaActual,
+      );
+      return;
+    }
+    _ejecutarBusqueda(_currentQuery, pagina: _paginaActual);
   }
 
   void _ejecutarNuevaBusqueda(String query) {
@@ -390,7 +436,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
           ),
         ),
       ),
-      body: _buildBody(context, productos),
+      body: SafeArea(top: false, child: _buildBody(context, productos)),
     );
 
     return ListenableBuilder(
@@ -432,31 +478,49 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.cloud_off_rounded, size: 64, color: Colors.grey),
+              Icon(
+                _isOffline ? Icons.wifi_off_rounded : Icons.cloud_off_rounded,
+                size: 64,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
               const SizedBox(height: 16),
               Text(
-                'No se pudo completar la búsqueda',
+                _isOffline
+                    ? 'Sin conexión a Internet'
+                    : 'No se pudo completar la búsqueda',
                 style: Theme.of(context).textTheme.titleMedium
                     ?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
-                _errorMessage!,
+                _isOffline
+                    ? 'Revisa tu conexión e inténtalo nuevamente.'
+                    : 'Inténtalo nuevamente en unos momentos.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 13,
+                ),
               ),
               const SizedBox(height: 20),
               M3EButton.filled(
-                onPressed: () => _ejecutarBusqueda(_searchController.text),
+                onPressed: _reintentarBusqueda,
                 shape: M3EButtonShape.round,
-                decoration: const M3EButtonDecoration(
-                  backgroundColor: WidgetStatePropertyAll(Color(0xFF2E6C37)),
+                decoration: M3EButtonDecoration(
+                  backgroundColor: WidgetStatePropertyAll(
+                    Theme.of(context).colorScheme.primary,
+                  ),
                 ),
-                label: const Text(
+                label: Text(
                   'Reintentar',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
                 ),
-                icon: const Icon(Icons.refresh, color: Colors.white),
+                icon: Icon(
+                  Icons.refresh,
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
               ),
             ],
           ),

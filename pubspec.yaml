@@ -29,6 +29,7 @@ dependencies:
   permission_handler: ^13.0.2
 
   #api
+  connectivity_plus: ^7.3.2
   http: ^1.6.0
 
   #mobile scanner

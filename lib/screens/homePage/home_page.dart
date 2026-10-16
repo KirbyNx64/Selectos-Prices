@@ -126,11 +126,11 @@ class _MyHomePageState extends State<MyHomePage> {
         _productosInicio = productos;
         _cargandoProductosInicio = false;
       });
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
       setState(() {
         _cargandoProductosInicio = false;
-        _errorProductosInicio = 'No se pudieron cargar los productos: $e';
+        _errorProductosInicio = 'home_products_load_failed';
       });
     }
   }
@@ -599,20 +599,31 @@ class _MyHomePageState extends State<MyHomePage> {
                       vertical: 24,
                       horizontal: 20,
                     ),
-                    child: Center(
+                    child: SizedBox(
+                      width: double.infinity,
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.cloud_off_rounded,
                             size: 48,
-                            color: Colors.grey,
+                            color: colorScheme.onSurfaceVariant,
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            _errorProductosInicio!,
+                            'No se pudieron cargar los productos',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Inténtalo nuevamente en unos momentos.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Colors.grey.shade600,
+                              color: colorScheme.onSurfaceVariant,
                               fontSize: 13,
                             ),
                           ),
@@ -620,18 +631,18 @@ class _MyHomePageState extends State<MyHomePage> {
                           M3EButton.filled(
                             onPressed: _cargarProductosInicio,
                             shape: M3EButtonShape.round,
-                            decoration: const M3EButtonDecoration(
+                            decoration: M3EButtonDecoration(
                               backgroundColor: WidgetStatePropertyAll(
-                                Color(0xFF2E6C37),
+                                colorScheme.primary,
                               ),
                             ),
-                            label: const Text(
+                            label: Text(
                               'Reintentar',
-                              style: TextStyle(color: Colors.white),
+                              style: TextStyle(color: colorScheme.onPrimary),
                             ),
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.refresh,
-                              color: Colors.white,
+                              color: colorScheme.onPrimary,
                               size: 18,
                             ),
                           ),
@@ -895,16 +906,13 @@ class _MyHomePageState extends State<MyHomePage> {
                   M3EButton.filled(
                     onPressed: () => setState(() => barIndex = 0),
                     shape: M3EButtonShape.round,
-                    decoration: const M3EButtonDecoration(
+                    decoration: M3EButtonDecoration(
                       backgroundColor: WidgetStatePropertyAll(
-                        Color(0xFF2E6C37),
+                        colorScheme.primary,
                       ),
                     ),
-                    label: const Text(
-                      'Explorar productos',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    icon: const Icon(Icons.search, color: Colors.white),
+                    label: const Text('Explorar productos'),
+                    icon: const Icon(Icons.search),
                   ),
                 ],
               ),
@@ -1059,6 +1067,8 @@ class _MyHomePageState extends State<MyHomePage> {
     ColorScheme colorScheme,
   ) {
     final product = item.product;
+    final quantityPromotion = item.quantityPromotion;
+    final hasAppliedPromotion = item.appliedPromotionBundles > 0;
     final isDarkMode = theme.brightness == Brightness.dark;
     final swipeBackgroundColor = isDarkMode
         ? colorScheme.error
@@ -1137,6 +1147,21 @@ class _MyHomePageState extends State<MyHomePage> {
                       fontSize: 12,
                     ),
                   ),
+                  if (quantityPromotion != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      '${quantityPromotion.quantity} por '
+                      '\$${quantityPromotion.price.toStringAsFixed(2)}'
+                      '${hasAppliedPromotion ? ' · Oferta aplicada' : ''}',
+                      style: TextStyle(
+                        color: hasAppliedPromotion
+                            ? colorScheme.primary
+                            : colorScheme.error,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   Container(
                     height: 36,
@@ -1182,11 +1207,28 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
             const SizedBox(width: 8),
-            Text(
-              '\$${item.subtotal.toStringAsFixed(2)}',
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (item.promotionSavings > 0)
+                  Text(
+                    '\$${item.regularSubtotal.toStringAsFixed(2)}',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      decoration: TextDecoration.lineThrough,
+                      decorationColor: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                Text(
+                  '\$${item.subtotal.toStringAsFixed(2)}',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: item.promotionSavings > 0
+                        ? colorScheme.primary
+                        : null,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
             ),
           ],
         ),

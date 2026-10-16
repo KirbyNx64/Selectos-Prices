@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:super_selectos/models/product.dart';
+import 'package:super_selectos/models/shopping_cart_item.dart';
 import 'package:super_selectos/services/shopping_cart_repository.dart';
 import 'package:super_selectos/services/super_selectos_service.dart';
 import 'package:super_selectos/widgets/app_snackbar.dart';
@@ -69,6 +70,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final tieneInformacionAdicional =
         (_producto.codigoBarra?.trim().isNotEmpty ?? false) ||
         (_producto.categoria?.trim().isNotEmpty ?? false);
+    final selectedItem = ShoppingCartItem(
+      key: ShoppingCartItem.keyFor(_producto),
+      product: _producto,
+      quantity: _cantidad,
+    );
+    final tienePrecio =
+        _producto.precioFinal != null || _producto.precio != null;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -470,68 +478,111 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 6),
               Row(
                 children: [
-                  Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          tooltip: 'Disminuir cantidad',
-                          onPressed: _cantidad > 1
-                              ? () => setState(() => _cantidad--)
-                              : null,
-                          icon: const Icon(Icons.remove_rounded),
-                        ),
-                        SizedBox(
-                          width: 32,
-                          child: Text(
-                            '$_cantidad',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          tooltip: 'Aumentar cantidad',
-                          onPressed: () => setState(() => _cantidad++),
-                          icon: const Icon(Icons.add_rounded),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
                   Expanded(
-                    child: SizedBox(
-                      height: 48,
-                      child: M3EButton.filled(
-                        onPressed: _agregarALista,
-                        shape: M3EButtonShape.round,
-                        decoration: const M3EButtonDecoration(
-                          backgroundColor: WidgetStatePropertyAll(brandGreen),
-                        ),
-                        label: const Text(
-                          'Agregar',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        icon: const Icon(
-                          Icons.add_shopping_cart_rounded,
-                          color: Colors.white,
-                        ),
+                    child: Text(
+                      'Total ',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
+                  if (tienePrecio) ...[
+                    if (selectedItem.promotionSavings > 0) ...[
+                      Text(
+                        '\$${selectedItem.regularSubtotal.toStringAsFixed(2)}',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          decoration: TextDecoration.lineThrough,
+                          decorationColor: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    Text(
+                      '\$${selectedItem.subtotal.toStringAsFixed(2)}',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ] else
+                    Text(
+                      'No disponible',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
+              SafeArea(
+                top: false,
+                minimum: const EdgeInsets.only(bottom: 16),
+                child: Row(
+                  children: [
+                    Container(
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            tooltip: 'Disminuir cantidad',
+                            onPressed: _cantidad > 1
+                                ? () => setState(() => _cantidad--)
+                                : null,
+                            icon: const Icon(Icons.remove_rounded),
+                          ),
+                          SizedBox(
+                            width: 32,
+                            child: Text(
+                              '$_cantidad',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Aumentar cantidad',
+                            onPressed: () => setState(() => _cantidad++),
+                            icon: const Icon(Icons.add_rounded),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: SizedBox(
+                        height: 48,
+                        child: M3EButton.filled(
+                          onPressed: _agregarALista,
+                          shape: M3EButtonShape.round,
+                          decoration: M3EButtonDecoration(
+                            backgroundColor: WidgetStatePropertyAll(
+                              colorScheme.primary,
+                            ),
+                          ),
+                          label: Text(
+                            'Agregar',
+                            style: TextStyle(color: colorScheme.onPrimary),
+                          ),
+                          icon: const Icon(Icons.add_shopping_cart_rounded),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

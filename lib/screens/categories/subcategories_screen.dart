@@ -117,233 +117,236 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // ── Hero Banner Header M3E estilo Súper Selectos ────────────
-            M3ECard(
-              variant: M3ECardVariant.filled,
-              borderRadius: BorderRadius.circular(24),
-              padding: const EdgeInsets.all(18),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: isDarkMode
-                        ? [
-                            colorScheme.primaryContainer,
-                            Color.alphaBlend(
-                              colorScheme.primary.withValues(alpha: 0.12),
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Hero Banner Header M3E estilo Súper Selectos ────────────
+              M3ECard(
+                variant: M3ECardVariant.filled,
+                borderRadius: BorderRadius.circular(24),
+                padding: const EdgeInsets.all(18),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: isDarkMode
+                          ? [
                               colorScheme.primaryContainer,
-                            ),
-                          ]
-                        : const [Color(0xFF1B4E24), Color(0xFF2E6C37)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                              Color.alphaBlend(
+                                colorScheme.primary.withValues(alpha: 0.12),
+                                colorScheme.primaryContainer,
+                              ),
+                            ]
+                          : const [Color(0xFF1B4E24), Color(0xFF2E6C37)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: bannerForeground.withValues(alpha: 0.14),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Icon(
-                            widget.category.icon,
-                            color: bannerForeground,
-                            size: 26,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                widget.category.tituloCompleto,
-                                style: TextStyle(
-                                  color: bannerForeground,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: -0.3,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '${widget.category.grupos.length} grupos · $_totalSubcategorias subcategorías',
-                                style: TextStyle(
-                                  color: bannerForeground.withValues(
-                                    alpha: 0.82,
-                                  ),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    // Botón de acción destacado "Ver todo"
-                    M3EButton.filled(
-                      onPressed: () => _abrirProductos(
-                        context,
-                        'Todos en ${widget.category.tituloCompleto}',
-                        widget.category.id,
-                      ),
-                      shape: M3EButtonShape.round,
-                      decoration: M3EButtonDecoration(
-                        backgroundColor: WidgetStatePropertyAll(
-                          bannerButtonBackground,
-                        ),
-                        foregroundColor: WidgetStatePropertyAll(
-                          bannerButtonForeground,
-                        ),
-                      ),
-                      icon: Icon(
-                        Icons.grid_view_rounded,
-                        size: 18,
-                        color: bannerButtonForeground,
-                      ),
-                      label: Text(
-                        'Ver todo en ${widget.category.tituloCompleto}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: bannerButtonForeground,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // ── Barra de búsqueda rápida de subcategorías ───────────────
-            if (widget.category.grupos.length > 1 ||
-                _totalSubcategorias > 3) ...[
-              M3ESearchBar(
-                controller: _filterController,
-                focusNode: _filterFocusNode,
-                onTapOutside: (_) => _filterFocusNode.unfocus(),
-                hintText: 'Filtrar en ${widget.category.tituloCompleto}...',
-                leading: const Icon(Icons.search_rounded),
-                showClearButton: true,
-                margin: 12,
-                focusedMargin: 0,
-                contextMenuBuilder: (context, editableTextState) {
-                  return AdaptiveTextSelectionToolbar.editableText(
-                    editableTextState: editableTextState,
-                  );
-                },
-                onChanged: (val) {
-                  setState(() {
-                    _filterQuery = val;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-            ],
-
-            // ── Lista o Cuadrícula Adaptable de Grupos M3E ──────────────
-            if (filteredGroups.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 40),
-                child: Center(
+                  padding: const EdgeInsets.all(16),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Icon(
-                        Icons.search_off_rounded,
-                        size: 48,
-                        color: colorScheme.outline,
+                      Row(
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: bannerForeground.withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Icon(
+                              widget.category.icon,
+                              color: bannerForeground,
+                              size: 26,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  widget.category.tituloCompleto,
+                                  style: TextStyle(
+                                    color: bannerForeground,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${widget.category.grupos.length} grupos · $_totalSubcategorias subcategorías',
+                                  style: TextStyle(
+                                    color: bannerForeground.withValues(
+                                      alpha: 0.82,
+                                    ),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'No se encontraron subcategorías para "$_filterQuery"',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: colorScheme.onSurfaceVariant,
-                          fontSize: 14,
+                      const SizedBox(height: 14),
+                      // Botón de acción destacado "Ver todo"
+                      M3EButton.filled(
+                        onPressed: () => _abrirProductos(
+                          context,
+                          'Todos en ${widget.category.tituloCompleto}',
+                          widget.category.id,
+                        ),
+                        shape: M3EButtonShape.round,
+                        decoration: M3EButtonDecoration(
+                          backgroundColor: WidgetStatePropertyAll(
+                            bannerButtonBackground,
+                          ),
+                          foregroundColor: WidgetStatePropertyAll(
+                            bannerButtonForeground,
+                          ),
+                        ),
+                        icon: Icon(
+                          Icons.grid_view_rounded,
+                          size: 18,
+                          color: bannerButtonForeground,
+                        ),
+                        label: Text(
+                          'Ver todo en ${widget.category.tituloCompleto}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: bannerButtonForeground,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-              )
-            else
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  // En móvil (<650px) se utiliza 1 sola columna para maximizar el área táctil ergonómica
-                  final isMobile = constraints.maxWidth < 650;
-                  final crossAxisCount = isMobile
-                      ? 1
-                      : (constraints.maxWidth > 1000 ? 3 : 2);
+              ),
+              const SizedBox(height: 16),
 
-                  if (crossAxisCount == 1) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+              // ── Barra de búsqueda rápida de subcategorías ───────────────
+              if (widget.category.grupos.length > 1 ||
+                  _totalSubcategorias > 3) ...[
+                M3ESearchBar(
+                  controller: _filterController,
+                  focusNode: _filterFocusNode,
+                  onTapOutside: (_) => _filterFocusNode.unfocus(),
+                  hintText: 'Filtrar en ${widget.category.tituloCompleto}...',
+                  leading: const Icon(Icons.search_rounded),
+                  showClearButton: true,
+                  margin: 12,
+                  focusedMargin: 0,
+                  contextMenuBuilder: (context, editableTextState) {
+                    return AdaptiveTextSelectionToolbar.editableText(
+                      editableTextState: editableTextState,
+                    );
+                  },
+                  onChanged: (val) {
+                    setState(() {
+                      _filterQuery = val;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // ── Lista o Cuadrícula Adaptable de Grupos M3E ──────────────
+              if (filteredGroups.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40),
+                  child: Center(
+                    child: Column(
                       children: [
-                        for (final grupo in filteredGroups) ...[
-                          _buildGrupoCard(context, grupo, colorScheme),
-                          const SizedBox(height: 14),
+                        Icon(
+                          Icons.search_off_rounded,
+                          size: 48,
+                          color: colorScheme.outline,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'No se encontraron subcategorías para "$_filterQuery"',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    // En móvil (<650px) se utiliza 1 sola columna para maximizar el área táctil ergonómica
+                    final isMobile = constraints.maxWidth < 650;
+                    final crossAxisCount = isMobile
+                        ? 1
+                        : (constraints.maxWidth > 1000 ? 3 : 2);
+
+                    if (crossAxisCount == 1) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (final grupo in filteredGroups) ...[
+                            _buildGrupoCard(context, grupo, colorScheme),
+                            const SizedBox(height: 14),
+                          ],
+                        ],
+                      );
+                    }
+
+                    // Layout multi-columna balanceado para tablets y pantallas amplias
+                    final columnWidth =
+                        (constraints.maxWidth - (crossAxisCount - 1) * 16) /
+                        crossAxisCount;
+                    final columns = List.generate(
+                      crossAxisCount,
+                      (_) => <CategoryGroup>[],
+                    );
+                    for (var i = 0; i < filteredGroups.length; i++) {
+                      columns[i % crossAxisCount].add(filteredGroups[i]);
+                    }
+
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (
+                          int colIndex = 0;
+                          colIndex < crossAxisCount;
+                          colIndex++
+                        ) ...[
+                          if (colIndex > 0) const SizedBox(width: 16),
+                          SizedBox(
+                            width: columnWidth,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                for (final grupo in columns[colIndex]) ...[
+                                  _buildGrupoCard(context, grupo, colorScheme),
+                                  const SizedBox(height: 14),
+                                ],
+                              ],
+                            ),
+                          ),
                         ],
                       ],
                     );
-                  }
-
-                  // Layout multi-columna balanceado para tablets y pantallas amplias
-                  final columnWidth =
-                      (constraints.maxWidth - (crossAxisCount - 1) * 16) /
-                      crossAxisCount;
-                  final columns = List.generate(
-                    crossAxisCount,
-                    (_) => <CategoryGroup>[],
-                  );
-                  for (var i = 0; i < filteredGroups.length; i++) {
-                    columns[i % crossAxisCount].add(filteredGroups[i]);
-                  }
-
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      for (
-                        int colIndex = 0;
-                        colIndex < crossAxisCount;
-                        colIndex++
-                      ) ...[
-                        if (colIndex > 0) const SizedBox(width: 16),
-                        SizedBox(
-                          width: columnWidth,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              for (final grupo in columns[colIndex]) ...[
-                                _buildGrupoCard(context, grupo, colorScheme),
-                                const SizedBox(height: 14),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
-                  );
-                },
-              ),
-          ],
+                  },
+                ),
+            ],
+          ),
         ),
       ),
     );

@@ -41,116 +41,119 @@ class SettingsScreen extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
-          body: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              Text(
-                'Tienda',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: colorScheme.primary,
-                  fontWeight: FontWeight.bold,
+          body: SafeArea(
+            top: false,
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                Text(
+                  'Tienda',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              ListenableBuilder(
-                listenable: storeController,
-                builder: (context, _) {
-                  final branch = storeController.selectedBranch;
-                  return Card(
-                    elevation: 0,
-                    color: colorScheme.surfaceContainer,
-                    clipBehavior: Clip.antiAlias,
-                    child: ListTile(
-                      onTap: () => _selectBranch(context),
-                      leading: const Icon(Icons.storefront_rounded),
-                      title: const Text('Sala de venta'),
-                      subtitle: Text(
-                        branch?.name ?? 'Selecciona tu sala más cercana',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                const SizedBox(height: 8),
+                ListenableBuilder(
+                  listenable: storeController,
+                  builder: (context, _) {
+                    final branch = storeController.selectedBranch;
+                    return Card(
+                      elevation: 0,
+                      color: colorScheme.surfaceContainer,
+                      clipBehavior: Clip.antiAlias,
+                      child: ListTile(
+                        onTap: () => _selectBranch(context),
+                        leading: const Icon(Icons.storefront_rounded),
+                        title: const Text('Sala de venta'),
+                        subtitle: Text(
+                          branch?.name ?? 'Selecciona tu sala más cercana',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded),
                       ),
-                      trailing: const Icon(Icons.chevron_right_rounded),
+                    );
+                  },
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+                  child: Text(
+                    'La app mostrará únicamente productos disponibles en la sala seleccionada.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
                     ),
-                  );
-                },
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-                child: Text(
-                  'La app mostrará únicamente productos disponibles en la sala seleccionada.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Apariencia',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Card(
-                elevation: 0,
-                color: colorScheme.surfaceContainer,
-                clipBehavior: Clip.antiAlias,
-                child: SwitchListTile(
-                  value: themeController.isDarkMode,
-                  onChanged: themeController.setDarkMode,
-                  secondary: Icon(
-                    themeController.isDarkMode
-                        ? Icons.dark_mode_rounded
-                        : Icons.dark_mode_outlined,
-                  ),
-                  title: const Text('Tema oscuro'),
-                  subtitle: const Text(
-                    'Usar colores oscuros en toda la aplicación',
+                const SizedBox(height: 24),
+                Text(
+                  'Apariencia',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Datos',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Card(
-                elevation: 0,
-                color: colorScheme.errorContainer,
-                clipBehavior: Clip.antiAlias,
-                child: ListTile(
-                  onTap: () => _confirmDeleteAllLists(context),
-                  leading: Icon(
-                    Icons.delete_sweep_outlined,
-                    color: colorScheme.onErrorContainer,
+                const SizedBox(height: 8),
+                Card(
+                  elevation: 0,
+                  color: colorScheme.surfaceContainer,
+                  clipBehavior: Clip.antiAlias,
+                  child: SwitchListTile(
+                    value: themeController.isDarkMode,
+                    onChanged: themeController.setDarkMode,
+                    secondary: Icon(
+                      themeController.isDarkMode
+                          ? Icons.dark_mode_rounded
+                          : Icons.dark_mode_outlined,
+                    ),
+                    title: const Text('Tema oscuro'),
+                    subtitle: const Text(
+                      'Usar colores oscuros en toda la aplicación',
+                    ),
                   ),
-                  title: Text(
-                    'Eliminar todas las listas',
-                    style: TextStyle(
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Datos',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Card(
+                  elevation: 0,
+                  color: colorScheme.errorContainer,
+                  clipBehavior: Clip.antiAlias,
+                  child: ListTile(
+                    onTap: () => _confirmDeleteAllLists(context),
+                    leading: Icon(
+                      Icons.delete_sweep_outlined,
                       color: colorScheme.onErrorContainer,
-                      fontWeight: FontWeight.w600,
                     ),
-                  ),
-                  subtitle: Text(
-                    'Borra todas las listas y los productos guardados',
-                    style: TextStyle(
-                      color: colorScheme.onErrorContainer.withValues(
-                        alpha: 0.8,
+                    title: Text(
+                      'Eliminar todas las listas',
+                      style: TextStyle(
+                        color: colorScheme.onErrorContainer,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ),
-                  trailing: Icon(
-                    Icons.chevron_right_rounded,
-                    color: colorScheme.onErrorContainer,
+                    subtitle: Text(
+                      'Borra todas las listas y los productos guardados',
+                      style: TextStyle(
+                        color: colorScheme.onErrorContainer.withValues(
+                          alpha: 0.8,
+                        ),
+                      ),
+                    ),
+                    trailing: Icon(
+                      Icons.chevron_right_rounded,
+                      color: colorScheme.onErrorContainer,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
