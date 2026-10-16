@@ -290,13 +290,24 @@ class _MyHomePageState extends State<MyHomePage> {
               'Lista de compras',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            if (_cart.selectedList != null)
-              Text(
-                _cart.selectedList!.dateTimeLabel,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
+            ListenableBuilder(
+              listenable: _cart,
+              builder: (context, _) {
+                final selectedList = _cart.selectedList;
+                if (selectedList == null) return const SizedBox.shrink();
+                final itemLabel = _cart.totalItems == 1
+                    ? '1 producto'
+                    : '${_cart.totalItems} productos';
+                return Text(
+                  '${selectedList.dateTimeLabel} · $itemLabel',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                );
+              },
+            ),
           ],
         ),
         actions: [
@@ -974,41 +985,40 @@ class _MyHomePageState extends State<MyHomePage> {
             SafeArea(
               top: false,
               child: Container(
-                padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 14),
                 decoration: BoxDecoration(
                   color: colorScheme.surface,
                   border: Border(
                     top: BorderSide(color: colorScheme.outlineVariant),
                   ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${_cart.totalItems} ${_cart.totalItems == 1 ? 'producto' : 'productos'}',
-                          style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
-                            fontSize: 13,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Total estimado',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                    _buildCartSummaryRow(
+                      label: 'Total de compra',
+                      amount: _cart.purchaseTotal,
+                      theme: theme,
+                      colorScheme: colorScheme,
                     ),
-                    Text(
-                      '\$${_cart.estimatedTotal.toStringAsFixed(2)}',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    const SizedBox(height: 4),
+                    _buildCartSummaryRow(
+                      label: 'Ahorro total',
+                      amount: _cart.totalSavings,
+                      theme: theme,
+                      colorScheme: colorScheme,
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 7),
+                      child: Divider(height: 1),
+                    ),
+                    _buildCartSummaryRow(
+                      label: 'Total final',
+                      amount: _cart.estimatedTotal,
+                      theme: theme,
+                      colorScheme: colorScheme,
+                      emphasized: true,
+                      amountColor: colorScheme.primary,
                     ),
                   ],
                 ),
@@ -1017,6 +1027,46 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildCartSummaryRow({
+    required String label,
+    required double amount,
+    required ThemeData theme,
+    required ColorScheme colorScheme,
+    bool emphasized = false,
+    Color? amountColor,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style:
+              (emphasized
+                      ? theme.textTheme.titleMedium
+                      : theme.textTheme.bodyMedium)
+                  ?.copyWith(
+                    color: emphasized
+                        ? (amountColor ?? colorScheme.onSurface)
+                        : colorScheme.onSurfaceVariant,
+                    fontSize: emphasized ? 18 : null,
+                    fontWeight: emphasized ? FontWeight.w800 : FontWeight.w600,
+                  ),
+        ),
+        Text(
+          '\$${amount.toStringAsFixed(2)}',
+          style:
+              (emphasized
+                      ? theme.textTheme.headlineSmall
+                      : theme.textTheme.bodyLarge)
+                  ?.copyWith(
+                    color: amountColor,
+                    fontWeight: emphasized ? FontWeight.w900 : FontWeight.w700,
+                  ),
+        ),
+      ],
     );
   }
 

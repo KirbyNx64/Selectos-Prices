@@ -29,6 +29,12 @@ class ShoppingCartRepository extends ChangeNotifier {
 
   int get totalItems => _items.fold(0, (total, item) => total + item.quantity);
 
+  double get purchaseTotal =>
+      _items.fold(0, (total, item) => total + item.regularSubtotal);
+
+  double get totalSavings =>
+      _items.fold(0, (total, item) => total + item.promotionSavings);
+
   double get estimatedTotal =>
       _items.fold(0, (total, item) => total + item.subtotal);
 
