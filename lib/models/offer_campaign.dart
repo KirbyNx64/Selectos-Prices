@@ -9,3 +9,10 @@ class OfferCampaign {
     required this.imageUrl,
   });
 }
+
+class OfferHomeContent {
+  final List<OfferCampaign> banners;
+  final List<OfferCampaign> campaigns;
+
+  const OfferHomeContent({required this.banners, required this.campaigns});
+}

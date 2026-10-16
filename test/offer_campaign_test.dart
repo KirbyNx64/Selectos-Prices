@@ -9,6 +9,19 @@ void main() {
     () async {
       final client = MockClient((_) async {
         return http.Response('''
+        <div id="SliderHomeMain">
+          <div class="carousel-item active">
+            <a href="/products-landing/CELEBRAHORRON-P">
+              <img class="img-large" src="https://cdn.example/banner.jpg" />
+              <img class="img-medium" src="https://cdn.example/mobile.jpg" />
+            </a>
+          </div>
+          <div class="carousel-item">
+            <a href="/special-deals">
+              <img class="img-large" src="https://cdn.example/deals.jpg" />
+            </a>
+          </div>
+        </div>
         <div class="item-categoria-destacada">
           <a href="/products-landing/SABORES-A">
             <img src="https://cdn.example/sabores.jpg" />
@@ -24,7 +37,8 @@ void main() {
       final service = SuperSelectosService(client: client);
       addTearDown(service.dispose);
 
-      final campaigns = await service.obtenerCampanasDestacadas();
+      final content = await service.obtenerContenidoOfertas();
+      final campaigns = content.campaigns;
 
       expect(campaigns, hasLength(2));
       expect(campaigns.first.title, 'Sabores de Fiesta');
@@ -33,6 +47,17 @@ void main() {
         'https://www.superselectos.com/products-landing/SABORES-A',
       );
       expect(campaigns.last.title, 'Todo para tu hogar');
+      expect(content.banners, hasLength(2));
+      expect(content.banners.first.title, 'Celebra Ahorrón');
+      expect(content.banners.first.imageUrl, 'https://cdn.example/banner.jpg');
+      expect(
+        content.banners.first.url,
+        'https://www.superselectos.com/products-landing/CELEBRAHORRON-P',
+      );
+      expect(
+        content.banners.last.url,
+        'https://www.superselectos.com/special-deals',
+      );
     },
   );
 

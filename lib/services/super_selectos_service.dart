@@ -96,6 +96,7 @@ class SuperSelectosService {
     : _client = client ?? http.Client();
 
   static const _campaignTitles = <String, String>{
+    'CELEBRAHORRON-P': 'Celebra Ahorrón',
     'SABORES-A': 'Sabores de Fiesta',
     'HOGAR-A': 'Todo para tu hogar',
     'BOQUITAS-A': 'Boquitas para celebrar',
@@ -105,6 +106,11 @@ class SuperSelectosService {
   };
 
   Future<List<OfferCampaign>> obtenerCampanasDestacadas() async {
+    final content = await obtenerContenidoOfertas();
+    return content.campaigns;
+  }
+
+  Future<OfferHomeContent> obtenerContenidoOfertas() async {
     final response = await _client
         .get(
           Uri.parse('https://www.superselectos.com/'),
@@ -119,13 +125,31 @@ class SuperSelectosService {
     }
 
     final document = html_parser.parse(response.body);
+    final banners = _parseOfferLinks(
+      document.querySelectorAll(
+        '#SliderHomeMain .carousel-item a[href*="products-landing/"], '
+        '#SliderHomeMain .carousel-item a[href*="special-deals"]',
+      ),
+      imageSelector: 'img.img-large',
+    );
+    final campaigns = _parseOfferLinks(
+      document.querySelectorAll(
+        '.item-categoria-destacada a[href*="products-landing/"]',
+      ),
+    );
+
+    return OfferHomeContent(banners: banners, campaigns: campaigns);
+  }
+
+  List<OfferCampaign> _parseOfferLinks(
+    Iterable<html_dom.Element> anchors, {
+    String imageSelector = 'img',
+  }) {
     final campaigns = <OfferCampaign>[];
     final seenUrls = <String>{};
-    for (final anchor in document.querySelectorAll(
-      '.item-categoria-destacada a[href*="products-landing/"]',
-    )) {
+    for (final anchor in anchors) {
       final href = anchor.attributes['href']?.trim();
-      final image = anchor.querySelector('img');
+      final image = anchor.querySelector(imageSelector);
       final imageUrl =
           image?.attributes['src']?.trim() ??
           image?.attributes['data-src']?.trim();
@@ -142,11 +166,16 @@ class SuperSelectosService {
       if (!seenUrls.add(url)) continue;
 
       final slug = Uri.parse(url).pathSegments.last.toUpperCase();
+      final resolvedImageUrl = Uri.parse('https://www.superselectos.com/')
+          .resolve(imageUrl)
+          .toString();
       campaigns.add(
         OfferCampaign(
           title: _campaignTitles[slug] ?? _titleFromCampaignSlug(slug),
           url: url,
-          imageUrl: imageUrl.startsWith('//') ? 'https:$imageUrl' : imageUrl,
+          imageUrl: imageUrl.startsWith('//')
+              ? 'https:$imageUrl'
+              : resolvedImageUrl,
         ),
       );
     }
@@ -166,7 +195,8 @@ class SuperSelectosService {
             uri.host.endsWith('.superselectos.com'));
     if (uri == null ||
         !isSelectosHost ||
-        !uri.path.contains('/products-landing/')) {
+        (!uri.path.contains('/products-landing/') &&
+            uri.path != '/special-deals')) {
       throw const FormatException('Enlace de campaña inválido');
     }
 
@@ -205,7 +235,7 @@ class SuperSelectosService {
 
   static String _titleFromCampaignSlug(String slug) {
     return slug
-        .replaceAll(RegExp(r'-A$'), '')
+        .replaceAll(RegExp(r'-(?:A|P)$'), '')
         .replaceAll('-', ' ')
         .toLowerCase()
         .split(' ')

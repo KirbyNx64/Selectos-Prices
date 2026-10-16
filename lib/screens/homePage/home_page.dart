@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:super_selectos/models/category.dart';
 import 'package:super_selectos/models/offer_campaign.dart';
 import 'package:super_selectos/models/product.dart';
@@ -28,7 +31,9 @@ class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
+  final PageController _offerBannerController = PageController();
   late final M3ENavigationBarController _navController;
+  Timer? _offerBannerTimer;
   int barIndex = 0;
 
   final SuperSelectosService _service = SuperSelectosService();
@@ -38,6 +43,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String? _errorProductosInicio;
   int _cantidadAMostrar = 12;
   List<OfferCampaign> _offerCampaigns = const [];
+  List<OfferCampaign> _offerBanners = const [];
   bool _loadingOfferCampaigns = false;
   bool _offerCampaignsLoaded = false;
   bool _offerCampaignsError = false;
@@ -107,6 +113,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void dispose() {
+    _offerBannerTimer?.cancel();
+    _offerBannerController.dispose();
     _navController.dispose();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
@@ -147,13 +155,15 @@ class _MyHomePageState extends State<MyHomePage> {
       _offerCampaignsError = false;
     });
     try {
-      final campaigns = await _service.obtenerCampanasDestacadas();
+      final content = await _service.obtenerContenidoOfertas();
       if (!mounted) return;
       setState(() {
-        _offerCampaigns = campaigns;
+        _offerCampaigns = content.campaigns;
+        _offerBanners = content.banners;
         _loadingOfferCampaigns = false;
         _offerCampaignsLoaded = true;
       });
+      _startOfferBannerTimer();
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -162,6 +172,26 @@ class _MyHomePageState extends State<MyHomePage> {
         _offerCampaignsError = true;
       });
     }
+  }
+
+  void _startOfferBannerTimer() {
+    _offerBannerTimer?.cancel();
+    if (_offerBanners.length < 2) return;
+    _offerBannerTimer = Timer.periodic(const Duration(seconds: 6), (_) {
+      if (!mounted || barIndex != 2 || !_offerBannerController.hasClients) {
+        return;
+      }
+      final currentPage = _offerBannerController.page?.round() ?? 0;
+      if (currentPage >= _offerBanners.length - 1) {
+        _offerBannerController.jumpToPage(0);
+      } else {
+        _offerBannerController.animateToPage(
+          currentPage + 1,
+          duration: const Duration(milliseconds: 450),
+          curve: Curves.easeInOutCubic,
+        );
+      }
+    });
   }
 
   void _openOfferCampaign(OfferCampaign campaign) {
@@ -971,23 +1001,118 @@ class _MyHomePageState extends State<MyHomePage> {
             : (constraints.maxWidth >= 700
                   ? 4
                   : (constraints.maxWidth >= 480 ? 3 : 2));
-        return GridView.builder(
-          padding: const EdgeInsets.all(12),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1,
+        return CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            if (_offerBanners.isNotEmpty)
+              SliverToBoxAdapter(child: _buildOfferBannerCarousel(colorScheme)),
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(
+                12,
+                _offerBanners.isEmpty ? 12 : 4,
+                12,
+                24,
+              ),
+              sliver: SliverGrid(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 1,
+                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final campaign = _offerCampaigns[index];
+                  return _OfferCampaignCard(
+                    campaign: campaign,
+                    colorScheme: colorScheme,
+                    onTap: () => _openOfferCampaign(campaign),
+                  );
+                }, childCount: _offerCampaigns.length),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildOfferBannerCarousel(ColorScheme colorScheme) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final aspectRatio = constraints.maxWidth >= 700 ? 4.0 : 2.45;
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+          child: Column(
+            children: [
+              AspectRatio(
+                aspectRatio: aspectRatio,
+                child: PageView.builder(
+                  controller: _offerBannerController,
+                  itemCount: _offerBanners.length,
+                  itemBuilder: (context, index) {
+                    final banner = _offerBanners[index];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      child: Material(
+                        color: colorScheme.surfaceContainerLow,
+                        clipBehavior: Clip.antiAlias,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: _PressableInkWell(
+                          onTap: () => _openOfferCampaign(banner),
+                          borderRadius: BorderRadius.circular(18),
+                          semanticLabel: 'Ver oferta ${banner.title}',
+                          pressedScale: 0.98,
+                          child: Image.network(
+                            banner.imageUrl,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, progress) {
+                              if (progress == null) return child;
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: colorScheme.primary,
+                                ),
+                              );
+                            },
+                            errorBuilder: (_, _, _) => Center(
+                              child: Icon(
+                                Icons.image_not_supported_outlined,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              if (_offerBanners.length > 1) ...[
+                const SizedBox(height: 10),
+                SmoothPageIndicator(
+                  controller: _offerBannerController,
+                  count: _offerBanners.length,
+                  effect: ExpandingDotsEffect(
+                    dotWidth: 7,
+                    dotHeight: 7,
+                    spacing: 5,
+                    expansionFactor: 3,
+                    activeDotColor: colorScheme.primary,
+                    dotColor: colorScheme.outlineVariant,
+                  ),
+                  onDotClicked: (index) {
+                    _offerBannerController.animateToPage(
+                      index,
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.easeOutCubic,
+                    );
+                  },
+                ),
+              ],
+            ],
           ),
-          itemCount: _offerCampaigns.length,
-          itemBuilder: (context, index) {
-            final campaign = _offerCampaigns[index];
-            return _OfferCampaignCard(
-              campaign: campaign,
-              colorScheme: colorScheme,
-              onTap: () => _openOfferCampaign(campaign),
-            );
-          },
         );
       },
     );
@@ -1527,11 +1652,10 @@ class _OfferCampaignCardState extends State<_OfferCampaignCard> {
         duration: Duration(milliseconds: _pressed ? 80 : 140),
         curve: _pressed ? Curves.easeOut : Curves.easeOutBack,
         child: Material(
-          color: colorScheme.surfaceContainerLowest,
+          color: colorScheme.surfaceContainerLow,
           clipBehavior: Clip.antiAlias,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: colorScheme.outlineVariant),
           ),
           child: InkWell(
             onHighlightChanged: (pressed) => setState(() => _pressed = pressed),
@@ -1580,12 +1704,14 @@ class _PressableInkWell extends StatefulWidget {
     required this.borderRadius,
     required this.semanticLabel,
     required this.child,
+    this.pressedScale = 0.94,
   });
 
   final VoidCallback onTap;
   final BorderRadius borderRadius;
   final String semanticLabel;
   final Widget child;
+  final double pressedScale;
 
   @override
   State<_PressableInkWell> createState() => _PressableInkWellState();
@@ -1600,7 +1726,7 @@ class _PressableInkWellState extends State<_PressableInkWell> {
       button: true,
       label: widget.semanticLabel,
       child: AnimatedScale(
-        scale: _pressed ? 0.94 : 1,
+        scale: _pressed ? widget.pressedScale : 1,
         duration: Duration(milliseconds: _pressed ? 80 : 140),
         curve: _pressed ? Curves.easeOut : Curves.easeOutBack,
         child: InkWell(
