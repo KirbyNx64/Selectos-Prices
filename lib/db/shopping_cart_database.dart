@@ -55,6 +55,16 @@ class ShoppingCartDatabase {
     await db.delete(_listsTable, where: 'id = ?', whereArgs: [listId]);
   }
 
+  Future<ShoppingList> deleteAllListsAndCreate(DateTime createdAt) async {
+    final db = await database;
+    return db.transaction((transaction) async {
+      await transaction.delete(_itemsTable);
+      await transaction.delete(_listsTable);
+      final id = await _insertList(transaction, createdAt);
+      return ShoppingList(id: id, createdAt: createdAt);
+    });
+  }
+
   Future<List<ShoppingCartItem>> getItems(int listId) async {
     final db = await database;
     final rows = await db.query(

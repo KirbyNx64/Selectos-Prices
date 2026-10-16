@@ -6,10 +6,7 @@ import 'package:super_selectos/screens/searchResults/search_results_screen.dart'
 class SubcategoriesScreen extends StatefulWidget {
   final MainCategory category;
 
-  const SubcategoriesScreen({
-    super.key,
-    required this.category,
-  });
+  const SubcategoriesScreen({super.key, required this.category});
 
   @override
   State<SubcategoriesScreen> createState() => _SubcategoriesScreenState();
@@ -19,22 +16,23 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
   static const brandGreen = Color(0xFF2E6C37);
 
   final TextEditingController _filterController = TextEditingController();
+  final FocusNode _filterFocusNode = FocusNode();
   String _filterQuery = '';
 
   @override
   void dispose() {
+    _filterFocusNode.dispose();
     _filterController.dispose();
     super.dispose();
   }
 
   void _abrirProductos(BuildContext context, String nombre, String codigo) {
+    _filterFocusNode.unfocus();
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => SearchResultsScreen(
-          initialQuery: nombre,
-          categoryCode: codigo,
-        ),
+        builder: (_) =>
+            SearchResultsScreen(initialQuery: nombre, categoryCode: codigo),
       ),
     );
   }
@@ -80,8 +78,18 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final filteredGroups = _filteredGroups;
+    final isDarkMode = theme.brightness == Brightness.dark;
+    final bannerForeground = isDarkMode
+        ? colorScheme.onPrimaryContainer
+        : Colors.white;
+    final bannerButtonBackground = isDarkMode
+        ? colorScheme.primary
+        : Colors.white;
+    final bannerButtonForeground = isDarkMode
+        ? colorScheme.onPrimary
+        : brandGreen;
 
-    return Scaffold(
+    final scaffold = Scaffold(
       appBar: AppBar(
         notificationPredicate: (_) => false,
         elevation: 0,
@@ -95,7 +103,13 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
             size: M3EIconButtonSize.sm,
             shape: M3EIconButtonShapeVariant.round,
             tooltip: 'Volver',
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              if (_filterFocusNode.hasFocus) {
+                _filterFocusNode.unfocus();
+              } else {
+                Navigator.pop(context);
+              }
+            },
           ),
         ),
         title: Text(
@@ -116,11 +130,16 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
               padding: const EdgeInsets.all(18),
               child: Container(
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF1B4E24),
-                      Color(0xFF2E6C37),
-                    ],
+                  gradient: LinearGradient(
+                    colors: isDarkMode
+                        ? [
+                            colorScheme.primaryContainer,
+                            Color.alphaBlend(
+                              colorScheme.primary.withValues(alpha: 0.12),
+                              colorScheme.primaryContainer,
+                            ),
+                          ]
+                        : const [Color(0xFF1B4E24), Color(0xFF2E6C37)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -136,12 +155,12 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.18),
+                            color: bannerForeground.withValues(alpha: 0.14),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Icon(
                             widget.category.icon,
-                            color: Colors.white,
+                            color: bannerForeground,
                             size: 26,
                           ),
                         ),
@@ -152,8 +171,8 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
                             children: [
                               Text(
                                 widget.category.tituloCompleto,
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: bannerForeground,
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: -0.3,
@@ -163,7 +182,9 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
                               Text(
                                 '${widget.category.grupos.length} grupos · $_totalSubcategorias subcategorías',
                                 style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.85),
+                                  color: bannerForeground.withValues(
+                                    alpha: 0.82,
+                                  ),
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -182,22 +203,26 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
                         widget.category.id,
                       ),
                       shape: M3EButtonShape.round,
-                      decoration: const M3EButtonDecoration(
-                        backgroundColor: WidgetStatePropertyAll(Colors.white),
-                        foregroundColor: WidgetStatePropertyAll(brandGreen),
+                      decoration: M3EButtonDecoration(
+                        backgroundColor: WidgetStatePropertyAll(
+                          bannerButtonBackground,
+                        ),
+                        foregroundColor: WidgetStatePropertyAll(
+                          bannerButtonForeground,
+                        ),
                       ),
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.grid_view_rounded,
                         size: 18,
-                        color: brandGreen,
+                        color: bannerButtonForeground,
                       ),
                       label: Text(
                         'Ver todo en ${widget.category.tituloCompleto}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: brandGreen,
+                          color: bannerButtonForeground,
                           fontSize: 13,
                         ),
                       ),
@@ -209,13 +234,17 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
             const SizedBox(height: 16),
 
             // ── Barra de búsqueda rápida de subcategorías ───────────────
-            if (widget.category.grupos.length > 1 || _totalSubcategorias > 3) ...[
+            if (widget.category.grupos.length > 1 ||
+                _totalSubcategorias > 3) ...[
               M3ESearchBar(
                 controller: _filterController,
+                focusNode: _filterFocusNode,
+                onTapOutside: (_) => _filterFocusNode.unfocus(),
                 hintText: 'Filtrar en ${widget.category.tituloCompleto}...',
                 leading: const Icon(Icons.search_rounded),
                 showClearButton: true,
-                margin: 0,
+                margin: 12,
+                focusedMargin: 0,
                 contextMenuBuilder: (context, editableTextState) {
                   return AdaptiveTextSelectionToolbar.editableText(
                     editableTextState: editableTextState,
@@ -260,7 +289,9 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
                 builder: (context, constraints) {
                   // En móvil (<650px) se utiliza 1 sola columna para maximizar el área táctil ergonómica
                   final isMobile = constraints.maxWidth < 650;
-                  final crossAxisCount = isMobile ? 1 : (constraints.maxWidth > 1000 ? 3 : 2);
+                  final crossAxisCount = isMobile
+                      ? 1
+                      : (constraints.maxWidth > 1000 ? 3 : 2);
 
                   if (crossAxisCount == 1) {
                     return Column(
@@ -275,7 +306,9 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
                   }
 
                   // Layout multi-columna balanceado para tablets y pantallas amplias
-                  final columnWidth = (constraints.maxWidth - (crossAxisCount - 1) * 16) / crossAxisCount;
+                  final columnWidth =
+                      (constraints.maxWidth - (crossAxisCount - 1) * 16) /
+                      crossAxisCount;
                   final columns = List.generate(
                     crossAxisCount,
                     (_) => <CategoryGroup>[],
@@ -287,7 +320,11 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      for (int colIndex = 0; colIndex < crossAxisCount; colIndex++) ...[
+                      for (
+                        int colIndex = 0;
+                        colIndex < crossAxisCount;
+                        colIndex++
+                      ) ...[
                         if (colIndex > 0) const SizedBox(width: 16),
                         SizedBox(
                           width: columnWidth,
@@ -310,6 +347,22 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
         ),
       ),
     );
+
+    return ListenableBuilder(
+      listenable: _filterFocusNode,
+      child: scaffold,
+      builder: (context, child) {
+        return PopScope(
+          canPop: !_filterFocusNode.hasFocus,
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) return;
+            _filterFocusNode.unfocus();
+            FocusScope.of(context).unfocus();
+          },
+          child: child!,
+        );
+      },
+    );
   }
 
   Widget _buildGrupoCard(
@@ -330,16 +383,21 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             child: InkWell(
               onTap: () => _abrirProductos(context, grupo.nombre, grupo.id),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 child: Row(
                   children: [
                     Container(
                       width: 8,
                       height: 8,
-                      decoration: const BoxDecoration(
-                        color: brandGreen,
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -362,24 +420,24 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: brandGreen.withValues(alpha: 0.12),
+                          color: colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
                           '${grupo.subcategorias.length}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: brandGreen,
+                            color: colorScheme.onPrimaryContainer,
                           ),
                         ),
                       ),
                       const SizedBox(width: 8),
                     ],
-                    const Icon(
+                    Icon(
                       Icons.arrow_forward_ios_rounded,
                       size: 13,
-                      color: brandGreen,
+                      color: colorScheme.primary,
                     ),
                   ],
                 ),
@@ -408,7 +466,9 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
                   child: InkWell(
                     onTap: () => _abrirProductos(context, sub.nombre, sub.id),
                     borderRadius: isLast
-                        ? const BorderRadius.vertical(bottom: Radius.circular(20))
+                        ? const BorderRadius.vertical(
+                            bottom: Radius.circular(20),
+                          )
                         : BorderRadius.zero,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
@@ -420,7 +480,7 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
                           Icon(
                             Icons.subdirectory_arrow_right_rounded,
                             size: 17,
-                            color: brandGreen.withValues(alpha: 0.75),
+                            color: colorScheme.primary,
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -429,7 +489,9 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
-                                color: colorScheme.onSurface.withValues(alpha: 0.9),
+                                color: colorScheme.onSurface.withValues(
+                                  alpha: 0.9,
+                                ),
                                 height: 1.3,
                               ),
                             ),
@@ -437,7 +499,9 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
                           Icon(
                             Icons.chevron_right_rounded,
                             size: 20,
-                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                            color: colorScheme.onSurfaceVariant.withValues(
+                              alpha: 0.5,
+                            ),
                           ),
                         ],
                       ),
@@ -452,7 +516,9 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
               color: Colors.transparent,
               child: InkWell(
                 onTap: () => _abrirProductos(context, grupo.nombre, grupo.id),
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(20),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -460,10 +526,10 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.shopping_bag_outlined,
                         size: 18,
-                        color: brandGreen,
+                        color: colorScheme.primary,
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -476,10 +542,10 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
                           ),
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.chevron_right_rounded,
                         size: 20,
-                        color: brandGreen,
+                        color: colorScheme.primary,
                       ),
                     ],
                   ),

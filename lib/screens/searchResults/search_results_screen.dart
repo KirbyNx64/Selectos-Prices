@@ -608,6 +608,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   Widget _buildPaginationWidget(PaginationInfo paginacion) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final colorScheme = Theme.of(context).colorScheme;
         final availableWidth = constraints.maxWidth;
         // 76px reservados para los botones Anterior/Siguiente (32px cada uno) y padding (12px)
         final availableForNumbers = availableWidth - 76;
@@ -642,15 +643,12 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F5ED),
+            color: colorScheme.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: const Color(0xFF2E6C37).withValues(alpha: 0.12),
-              width: 1,
-            ),
+            border: Border.all(color: colorScheme.outlineVariant, width: 1),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: colorScheme.shadow.withValues(alpha: 0.08),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
@@ -679,14 +677,15 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                       height: 32,
                       decoration: BoxDecoration(
                         color: num == paginacion.paginaActual
-                            ? const Color(0xFF2E6C37)
+                            ? colorScheme.primary
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: num == paginacion.paginaActual
                             ? [
                                 BoxShadow(
-                                  color: const Color(0xFF2E6C37)
-                                      .withValues(alpha: 0.28),
+                                  color: colorScheme.primary.withValues(
+                                    alpha: 0.28,
+                                  ),
                                   blurRadius: 4,
                                   offset: const Offset(0, 1),
                                 ),
@@ -705,8 +704,8 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                               '$num',
                               style: TextStyle(
                                 color: num == paginacion.paginaActual
-                                    ? Colors.white
-                                    : const Color(0xFF2E6C37),
+                                    ? colorScheme.onPrimary
+                                    : colorScheme.primary,
                                 fontSize: 13,
                                 fontWeight: num == paginacion.paginaActual
                                     ? FontWeight.bold
@@ -723,8 +722,8 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Text(
                     '${paginacion.paginaActual} / ${paginacion.paginasDisponibles.isNotEmpty ? paginacion.paginasDisponibles.last : paginacion.paginaActual}',
-                    style: const TextStyle(
-                      color: Color(0xFF2E6C37),
+                    style: TextStyle(
+                      color: colorScheme.primary,
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                     ),
@@ -753,6 +752,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     required VoidCallback? onTap,
   }) {
     final enabled = onTap != null;
+    final colorScheme = Theme.of(context).colorScheme;
     return Tooltip(
       message: tooltip,
       child: Material(
@@ -768,8 +768,8 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
               icon,
               size: 20,
               color: enabled
-                  ? const Color(0xFF2E6C37)
-                  : const Color(0xFFBDBDBD),
+                  ? colorScheme.primary
+                  : colorScheme.onSurface.withValues(alpha: 0.38),
             ),
           ),
         ),

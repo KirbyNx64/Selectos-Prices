@@ -118,6 +118,17 @@ class ShoppingCartRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> deleteAllLists() async {
+    await _ensureInitialized();
+    final replacement = await _database.deleteAllListsAndCreate(DateTime.now());
+    _lists
+      ..clear()
+      ..add(replacement);
+    _selectedList = replacement;
+    _items.clear();
+    notifyListeners();
+  }
+
   Future<void> _ensureInitialized() async {
     if (!_initialized) await initialize();
   }

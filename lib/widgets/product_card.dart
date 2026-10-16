@@ -127,7 +127,7 @@ class _ProductCardState extends State<ProductCard> {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
-                          color: brandGreen,
+                          color: colorScheme.primary,
                           letterSpacing: 0.8,
                         ),
                       ),

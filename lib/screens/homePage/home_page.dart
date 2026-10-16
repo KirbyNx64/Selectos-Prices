@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:super_selectos/models/category.dart';
 import 'package:super_selectos/models/product.dart';
@@ -7,6 +8,7 @@ import 'package:super_selectos/screens/categories/subcategories_screen.dart';
 import 'package:super_selectos/screens/homePage/barcode_scanner_screen.dart';
 import 'package:super_selectos/screens/productDetail/product_detail_screen.dart';
 import 'package:super_selectos/screens/searchResults/search_results_screen.dart';
+import 'package:super_selectos/screens/settings/settings_screen.dart';
 import 'package:super_selectos/services/shopping_cart_repository.dart';
 import 'package:super_selectos/services/super_selectos_service.dart';
 import 'package:super_selectos/widgets/app_snackbar.dart';
@@ -310,45 +312,99 @@ class _MyHomePageState extends State<MyHomePage> {
     return AppBar(
       notificationPredicate: (_) => false,
       elevation: 0,
-      backgroundColor: colorScheme.surface,
+      backgroundColor: colorScheme.primary,
+      foregroundColor: colorScheme.onPrimary,
       scrolledUnderElevation: 0,
       surfaceTintColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+      ),
       titleSpacing: 12,
-      title: Row(
+      toolbarHeight: 124,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: M3ESearchBar(
-              focusNode: _searchFocusNode,
-              onTapOutside: (_) => _searchFocusNode.unfocus(),
-              margin: 12,
-              focusedMargin: 0,
-              expandOnFocus: true,
-              controller: _searchController,
-              hintText: '¿Qué estás buscando?',
-              leading: const Icon(Icons.search),
-              showClearButton: true,
-              onSubmitted: _irAResultados,
-              contextMenuBuilder: (context, editableTextState) {
-                return AdaptiveTextSelectionToolbar.editableText(
-                  editableTextState: editableTextState,
-                );
-              },
+          Padding(
+            padding: const EdgeInsets.only(left: 12, right: 4, bottom: 8),
+            child: Row(
+              children: [
+                SvgPicture.asset(
+                  'assets/shopping_cart.svg',
+                  width: 36,
+                  height: 36,
+                  fit: BoxFit.contain,
+                  colorFilter: ColorFilter.mode(
+                    colorScheme.onPrimary,
+                    BlendMode.srcIn,
+                  ),
+                  semanticsLabel: 'Carrito de compras',
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Selectos Prices',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: colorScheme.onPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                M3EIconButton(
+                  icon: const Icon(Icons.settings_rounded),
+                  variant: M3EIconButtonVariant.tonal,
+                  size: M3EIconButtonSize.sm,
+                  shape: M3EIconButtonShapeVariant.round,
+                  tooltip: 'Ajustes',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 8),
-          // Botón circular para abrir el escáner de código de barras
-          M3EIconButton(
-            icon: const Icon(Icons.qr_code_scanner_rounded),
-            variant: M3EIconButtonVariant.filled,
-            size: M3EIconButtonSize.sm,
-            shape: M3EIconButtonShapeVariant.round,
-            tooltip: 'Escanear código de barras',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const BarcodeScannerScreen()),
-              );
-            },
+          Row(
+            children: [
+              Expanded(
+                child: M3ESearchBar(
+                  focusNode: _searchFocusNode,
+                  onTapOutside: (_) => _searchFocusNode.unfocus(),
+                  margin: 12,
+                  focusedMargin: 0,
+                  expandOnFocus: true,
+                  controller: _searchController,
+                  hintText: '¿Qué estás buscando?',
+                  leading: const Icon(Icons.search),
+                  trailing: [
+                    M3EIconButton(
+                      icon: const Icon(Icons.qr_code_scanner_rounded),
+                      variant: M3EIconButtonVariant.filled,
+                      size: M3EIconButtonSize.sm,
+                      shape: M3EIconButtonShapeVariant.round,
+                      tooltip: 'Escanear código de barras',
+                      onPressed: () {
+                        _searchFocusNode.unfocus();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const BarcodeScannerScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                  showClearButton: true,
+                  onSubmitted: _irAResultados,
+                  contextMenuBuilder: (context, editableTextState) {
+                    return AdaptiveTextSelectionToolbar.editableText(
+                      editableTextState: editableTextState,
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -395,7 +451,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           fontWeight: FontWeight.w800,
                           fontSize: 18,
                           letterSpacing: -0.3,
-                          color: const Color(0xFF1E293B),
+                          color: colorScheme.onSurface,
                         ),
                       ),
                       InkWell(
@@ -405,8 +461,8 @@ class _MyHomePageState extends State<MyHomePage> {
                             barIndex = 1;
                           });
                         },
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
                             horizontal: 4,
                             vertical: 2,
                           ),
@@ -416,16 +472,16 @@ class _MyHomePageState extends State<MyHomePage> {
                               Text(
                                 'Ver todas',
                                 style: TextStyle(
-                                  color: Color(0xFF2E6C37),
+                                  color: colorScheme.primary,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
                                 ),
                               ),
-                              SizedBox(width: 2),
+                              const SizedBox(width: 2),
                               Icon(
                                 Icons.chevron_right_rounded,
                                 size: 18,
-                                color: Color(0xFF2E6C37),
+                                color: colorScheme.primary,
                               ),
                             ],
                           ),
@@ -446,7 +502,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         Expanded(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: _buildCategoriaCard(item),
+                            child: _buildCategoriaCard(item, colorScheme),
                           ),
                         ),
                     ],
@@ -466,7 +522,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           fontWeight: FontWeight.w800,
                           fontSize: 18,
                           letterSpacing: -0.3,
-                          color: const Color(0xFF1E293B),
+                          color: colorScheme.onSurface,
                         ),
                       ),
                     ],
@@ -599,7 +655,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildCategoriaCard(MainCategory item) {
+  Widget _buildCategoriaCard(MainCategory item, ColorScheme colorScheme) {
     return InkWell(
       onTap: () => _abrirCategoria(item),
       borderRadius: BorderRadius.circular(22),
@@ -630,11 +686,11 @@ class _MyHomePageState extends State<MyHomePage> {
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               height: 1.2,
-              color: Color(0xFF1E293B),
+              color: colorScheme.onSurface,
             ),
           ),
         ],
@@ -685,11 +741,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   height: 1.2,
-                  color: Color(0xFF1E293B),
+                  color: colorScheme.onSurface,
                 ),
               ),
             ],
@@ -859,7 +915,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     Text(
                       '\$${_cart.estimatedTotal.toStringAsFixed(2)}',
                       style: theme.textTheme.headlineSmall?.copyWith(
-                        color: const Color(0xFF2E6C37),
+                        color: colorScheme.primary,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -897,6 +953,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _confirmDeleteSelectedList() async {
     final selectedList = _cart.selectedList;
     if (selectedList == null) return;
+    final colorScheme = Theme.of(context).colorScheme;
 
     final shouldDelete = await M3EDialog.show<bool>(
       context,
@@ -904,9 +961,10 @@ class _MyHomePageState extends State<MyHomePage> {
         type: MaterialType.transparency,
         child: M3EDialog(
           title: '¿Eliminar esta lista?',
-          icon: const Icon(Icons.delete_outline_rounded),
+          icon: Icon(Icons.delete_outline_rounded, color: colorScheme.error),
           content: Text(
             'Se eliminará la lista del ${selectedList.dateTimeLabel} y todos sus productos.',
+            style: TextStyle(color: colorScheme.onSurfaceVariant),
           ),
           actions: [
             M3EButton.text(
@@ -917,13 +975,12 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: () => Navigator.pop(context, true),
               shape: M3EButtonShape.round,
               decoration: M3EButtonDecoration(
-                backgroundColor: WidgetStatePropertyAll(
-                  Theme.of(context).colorScheme.error,
-                ),
+                backgroundColor: WidgetStatePropertyAll(colorScheme.error),
+                foregroundColor: WidgetStatePropertyAll(colorScheme.onError),
               ),
-              child: const Text(
+              child: Text(
                 'Eliminar',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: colorScheme.onError),
               ),
             ),
           ],

@@ -64,7 +64,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     const brandGreen = Color(0xFF2E6C37);
     const selectosLime = Color(0xFF7EB424);
     const discountRed = Color(0xFFB3261E);
-    const discountRedContainer = Color(0xFFF9DEDC);
 
     final imagenes = _producto.todasLasImagenes;
     final tieneInformacionAdicional =
@@ -289,9 +288,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               Text(
                 _producto.nombre,
                 style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w800,
                   letterSpacing: -0.3,
-                  color: const Color(0xFF1C1B1F),
+                  height: 1.2,
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 16),
@@ -312,10 +312,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           _producto.precioFinal != null
                               ? '\$${_producto.precioFinal!.toStringAsFixed(2)}'
                               : 'No disponible',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.w900,
-                            color: brandGreen,
+                            color: colorScheme.primary,
                             letterSpacing: -0.5,
                           ),
                         ),
@@ -327,7 +327,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             style: TextStyle(
                               fontSize: 18,
                               decoration: TextDecoration.lineThrough,
-                              color: Colors.grey.shade600,
+                              decorationColor: colorScheme.onSurfaceVariant,
+                              color: colorScheme.onSurfaceVariant,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -343,13 +344,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: discountRedContainer,
+                          color: colorScheme.errorContainer,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           'Ahorras \$${_producto.descuento.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            color: discountRed,
+                          style: TextStyle(
+                            color: colorScheme.onErrorContainer,
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
                           ),
@@ -368,7 +369,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   'Descripción',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF1C1B1F),
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -376,7 +377,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: colorScheme.surfaceContainer,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: colorScheme.outlineVariant.withValues(alpha: 0.5),
@@ -386,7 +387,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     _producto.descripcion!,
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey.shade800,
+                      color: colorScheme.onSurface,
                       height: 1.4,
                       fontWeight: FontWeight.w500,
                     ),
