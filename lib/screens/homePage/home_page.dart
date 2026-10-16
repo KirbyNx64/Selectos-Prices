@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:super_selectos/models/category.dart';
 import 'package:super_selectos/models/product.dart';
+import 'package:super_selectos/models/shopping_cart_item.dart';
 import 'package:super_selectos/screens/categories/subcategories_screen.dart';
 import 'package:super_selectos/screens/homePage/barcode_scanner_screen.dart';
 import 'package:super_selectos/screens/productDetail/product_detail_screen.dart';
 import 'package:super_selectos/screens/searchResults/search_results_screen.dart';
+import 'package:super_selectos/services/shopping_cart_repository.dart';
 import 'package:super_selectos/services/super_selectos_service.dart';
 import 'package:super_selectos/widgets/product_card.dart';
 
@@ -24,6 +26,7 @@ class _MyHomePageState extends State<MyHomePage> {
   int barIndex = 0;
 
   final SuperSelectosService _service = SuperSelectosService();
+  final ShoppingCartRepository _cart = ShoppingCartRepository.instance;
   List<Product> _productosInicio = [];
   bool _cargandoProductosInicio = true;
   String? _errorProductosInicio;
@@ -159,7 +162,7 @@ class _MyHomePageState extends State<MyHomePage> {
           M3ENavigationBarDestination(
             icon: Icon(M3EIcons.shopping_cart_outlined),
             selectedIcon: Icon(M3EIcons.shopping_cart),
-            label: 'Carrito',
+            label: 'Mi lista',
           ),
         ],
         selectedIndex: barIndex,
@@ -231,10 +234,75 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: colorScheme.surface,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
-        title: const Text(
-          'Mi Carrito',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Lista de compras',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            if (_cart.selectedList != null)
+              Text(
+                _cart.selectedList!.dateTimeLabel,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+          ],
         ),
+        actions: [
+          M3EMenu(
+            position: M3EMenuAnchorPosition.bottomEnd,
+            selectedValue: _cart.selectedList?.id,
+            onSelected: (value) {
+              if (value is int) {
+                _handleShoppingListSelection(value);
+              }
+            },
+            anchorBuilder: (context, openMenu) {
+              return Center(
+                child: M3EIconButton(
+                  icon: const Icon(Icons.playlist_add_check_rounded),
+                  variant: M3EIconButtonVariant.tonal,
+                  size: M3EIconButtonSize.sm,
+                  shape: M3EIconButtonShapeVariant.round,
+                  tooltip: 'Seleccionar lista',
+                  onPressed: openMenu,
+                ),
+              );
+            },
+            children: [
+              M3EMenuGroup(
+                label: 'Tus listas',
+                children: [
+                  for (final list in _cart.lists)
+                    M3EMenuSelectable(
+                      label: list.dateTimeLabel,
+                      value: list.id,
+                      selected: list.id == _cart.selectedList?.id,
+                      leading: const Icon(Icons.shopping_bag_outlined),
+                    ),
+                ],
+              ),
+              const M3EMenuGroup(
+                children: [
+                  M3EMenuEntry(
+                    label: 'Crear nueva lista',
+                    value: -1,
+                    leading: Icon(Icons.add_rounded),
+                  ),
+                  M3EMenuEntry(
+                    label: 'Eliminar lista actual',
+                    value: -2,
+                    leading: Icon(Icons.delete_outline_rounded),
+                    isDestructive: true,
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(width: 8),
+        ],
       );
     }
 
@@ -491,16 +559,13 @@ class _MyHomePageState extends State<MyHomePage> {
                 mainAxisSpacing: 10,
                 childAspectRatio: 0.54,
               ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final prod = _productosInicio[index];
-                  return ProductCard(
-                    product: prod,
-                    onTap: () => _mostrarDetalleProducto(prod),
-                  );
-                },
-                childCount: _productosInicio.take(_cantidadAMostrar).length,
-              ),
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final prod = _productosInicio[index];
+                return ProductCard(
+                  product: prod,
+                  onTap: () => _mostrarDetalleProducto(prod),
+                );
+              }, childCount: _productosInicio.take(_cantidadAMostrar).length),
             ),
           ),
           if (_cantidadAMostrar < _productosInicio.length)
@@ -528,9 +593,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
         ],
-        const SliverToBoxAdapter(
-          child: SizedBox(height: 20),
-        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 20)),
       ],
     );
   }
@@ -676,59 +739,405 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildCarritoView(ThemeData theme, ColorScheme colorScheme) {
-    return Center(
+    return ListenableBuilder(
+      listenable: _cart,
+      builder: (context, _) {
+        if (_cart.loading && _cart.items.isEmpty) {
+          return const Center(
+            child: M3ELoadingIndicator(size: 48, color: Color(0xFF2E6C37)),
+          );
+        }
+
+        if (_cart.items.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer.withValues(
+                        alpha: 0.4,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      M3EIcons.shopping_cart_outlined,
+                      size: 64,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Tu lista está vacía',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Explora productos y agrega todo lo que necesitas comprar.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: colorScheme.onSurfaceVariant,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  M3EButton.filled(
+                    onPressed: () => setState(() => barIndex = 0),
+                    shape: M3EButtonShape.round,
+                    decoration: const M3EButtonDecoration(
+                      backgroundColor: WidgetStatePropertyAll(
+                        Color(0xFF2E6C37),
+                      ),
+                    ),
+                    label: const Text(
+                      'Explorar productos',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    icon: const Icon(Icons.search, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return Column(
+          children: [
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                itemCount: _cart.items.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
+                itemBuilder: (context, index) {
+                  return _buildShoppingListItem(
+                    _cart.items[index],
+                    theme,
+                    colorScheme,
+                  );
+                },
+              ),
+            ),
+            SafeArea(
+              top: false,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  border: Border(
+                    top: BorderSide(color: colorScheme.outlineVariant),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${_cart.totalItems} ${_cart.totalItems == 1 ? 'producto' : 'productos'}',
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Total estimado',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      '\$${_cart.estimatedTotal.toStringAsFixed(2)}',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        color: const Color(0xFF2E6C37),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _handleShoppingListSelection(int listId) async {
+    try {
+      if (listId == -2) {
+        await _confirmDeleteSelectedList();
+        return;
+      } else if (listId == -1) {
+        await _cart.createList();
+      } else {
+        await _cart.selectList(listId);
+      }
+      if (!mounted) return;
+      setState(() {});
+    } catch (_) {
+      if (!mounted) return;
+      M3ESnackbar.show(
+        context,
+        message: 'No se pudo abrir la lista seleccionada',
+        duration: const Duration(seconds: 2),
+      );
+    }
+  }
+
+  Future<void> _confirmDeleteSelectedList() async {
+    final selectedList = _cart.selectedList;
+    if (selectedList == null) return;
+
+    final shouldDelete = await M3EDialog.show<bool>(
+      context,
+      dialog: M3EDialog(
+        title: '¿Eliminar esta lista?',
+        icon: const Icon(Icons.delete_outline_rounded),
+        content: Text(
+          'Se eliminarán la lista del ${selectedList.dateTimeLabel} y todos sus productos.',
+        ),
+        actions: [
+          M3EButton.text(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          M3EButton.filled(
+            onPressed: () => Navigator.pop(context, true),
+            shape: M3EButtonShape.round,
+            decoration: M3EButtonDecoration(
+              backgroundColor: WidgetStatePropertyAll(
+                Theme.of(context).colorScheme.error,
+              ),
+            ),
+            child: const Text(
+              'Eliminar',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete != true || !mounted) return;
+
+    try {
+      await _cart.deleteSelectedList();
+      if (!mounted) return;
+      setState(() {});
+      M3ESnackbar.show(
+        context,
+        message: 'Lista eliminada',
+        duration: const Duration(seconds: 2),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      M3ESnackbar.show(
+        context,
+        message: 'No se pudo eliminar la lista',
+        duration: const Duration(seconds: 2),
+      );
+    }
+  }
+
+  Widget _buildShoppingListItem(
+    ShoppingCartItem item,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    final product = item.product;
+    return M3ECard(
+      variant: M3ECardVariant.outlined,
+      elevation: 0,
+      color: colorScheme.surfaceContainerLowest,
+      borderRadius: BorderRadius.circular(18),
+      border: BorderSide(
+        color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+      ),
+      padding: EdgeInsets.zero,
+      onPressed: () => _mostrarDetalleProducto(product),
+      swipeMode: M3ECardSwipeMode.reveal,
+      trailingSwipeColor: colorScheme.errorContainer,
+      trailingSwipeAction: M3EIconButton(
+        icon: const Icon(Icons.delete_outline_rounded),
+        variant: M3EIconButtonVariant.filled,
+        size: M3EIconButtonSize.sm,
+        shape: M3EIconButtonShapeVariant.round,
+        tooltip: 'Quitar de la lista',
+        decoration: M3EIconButtonDecoration(
+          backgroundColor: WidgetStatePropertyAll(colorScheme.error),
+          foregroundColor: WidgetStatePropertyAll(colorScheme.onError),
+        ),
+        onPressed: () => _removeCartItem(item),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        padding: const EdgeInsets.all(12),
+        child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              width: 72,
+              height: 72,
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withValues(alpha: 0.4),
-                shape: BoxShape.circle,
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(
-                M3EIcons.shopping_cart_outlined,
-                size: 64,
-                color: colorScheme.primary,
+              child: product.imagen?.isNotEmpty ?? false
+                  ? Image.network(
+                      product.imagen!,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, _, _) => const Icon(
+                        Icons.image_not_supported_outlined,
+                        color: Colors.grey,
+                      ),
+                    )
+                  : const Icon(Icons.image_outlined, color: Colors.grey),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.nombre,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '\$${item.unitPrice.toStringAsFixed(2)} c/u',
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildQuantityButton(
+                          icon: Icons.remove_rounded,
+                          tooltip: 'Disminuir cantidad',
+                          colorScheme: colorScheme,
+                          onPressed: item.quantity > 1
+                              ? () =>
+                                    _updateCartQuantity(item, item.quantity - 1)
+                              : null,
+                        ),
+                        SizedBox(
+                          width: 34,
+                          child: Text(
+                            '${item.quantity}',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                        _buildQuantityButton(
+                          icon: Icons.add_rounded,
+                          tooltip: 'Aumentar cantidad',
+                          colorScheme: colorScheme,
+                          onPressed: () =>
+                              _updateCartQuantity(item, item.quantity + 1),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(width: 8),
             Text(
-              'Tu carrito está vacío',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
+              '\$${item.subtotal.toStringAsFixed(2)}',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w800,
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Explora tus productos favoritos y agrégalos a tu lista para comparar precios y promociones.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: colorScheme.onSurfaceVariant,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 24),
-            M3EButton.filled(
-              onPressed: () {
-                setState(() => barIndex = 0);
-              },
-              shape: M3EButtonShape.round,
-              decoration: const M3EButtonDecoration(
-                backgroundColor: WidgetStatePropertyAll(Color(0xFF2E6C37)),
-              ),
-              label: const Text(
-                'Explorar productos',
-                style: TextStyle(color: Colors.white),
-              ),
-              icon: const Icon(Icons.search, color: Colors.white),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildQuantityButton({
+    required IconData icon,
+    required String tooltip,
+    required ColorScheme colorScheme,
+    required VoidCallback? onPressed,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkResponse(
+          radius: 16,
+          onTap: onPressed,
+          child: SizedBox(
+            width: 28,
+            height: 36,
+            child: Icon(
+              icon,
+              size: 16,
+              color: onPressed != null
+                  ? colorScheme.onSurface
+                  : colorScheme.onSurface.withValues(alpha: 0.38),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _updateCartQuantity(ShoppingCartItem item, int quantity) async {
+    try {
+      await _cart.updateQuantity(item.key, quantity);
+    } catch (_) {
+      if (!mounted) return;
+      M3ESnackbar.show(
+        context,
+        message: 'No se pudo actualizar la cantidad',
+        duration: const Duration(seconds: 2),
+      );
+    }
+  }
+
+  Future<void> _removeCartItem(ShoppingCartItem item) async {
+    try {
+      await _cart.removeProduct(item.key);
+      if (!mounted) return;
+      M3ESnackbar.show(
+        context,
+        message: '${item.product.nombre} eliminado de tu lista',
+        duration: const Duration(seconds: 2),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      M3ESnackbar.show(
+        context,
+        message: 'No se pudo eliminar el producto',
+        duration: const Duration(seconds: 2),
+      );
+    }
   }
 }

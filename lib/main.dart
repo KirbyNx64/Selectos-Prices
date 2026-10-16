@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:super_selectos/screens/homePage/home_page.dart';
+import 'package:super_selectos/services/shopping_cart_repository.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await ShoppingCartRepository.instance.initialize();
   runApp(const MyApp());
 }
 

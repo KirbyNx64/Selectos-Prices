@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:super_selectos/models/product.dart';
+import 'package:super_selectos/services/shopping_cart_repository.dart';
 import 'package:super_selectos/services/super_selectos_service.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -508,7 +509,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     child: SizedBox(
                       height: 48,
                       child: M3EButton.filled(
-                        onPressed: () {},
+                        onPressed: _agregarALista,
                         shape: M3EButtonShape.round,
                         decoration: const M3EButtonDecoration(
                           backgroundColor: WidgetStatePropertyAll(brandGreen),
@@ -532,6 +533,25 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _agregarALista() async {
+    try {
+      await ShoppingCartRepository.instance.addProduct(_producto, _cantidad);
+      if (!mounted) return;
+      M3ESnackbar.show(
+        context,
+        message: '${_producto.nombre} ($_cantidad) agregado a tu lista',
+        duration: const Duration(seconds: 2),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      M3ESnackbar.show(
+        context,
+        message: 'No se pudo guardar el producto',
+        duration: const Duration(seconds: 2),
+      );
+    }
   }
 
   void _compartirEnlace(BuildContext context) {
