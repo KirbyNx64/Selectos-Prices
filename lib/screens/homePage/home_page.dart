@@ -1103,6 +1103,8 @@ class _MyHomePageState extends State<MyHomePage> {
   ) {
     final product = item.product;
     final quantityPromotion = item.quantityPromotion;
+    final takeAndPayPromotion = item.takeAndPayPromotion;
+    final secondUnitDiscountPromotion = item.secondUnitDiscountPromotion;
     final hasAppliedPromotion = item.appliedPromotionBundles > 0;
     final isDarkMode = theme.brightness == Brightness.dark;
     final swipeBackgroundColor = isDarkMode
@@ -1187,6 +1189,33 @@ class _MyHomePageState extends State<MyHomePage> {
                     Text(
                       '${quantityPromotion.quantity} por '
                       '\$${quantityPromotion.price.toStringAsFixed(2)}'
+                      '${hasAppliedPromotion ? ' · Oferta aplicada' : ''}',
+                      style: TextStyle(
+                        color: hasAppliedPromotion
+                            ? colorScheme.primary
+                            : colorScheme.error,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ] else if (takeAndPayPromotion != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      '${takeAndPayPromotion.takeQuantity}x'
+                      '${takeAndPayPromotion.payQuantity}'
+                      '${hasAppliedPromotion ? ' · Oferta aplicada' : ''}',
+                      style: TextStyle(
+                        color: hasAppliedPromotion
+                            ? colorScheme.primary
+                            : colorScheme.error,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ] else if (secondUnitDiscountPromotion != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      '2ª unidad -${secondUnitDiscountPromotion.discountPercent}%'
                       '${hasAppliedPromotion ? ' · Oferta aplicada' : ''}',
                       style: TextStyle(
                         color: hasAppliedPromotion

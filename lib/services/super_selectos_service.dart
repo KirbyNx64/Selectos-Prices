@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:html/dom.dart' as html_dom;
 import 'package:html/parser.dart' as html_parser;
 import 'package:http/http.dart' as http;
 import 'package:super_selectos/models/product.dart';
@@ -398,9 +399,6 @@ class SuperSelectosService {
       final precioElem = modal.querySelector('.precios .precio, strong.precio');
       final antesElem = modal.querySelector('.precios .antes, span.antes');
       final ahorroElem = modal.querySelector('.precios .ahorro, span.ahorro');
-      final promoElem = modal.querySelector(
-        '.vinetas-top .badge, .vinetas-producto .badge, .vinetas .badge',
-      );
 
       double? precioFinal = _parsePrice(precioElem?.text);
       if (precioFinal == null) {
@@ -475,7 +473,7 @@ class SuperSelectosService {
       }
       descripcion ??= productoBase?.descripcion;
 
-      final promocion = promoElem?.text.trim();
+      final promocion = _extractPromotion(modal);
 
       return Product(
         id: cleanId,
@@ -1123,9 +1121,6 @@ class SuperSelectosService {
       );
       final antesElem = tarjeta.querySelector('.precios .antes, span.antes');
       final ahorroElem = tarjeta.querySelector('.precios .ahorro, span.ahorro');
-      final promoElem = tarjeta.querySelector(
-        '.vinetas-producto .badge, .vinetas-top .badge',
-      );
 
       double? precioFinal = _parsePrice(precioElem?.text);
 
@@ -1169,7 +1164,7 @@ class SuperSelectosService {
       }
 
       // Promoción
-      final promocion = promoElem?.text.trim();
+      final promocion = _extractPromotion(tarjeta);
 
       // Categoría
       final catElem = tarjeta.querySelector(
@@ -1294,6 +1289,54 @@ class SuperSelectosService {
     if (match != null) {
       return double.tryParse(match.group(0)!);
     }
+    return null;
+  }
+
+  String? _extractPromotion(html_dom.Element root) {
+    final badge = root.querySelector(
+      '.vinetas-producto .badge, .vinetas-top .badge, .vinetas .badge',
+    );
+    final badgeText = badge?.text.trim();
+    if (badgeText != null && badgeText.isNotEmpty) return badgeText;
+
+    final image = root.querySelector(
+      '.vinetas-producto img, .vinetas-top img, .vinetas img',
+    );
+    if (image == null) return null;
+
+    final altLabel = image.attributes['alt']?.trim();
+    final accessibleLabel = altLabel?.isNotEmpty == true
+        ? altLabel
+        : image.attributes['title']?.trim();
+    if (accessibleLabel != null && accessibleLabel.isNotEmpty) {
+      return accessibleLabel;
+    }
+
+    // Súper Selectos represents these promotions using an image instead of
+    // text: `2-1.png` means 2X1 and `2-75.png` means 75% off the second unit.
+    final source = image.attributes['src'] ?? image.attributes['data-src'];
+    final match = source == null
+        ? null
+        : RegExp(
+            r'tipoPromoMM/(\d+)-(\d+)\.(?:png|webp|jpe?g)',
+            caseSensitive: false,
+          ).firstMatch(source);
+    if (match == null) return null;
+
+    final firstValue = int.tryParse(match.group(1)!);
+    final secondValue = int.tryParse(match.group(2)!);
+    if (firstValue == null || secondValue == null || firstValue <= 1) {
+      return null;
+    }
+
+    if (secondValue > 0 && secondValue < firstValue) {
+      return '${firstValue}X$secondValue';
+    }
+
+    if (firstValue == 2 && secondValue > 0 && secondValue < 100) {
+      return '2ª unidad con $secondValue% de descuento';
+    }
+
     return null;
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:super_selectos/models/product.dart';
+import 'package:super_selectos/models/shopping_cart_item.dart';
 import 'package:super_selectos/services/shopping_cart_repository.dart';
 import 'package:super_selectos/widgets/app_snackbar.dart';
 
@@ -99,7 +100,7 @@ class _ProductCardState extends State<ProductCard> {
                         top: 8,
                         right: 8,
                         child: _DiscountBadge(
-                          label: product.promocion!,
+                          label: compactPromotionLabel(product.promocion!),
                           backgroundColor: discountRed,
                           foregroundColor: discountRedContainer,
                         ),
@@ -325,6 +326,7 @@ class _DiscountBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: const BoxConstraints(maxWidth: 130),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: backgroundColor,
@@ -332,6 +334,8 @@ class _DiscountBadge extends StatelessWidget {
       ),
       child: Text(
         label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: foregroundColor,
           fontSize: 10,

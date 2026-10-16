@@ -282,7 +282,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        _producto.promocion!,
+                        compactPromotionLabel(_producto.promocion!),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,

@@ -4,6 +4,37 @@ import 'package:super_selectos/models/product.dart';
 import 'package:super_selectos/widgets/product_card.dart';
 
 void main() {
+  testWidgets('ProductCard uses a compact second-unit promotion badge', (
+    WidgetTester tester,
+  ) async {
+    const product = Product(
+      id: '124037',
+      nombre: 'Suavizante Terso Elixir Floral Alegre Temporada 2 L',
+      precioFinal: 4.60,
+      promocion: '2ª unidad con 75% de descuento',
+      categoria: 'Suavizantes',
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 140,
+              height: 274,
+              child: ProductCard(product: product),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    expect(find.text('2.ª -75%'), findsOneWidget);
+    expect(find.text('2ª unidad con 75% de descuento'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('ProductCard test standard card', (WidgetTester tester) async {
     final product = Product(
       id: '1',
@@ -34,36 +65,41 @@ void main() {
     expect(find.text('1'), findsOneWidget);
   });
 
-  testWidgets('ProductCard test narrow width and large price without overflow', (WidgetTester tester) async {
-    final product = Product(
-      id: '2',
-      nombre: 'Producto Con Nombre Muy Largo Que Ocupa Varias Lineas',
-      precioFinal: 1299.99,
-      precioOriginal: 1599.99,
-      descuento: 300.0,
-      tieneDescuento: true,
-      categoria: 'Electrodomesticos',
-    );
+  testWidgets(
+    'ProductCard test narrow width and large price without overflow',
+    (WidgetTester tester) async {
+      final product = Product(
+        id: '2',
+        nombre: 'Producto Con Nombre Muy Largo Que Ocupa Varias Lineas',
+        precioFinal: 1299.99,
+        precioOriginal: 1599.99,
+        descuento: 300.0,
+        tieneDescuento: true,
+        categoria: 'Electrodomesticos',
+      );
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: SizedBox(
-              width: 140, // very narrow
-              height: 274,
-              child: ProductCard(product: product),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 140, // very narrow
+                height: 274,
+                child: ProductCard(product: product),
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
 
-    await tester.pumpAndSettle();
-    expect(find.text('\$1299.99'), findsOneWidget);
-  });
+      await tester.pumpAndSettle();
+      expect(find.text('\$1299.99'), findsOneWidget);
+    },
+  );
 
-  testWidgets('ProductCard increment and decrement work', (WidgetTester tester) async {
+  testWidgets('ProductCard increment and decrement work', (
+    WidgetTester tester,
+  ) async {
     final product = Product(
       id: '3',
       nombre: 'Leche Dos Pinos 1L',
