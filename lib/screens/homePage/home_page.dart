@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:super_selectos/models/category.dart';
+import 'package:super_selectos/models/offer_campaign.dart';
 import 'package:super_selectos/models/product.dart';
 import 'package:super_selectos/models/selectos_branch.dart';
 import 'package:super_selectos/models/shopping_cart_item.dart';
@@ -36,6 +37,10 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _cargandoProductosInicio = true;
   String? _errorProductosInicio;
   int _cantidadAMostrar = 12;
+  List<OfferCampaign> _offerCampaigns = const [];
+  bool _loadingOfferCampaigns = false;
+  bool _offerCampaignsLoaded = false;
+  bool _offerCampaignsError = false;
 
   final List<MainCategory> _categorias = listaCategoriasPrincipales;
 
@@ -135,6 +140,42 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  Future<void> _loadOfferCampaigns() async {
+    if (_loadingOfferCampaigns) return;
+    setState(() {
+      _loadingOfferCampaigns = true;
+      _offerCampaignsError = false;
+    });
+    try {
+      final campaigns = await _service.obtenerCampanasDestacadas();
+      if (!mounted) return;
+      setState(() {
+        _offerCampaigns = campaigns;
+        _loadingOfferCampaigns = false;
+        _offerCampaignsLoaded = true;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loadingOfferCampaigns = false;
+        _offerCampaignsLoaded = true;
+        _offerCampaignsError = true;
+      });
+    }
+  }
+
+  void _openOfferCampaign(OfferCampaign campaign) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SearchResultsScreen(
+          initialQuery: campaign.title,
+          landingUrl: campaign.url,
+        ),
+      ),
+    );
+  }
+
   void _mostrarDetalleProducto(Product producto) {
     Navigator.push(
       context,
@@ -211,6 +252,9 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
         selectedIndex: barIndex,
         onDestinationSelected: (i) {
+          if (i == 2 && !_offerCampaignsLoaded && !_loadingOfferCampaigns) {
+            _loadOfferCampaigns();
+          }
           setState(() {
             barIndex = i;
             if (i != 0) {
@@ -761,9 +805,10 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildCategoriaCard(MainCategory item, ColorScheme colorScheme) {
-    return InkWell(
+    return _PressableInkWell(
       onTap: () => _abrirCategoria(item),
       borderRadius: BorderRadius.circular(22),
+      semanticLabel: 'Abrir categoría ${item.nombre}',
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -816,9 +861,10 @@ class _MyHomePageState extends State<MyHomePage> {
       itemCount: _categorias.length,
       itemBuilder: (context, index) {
         final item = _categorias[index];
-        return InkWell(
+        return _PressableInkWell(
           onTap: () => _abrirCategoria(item),
           borderRadius: BorderRadius.circular(22),
+          semanticLabel: 'Abrir categoría ${item.nombre}',
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -865,38 +911,85 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildOfertasView(ThemeData theme, ColorScheme colorScheme) {
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.shopping_bag_outlined,
-              size: 64,
-              color: colorScheme.primary,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Aún no está implementado',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
+    if (_loadingOfferCampaigns || !_offerCampaignsLoaded) {
+      return Center(
+        child: M3ELoadingIndicator(size: 48, color: colorScheme.primary),
+      );
+    }
+
+    if (_offerCampaignsError) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.cloud_off_rounded,
+                size: 56,
+                color: colorScheme.primary,
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Estamos trabajando en ello, gracias por tu paciencia.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: colorScheme.onSurfaceVariant,
-                height: 1.4,
+              const SizedBox(height: 16),
+              Text(
+                'No se pudieron cargar las ofertas',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 6),
+              Text(
+                'Revisa tu conexión e inténtalo nuevamente.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: colorScheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 20),
+              M3EButton.filled(
+                onPressed: _loadOfferCampaigns,
+                label: const Text('Reintentar'),
+                icon: const Icon(Icons.refresh_rounded),
+              ),
+            ],
+          ),
         ),
-      ),
+      );
+    }
+
+    if (_offerCampaigns.isEmpty) {
+      return Center(
+        child: Text(
+          'No hay campañas disponibles por el momento.',
+          style: TextStyle(color: colorScheme.onSurfaceVariant),
+        ),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = constraints.maxWidth >= 1000
+            ? 6
+            : (constraints.maxWidth >= 700
+                  ? 4
+                  : (constraints.maxWidth >= 480 ? 3 : 2));
+        return GridView.builder(
+          padding: const EdgeInsets.all(12),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1,
+          ),
+          itemCount: _offerCampaigns.length,
+          itemBuilder: (context, index) {
+            final campaign = _offerCampaigns[index];
+            return _OfferCampaignCard(
+              campaign: campaign,
+              colorScheme: colorScheme,
+              onTap: () => _openOfferCampaign(campaign),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -1401,5 +1494,122 @@ class _MyHomePageState extends State<MyHomePage> {
       if (!mounted) return;
       AppSnackbar.error(context, message: 'No se pudo eliminar el producto');
     }
+  }
+}
+
+class _OfferCampaignCard extends StatefulWidget {
+  const _OfferCampaignCard({
+    required this.campaign,
+    required this.colorScheme,
+    required this.onTap,
+  });
+
+  final OfferCampaign campaign;
+  final ColorScheme colorScheme;
+  final VoidCallback onTap;
+
+  @override
+  State<_OfferCampaignCard> createState() => _OfferCampaignCardState();
+}
+
+class _OfferCampaignCardState extends State<_OfferCampaignCard> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = widget.colorScheme;
+
+    return Semantics(
+      button: true,
+      label: 'Ver campaña ${widget.campaign.title}',
+      child: AnimatedScale(
+        scale: _pressed ? 0.96 : 1,
+        duration: Duration(milliseconds: _pressed ? 80 : 140),
+        curve: _pressed ? Curves.easeOut : Curves.easeOutBack,
+        child: Material(
+          color: colorScheme.surfaceContainerLowest,
+          clipBehavior: Clip.antiAlias,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: colorScheme.outlineVariant),
+          ),
+          child: InkWell(
+            onHighlightChanged: (pressed) => setState(() => _pressed = pressed),
+            onTap: widget.onTap,
+            child: Image.network(
+              widget.campaign.imageUrl,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, progress) {
+                if (progress == null) return child;
+                return Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: colorScheme.primary,
+                  ),
+                );
+              },
+              errorBuilder: (_, _, _) => Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.local_offer_outlined,
+                      color: colorScheme.primary,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      widget.campaign.title,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PressableInkWell extends StatefulWidget {
+  const _PressableInkWell({
+    required this.onTap,
+    required this.borderRadius,
+    required this.semanticLabel,
+    required this.child,
+  });
+
+  final VoidCallback onTap;
+  final BorderRadius borderRadius;
+  final String semanticLabel;
+  final Widget child;
+
+  @override
+  State<_PressableInkWell> createState() => _PressableInkWellState();
+}
+
+class _PressableInkWellState extends State<_PressableInkWell> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: widget.semanticLabel,
+      child: AnimatedScale(
+        scale: _pressed ? 0.94 : 1,
+        duration: Duration(milliseconds: _pressed ? 80 : 140),
+        curve: _pressed ? Curves.easeOut : Curves.easeOutBack,
+        child: InkWell(
+          onHighlightChanged: (pressed) => setState(() => _pressed = pressed),
+          onTap: widget.onTap,
+          borderRadius: widget.borderRadius,
+          child: widget.child,
+        ),
+      ),
+    );
   }
 }

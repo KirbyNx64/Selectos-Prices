@@ -9,11 +9,13 @@ import 'package:super_selectos/widgets/product_card.dart';
 class SearchResultsScreen extends StatefulWidget {
   final String initialQuery;
   final String? categoryCode;
+  final String? landingUrl;
 
   const SearchResultsScreen({
     super.key,
     required this.initialQuery,
     this.categoryCode,
+    this.landingUrl,
   });
 
   @override
@@ -34,6 +36,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   int _paginaActual = 1;
   String? _currentCategoryCode;
   String? _currentCategoryNombre;
+  String? _currentLandingUrl;
   String _currentQuery = '';
   ProductFilterSelection _selectedFilters = const ProductFilterSelection();
   List<ProductFilterGroup> _filterGroups = const [];
@@ -45,15 +48,67 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     _currentQuery = widget.initialQuery;
     _currentCategoryCode = widget.categoryCode;
     _currentCategoryNombre = widget.initialQuery;
+    _currentLandingUrl = widget.landingUrl;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        if (widget.categoryCode != null && widget.categoryCode!.isNotEmpty) {
+        if (widget.landingUrl != null && widget.landingUrl!.isNotEmpty) {
+          _ejecutarLanding();
+        } else if (widget.categoryCode != null &&
+            widget.categoryCode!.isNotEmpty) {
           _ejecutarBusquedaCategoria(widget.categoryCode!, widget.initialQuery);
         } else if (widget.initialQuery.trim().isNotEmpty) {
           _ejecutarBusqueda(widget.initialQuery);
         }
       }
     });
+  }
+
+  Future<void> _ejecutarLanding({int pagina = 1}) async {
+    final landingUrl = _currentLandingUrl;
+    if (landingUrl == null || landingUrl.isEmpty) return;
+
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      _isLoading = true;
+      _isOffline = false;
+      _errorMessage = null;
+      _paginaActual = pagina;
+      _currentCategoryCode = null;
+    });
+
+    if (!await _verificarConexion()) return;
+
+    try {
+      final response = await _service.obtenerProductosLanding(
+        landingUrl,
+        pagina: pagina,
+        filters: _selectedFilters,
+      );
+      if (!mounted) return;
+      setState(() {
+        _searchResponse = response;
+        _isLoading = false;
+        _isOffline = false;
+        _errorMessage = response.error;
+        if (response.filterGroups.isNotEmpty) {
+          _filterGroups = response.filterGroups;
+        }
+      });
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _isOffline = false;
+        _errorMessage = 'landing_search_failed';
+      });
+    }
   }
 
   @override
@@ -78,6 +133,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
       _paginaActual = pagina;
       _currentCategoryCode = code;
       _currentCategoryNombre = nombre;
+      _currentLandingUrl = null;
     });
 
     if (!await _verificarConexion()) return;
@@ -132,6 +188,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
       _paginaActual = pagina;
       _currentQuery = queryLimpio;
       _currentCategoryCode = null;
+      _currentLandingUrl = null;
     });
 
     if (!await _verificarConexion()) return;
@@ -196,6 +253,10 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   }
 
   void _reintentarBusqueda() {
+    if (_currentLandingUrl != null && _currentLandingUrl!.isNotEmpty) {
+      _ejecutarLanding(pagina: _paginaActual);
+      return;
+    }
     if (_currentCategoryCode != null && _currentCategoryCode!.isNotEmpty) {
       _ejecutarBusquedaCategoria(
         _currentCategoryCode!,
@@ -211,6 +272,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     setState(() {
       _selectedFilters = const ProductFilterSelection();
       _filterGroups = const [];
+      _currentLandingUrl = null;
     });
     _ejecutarBusqueda(query);
   }
@@ -360,7 +422,10 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
 
     if (selection == null || !mounted) return;
     setState(() => _selectedFilters = selection);
-    if (_currentCategoryCode != null && _currentCategoryCode!.isNotEmpty) {
+    if (_currentLandingUrl != null && _currentLandingUrl!.isNotEmpty) {
+      _ejecutarLanding();
+    } else if (_currentCategoryCode != null &&
+        _currentCategoryCode!.isNotEmpty) {
       _ejecutarBusquedaCategoria(
         _currentCategoryCode!,
         _currentCategoryNombre ?? '',
@@ -372,7 +437,10 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
 
   void _irAPagina(int nuevaPagina) {
     if (nuevaPagina == _paginaActual || _isLoading) return;
-    if (_currentCategoryCode != null && _currentCategoryCode!.isNotEmpty) {
+    if (_currentLandingUrl != null && _currentLandingUrl!.isNotEmpty) {
+      _ejecutarLanding(pagina: nuevaPagina);
+    } else if (_currentCategoryCode != null &&
+        _currentCategoryCode!.isNotEmpty) {
       _ejecutarBusquedaCategoria(
         _currentCategoryCode!,
         _currentCategoryNombre ?? '',
@@ -404,6 +472,10 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
         backgroundColor: Theme.of(context).colorScheme.surface,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(8),
+          child: SizedBox(height: 8),
+        ),
         titleSpacing: 0,
         leading: Center(
           child: M3EIconButton(
@@ -420,9 +492,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
           child: M3ESearchBar(
             focusNode: _searchFocusNode,
             onTapOutside: (_) => _searchFocusNode.unfocus(),
-            margin: 0,
+            margin: 12,
             focusedMargin: 0,
-            expandOnFocus: false,
+            expandOnFocus: true,
             controller: _searchController,
             hintText: 'Buscar producto...',
             leading: const Icon(Icons.search),
@@ -563,7 +635,10 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                     setState(() {
                       _selectedFilters = const ProductFilterSelection();
                     });
-                    if (_currentCategoryCode != null &&
+                    if (_currentLandingUrl != null &&
+                        _currentLandingUrl!.isNotEmpty) {
+                      _ejecutarLanding();
+                    } else if (_currentCategoryCode != null &&
                         _currentCategoryCode!.isNotEmpty) {
                       _ejecutarBusquedaCategoria(
                         _currentCategoryCode!,

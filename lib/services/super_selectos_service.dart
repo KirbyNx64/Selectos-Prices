@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:html/dom.dart' as html_dom;
 import 'package:html/parser.dart' as html_parser;
 import 'package:http/http.dart' as http;
+import 'package:super_selectos/models/offer_campaign.dart';
 import 'package:super_selectos/models/product.dart';
 import 'package:super_selectos/services/store_selection_controller.dart';
 
@@ -93,6 +94,125 @@ class SuperSelectosService {
 
   SuperSelectosService({http.Client? client})
     : _client = client ?? http.Client();
+
+  static const _campaignTitles = <String, String>{
+    'SABORES-A': 'Sabores de Fiesta',
+    'HOGAR-A': 'Todo para tu hogar',
+    'BOQUITAS-A': 'Boquitas para celebrar',
+    'BEBIDASFAVORITAS-A': 'Bebidas favoritas',
+    'SUPEROFERTAS-A': 'Súper ofertas',
+    'ESENCIALES-A': 'Esenciales para todos',
+  };
+
+  Future<List<OfferCampaign>> obtenerCampanasDestacadas() async {
+    final response = await _client
+        .get(
+          Uri.parse('https://www.superselectos.com/'),
+          headers: const {
+            'User-Agent': 'Mozilla/5.0',
+            'Accept': 'text/html,application/xhtml+xml',
+          },
+        )
+        .timeout(const Duration(seconds: 12));
+    if (response.statusCode != 200) {
+      throw StateError('No se pudieron cargar las ofertas');
+    }
+
+    final document = html_parser.parse(response.body);
+    final campaigns = <OfferCampaign>[];
+    final seenUrls = <String>{};
+    for (final anchor in document.querySelectorAll(
+      '.item-categoria-destacada a[href*="products-landing/"]',
+    )) {
+      final href = anchor.attributes['href']?.trim();
+      final image = anchor.querySelector('img');
+      final imageUrl =
+          image?.attributes['src']?.trim() ??
+          image?.attributes['data-src']?.trim();
+      if (href == null ||
+          href.isEmpty ||
+          imageUrl == null ||
+          imageUrl.isEmpty) {
+        continue;
+      }
+
+      final url = Uri.parse('https://www.superselectos.com/')
+          .resolve(href)
+          .toString();
+      if (!seenUrls.add(url)) continue;
+
+      final slug = Uri.parse(url).pathSegments.last.toUpperCase();
+      campaigns.add(
+        OfferCampaign(
+          title: _campaignTitles[slug] ?? _titleFromCampaignSlug(slug),
+          url: url,
+          imageUrl: imageUrl.startsWith('//') ? 'https:$imageUrl' : imageUrl,
+        ),
+      );
+    }
+
+    return campaigns;
+  }
+
+  Future<SearchResponse> obtenerProductosLanding(
+    String landingUrl, {
+    int pagina = 1,
+    ProductFilterSelection filters = const ProductFilterSelection(),
+  }) async {
+    final uri = Uri.tryParse(landingUrl);
+    final isSelectosHost =
+        uri != null &&
+        (uri.host == 'superselectos.com' ||
+            uri.host.endsWith('.superselectos.com'));
+    if (uri == null ||
+        !isSelectosHost ||
+        !uri.path.contains('/products-landing/')) {
+      throw const FormatException('Enlace de campaña inválido');
+    }
+
+    final queryParameters = <String, dynamic>{
+      ...uri.queryParameters,
+      ...filters.toQueryParameters(),
+    }..remove('page');
+    if (pagina > 1 || !filters.isEmpty) {
+      queryParameters['page'] = pagina.toString();
+    }
+    final pageUri = uri.replace(queryParameters: queryParameters);
+
+    final response = await _client
+        .get(
+          pageUri,
+          headers: const {
+            'User-Agent': 'Mozilla/5.0',
+            'Accept': 'text/html,application/xhtml+xml',
+          },
+        )
+        .timeout(const Duration(seconds: 12));
+    if (response.statusCode != 200) {
+      throw StateError('No se pudieron cargar los productos de la campaña');
+    }
+
+    final products = await _filterBySelectedBranch(
+      _parsearProductos(response.body, null),
+    );
+    return SearchResponse(
+      productos: products,
+      terminoResuelto: pageUri.pathSegments.last,
+      paginacion: _parsearPaginacion(response.body),
+      filterGroups: _parsearFiltros(response.body),
+    );
+  }
+
+  static String _titleFromCampaignSlug(String slug) {
+    return slug
+        .replaceAll(RegExp(r'-A$'), '')
+        .replaceAll('-', ' ')
+        .toLowerCase()
+        .split(' ')
+        .where((part) => part.isNotEmpty)
+        .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
+        .join(' ');
+  }
 
   /// Resuelve un código de barras (EAN-8, UPC-12, EAN-13, ITF-14)
   /// consultando Open Food Facts, Open Beauty Facts y Open Products Facts.
