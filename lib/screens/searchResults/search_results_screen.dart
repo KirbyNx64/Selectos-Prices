@@ -412,10 +412,15 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
 
   Widget _buildBody(BuildContext context, List<Product> productos) {
     if (_isLoading) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [M3ELoadingIndicator(size: 48, color: Color(0xFF2E6C37))],
+          children: [
+            M3ELoadingIndicator(
+              size: 48,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ],
         ),
       );
     }

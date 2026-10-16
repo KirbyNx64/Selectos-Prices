@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
+import 'package:super_selectos/models/selectos_branch.dart';
 import 'package:super_selectos/services/app_theme_controller.dart';
 import 'package:super_selectos/services/shopping_cart_repository.dart';
+import 'package:super_selectos/services/store_selection_controller.dart';
 import 'package:super_selectos/widgets/app_snackbar.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -16,6 +18,7 @@ class SettingsScreen extends StatelessWidget {
       builder: (context, _) {
         final theme = Theme.of(context);
         final colorScheme = theme.colorScheme;
+        final storeController = StoreSelectionController.instance;
 
         return Scaffold(
           appBar: AppBar(
@@ -41,6 +44,46 @@ class SettingsScreen extends StatelessWidget {
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              Text(
+                'Tienda',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ListenableBuilder(
+                listenable: storeController,
+                builder: (context, _) {
+                  final branch = storeController.selectedBranch;
+                  return Card(
+                    elevation: 0,
+                    color: colorScheme.surfaceContainer,
+                    clipBehavior: Clip.antiAlias,
+                    child: ListTile(
+                      onTap: () => _selectBranch(context),
+                      leading: const Icon(Icons.storefront_rounded),
+                      title: const Text('Sala de venta'),
+                      subtitle: Text(
+                        branch?.name ?? 'Selecciona tu sala más cercana',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                    ),
+                  );
+                },
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+                child: Text(
+                  'La app mostrará únicamente productos disponibles en la sala seleccionada.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
               Text(
                 'Apariencia',
                 style: theme.textTheme.titleSmall?.copyWith(
@@ -114,6 +157,30 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _selectBranch(BuildContext context) async {
+    final controller = StoreSelectionController.instance;
+    final selected = await showModalBottomSheet<SelectosBranch>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      useSafeArea: true,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
+      builder: (_) => BranchPickerSheet(
+        branches: controller.branches,
+        selectedBranchId: controller.selectedBranchId,
+      ),
+    );
+
+    if (selected == null || !context.mounted) return;
+    await controller.selectBranch(selected);
+    if (!context.mounted) return;
+    AppSnackbar.success(
+      context,
+      message: 'Sala seleccionada: ${selected.name}',
+      icon: Icons.storefront_rounded,
+    );
+  }
+
   Future<void> _confirmDeleteAllLists(BuildContext context) async {
     final colorScheme = Theme.of(context).colorScheme;
     final shouldDelete = await M3EDialog.show<bool>(
@@ -163,5 +230,142 @@ class SettingsScreen extends StatelessWidget {
       if (!context.mounted) return;
       AppSnackbar.error(context, message: 'No se pudieron eliminar las listas');
     }
+  }
+}
+
+class BranchPickerSheet extends StatefulWidget {
+  final List<SelectosBranch> branches;
+  final String? selectedBranchId;
+
+  const BranchPickerSheet({
+    super.key,
+    required this.branches,
+    required this.selectedBranchId,
+  });
+
+  @override
+  State<BranchPickerSheet> createState() => _BranchPickerSheetState();
+}
+
+class _BranchPickerSheetState extends State<BranchPickerSheet> {
+  final TextEditingController _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final normalizedQuery = _normalize(_query);
+    final filtered = normalizedQuery.isEmpty
+        ? widget.branches
+        : widget.branches
+              .where((branch) {
+                return _normalize(branch.name).contains(normalizedQuery) ||
+                    _normalize(branch.address).contains(normalizedQuery);
+              })
+              .toList(growable: false);
+
+    return SizedBox(
+      height: MediaQuery.sizeOf(context).height * 0.82,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Selecciona una sala',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: SearchBar(
+              controller: _searchController,
+              hintText: 'Buscar sala o ubicación',
+              leading: const Icon(Icons.search_rounded),
+              trailing: [
+                if (_query.isNotEmpty)
+                  IconButton(
+                    tooltip: 'Limpiar búsqueda',
+                    onPressed: () {
+                      _searchController.clear();
+                      setState(() => _query = '');
+                    },
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+              ],
+              onChanged: (value) => setState(() => _query = value),
+            ),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: filtered.isEmpty
+                ? Center(
+                    child: Text(
+                      'No se encontraron salas',
+                      style: theme.textTheme.bodyLarge,
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: filtered.length,
+                    itemBuilder: (context, index) {
+                      final branch = filtered[index];
+                      final selected = branch.id == widget.selectedBranchId;
+                      return ListTile(
+                        selected: selected,
+                        leading: Icon(
+                          selected
+                              ? Icons.storefront_rounded
+                              : Icons.storefront_outlined,
+                        ),
+                        title: Text(
+                          branch.name,
+                          style: TextStyle(
+                            fontWeight: selected
+                                ? FontWeight.bold
+                                : FontWeight.w500,
+                          ),
+                        ),
+                        subtitle: branch.address.isEmpty
+                            ? null
+                            : Text(
+                                branch.address,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                        trailing: selected
+                            ? Icon(
+                                Icons.check_circle_rounded,
+                                color: theme.colorScheme.primary,
+                              )
+                            : null,
+                        onTap: () => Navigator.pop(context, branch),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _normalize(String value) {
+    return value
+        .toLowerCase()
+        .replaceAll(RegExp('[áàäâ]'), 'a')
+        .replaceAll(RegExp('[éèëê]'), 'e')
+        .replaceAll(RegExp('[íìïî]'), 'i')
+        .replaceAll(RegExp('[óòöô]'), 'o')
+        .replaceAll(RegExp('[úùüû]'), 'u');
   }
 }

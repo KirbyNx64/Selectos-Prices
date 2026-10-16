@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:super_selectos/models/category.dart';
 import 'package:super_selectos/models/product.dart';
+import 'package:super_selectos/models/selectos_branch.dart';
 import 'package:super_selectos/models/shopping_cart_item.dart';
 import 'package:super_selectos/screens/categories/subcategories_screen.dart';
 import 'package:super_selectos/screens/homePage/barcode_scanner_screen.dart';
@@ -11,6 +12,7 @@ import 'package:super_selectos/screens/searchResults/search_results_screen.dart'
 import 'package:super_selectos/screens/settings/settings_screen.dart';
 import 'package:super_selectos/services/shopping_cart_repository.dart';
 import 'package:super_selectos/services/super_selectos_service.dart';
+import 'package:super_selectos/services/store_selection_controller.dart';
 import 'package:super_selectos/widgets/app_snackbar.dart';
 import 'package:super_selectos/widgets/product_card.dart';
 
@@ -42,7 +44,44 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     _navController = M3ENavigationBarController();
     _scrollController.addListener(_onScroll);
-    _cargarProductosInicio();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _selectInitialBranchAndLoadProducts();
+    });
+  }
+
+  Future<void> _selectInitialBranchAndLoadProducts() async {
+    final storeController = StoreSelectionController.instance;
+
+    // Algunos widget tests construyen esta pantalla sin ejecutar main().
+    if (storeController.branches.isEmpty) {
+      await _cargarProductosInicio();
+      return;
+    }
+
+    if (storeController.selectedBranch == null) {
+      final selected = await showModalBottomSheet<SelectosBranch>(
+        context: context,
+        isScrollControlled: true,
+        isDismissible: false,
+        enableDrag: false,
+        showDragHandle: true,
+        useSafeArea: true,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
+        builder: (_) => PopScope(
+          canPop: false,
+          child: BranchPickerSheet(
+            branches: storeController.branches,
+            selectedBranchId: null,
+          ),
+        ),
+      );
+
+      if (selected == null || !mounted) return;
+      await storeController.selectBranch(selected);
+      if (!mounted) return;
+    }
+
+    await _cargarProductosInicio(forzarRefresco: true);
   }
 
   void _onScroll() {
@@ -72,14 +111,16 @@ class _MyHomePageState extends State<MyHomePage> {
     super.dispose();
   }
 
-  Future<void> _cargarProductosInicio() async {
+  Future<void> _cargarProductosInicio({bool forzarRefresco = false}) async {
     setState(() {
       _cargandoProductosInicio = true;
       _errorProductosInicio = null;
     });
 
     try {
-      final productos = await _service.obtenerProductosInicio();
+      final productos = await _service.obtenerProductosInicio(
+        forzarRefresco: forzarRefresco,
+      );
       if (!mounted) return;
       setState(() {
         _productosInicio = productos;
@@ -355,11 +396,18 @@ class _MyHomePageState extends State<MyHomePage> {
                   size: M3EIconButtonSize.sm,
                   shape: M3EIconButtonShapeVariant.round,
                   tooltip: 'Ajustes',
-                  onPressed: () {
-                    Navigator.push(
+                  onPressed: () async {
+                    final previousBranchId =
+                        StoreSelectionController.instance.selectedBranchId;
+                    await Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const SettingsScreen()),
                     );
+                    if (!mounted) return;
+                    if (previousBranchId !=
+                        StoreSelectionController.instance.selectedBranchId) {
+                      _cargarProductosInicio(forzarRefresco: true);
+                    }
                   },
                 ),
               ],
@@ -532,14 +580,14 @@ class _MyHomePageState extends State<MyHomePage> {
 
                 // ── Grid o Estado de Carga de Productos de Inicio ────────────
                 if (_cargandoProductosInicio)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 40),
                     child: Center(
                       child: Column(
                         children: [
                           M3ELoadingIndicator(
                             size: 40,
-                            color: Color(0xFF2E6C37),
+                            color: colorScheme.primary,
                           ),
                         ],
                       ),
@@ -666,18 +714,18 @@ class _MyHomePageState extends State<MyHomePage> {
             width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color: const Color(0xFF2E6C37),
+              color: colorScheme.primary,
               borderRadius: BorderRadius.circular(22),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF2E6C37).withValues(alpha: 0.22),
+                  color: colorScheme.primary.withValues(alpha: 0.22),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
               ],
             ),
             child: Center(
-              child: Icon(item.icon, size: 30, color: Colors.white),
+              child: Icon(item.icon, size: 30, color: colorScheme.onPrimary),
             ),
           ),
           const SizedBox(height: 8),
@@ -721,18 +769,22 @@ class _MyHomePageState extends State<MyHomePage> {
                 width: 74,
                 height: 74,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2E6C37),
+                  color: colorScheme.primary,
                   borderRadius: BorderRadius.circular(22),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF2E6C37).withValues(alpha: 0.22),
+                      color: colorScheme.primary.withValues(alpha: 0.22),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
                   ],
                 ),
                 child: Center(
-                  child: Icon(item.icon, size: 32, color: Colors.white),
+                  child: Icon(
+                    item.icon,
+                    size: 32,
+                    color: colorScheme.onPrimary,
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -756,41 +808,37 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildOfertasView(ThemeData theme, ColorScheme colorScheme) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          //Muestrar que aun no esta implementado
-          Center(
-            child: Column(
-              children: [
-                Icon(
-                  Icons.shopping_bag_outlined,
-                  size: 64,
-                  color: colorScheme.primary,
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Aún no está implementado',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Estamos trabajando en ello, gracias por tu paciencia.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: colorScheme.onSurfaceVariant,
-                    height: 1.4,
-                  ),
-                ),
-              ],
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.shopping_bag_outlined,
+              size: 64,
+              color: colorScheme.primary,
             ),
-          ),
-        ],
+            const SizedBox(height: 24),
+            Text(
+              'Aún no está implementado',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Estamos trabajando en ello, gracias por tu paciencia.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: colorScheme.onSurfaceVariant,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -800,8 +848,8 @@ class _MyHomePageState extends State<MyHomePage> {
       listenable: _cart,
       builder: (context, _) {
         if (_cart.loading && _cart.items.isEmpty) {
-          return const Center(
-            child: M3ELoadingIndicator(size: 48, color: Color(0xFF2E6C37)),
+          return Center(
+            child: M3ELoadingIndicator(size: 48, color: colorScheme.primary),
           );
         }
 
@@ -1011,6 +1059,16 @@ class _MyHomePageState extends State<MyHomePage> {
     ColorScheme colorScheme,
   ) {
     final product = item.product;
+    final isDarkMode = theme.brightness == Brightness.dark;
+    final swipeBackgroundColor = isDarkMode
+        ? colorScheme.error
+        : colorScheme.errorContainer;
+    final deleteButtonColor = isDarkMode
+        ? colorScheme.errorContainer
+        : colorScheme.error;
+    final deleteIconColor = isDarkMode
+        ? colorScheme.onErrorContainer
+        : colorScheme.onError;
     return M3ECard(
       variant: M3ECardVariant.outlined,
       elevation: 0,
@@ -1022,7 +1080,7 @@ class _MyHomePageState extends State<MyHomePage> {
       padding: EdgeInsets.zero,
       onPressed: () => _mostrarDetalleProducto(product),
       swipeMode: M3ECardSwipeMode.reveal,
-      trailingSwipeColor: colorScheme.errorContainer,
+      trailingSwipeColor: swipeBackgroundColor,
       trailingSwipeAction: M3EIconButton(
         icon: const Icon(Icons.delete_outline_rounded),
         variant: M3EIconButtonVariant.filled,
@@ -1030,8 +1088,8 @@ class _MyHomePageState extends State<MyHomePage> {
         shape: M3EIconButtonShapeVariant.round,
         tooltip: 'Quitar de la lista',
         decoration: M3EIconButtonDecoration(
-          backgroundColor: WidgetStatePropertyAll(colorScheme.error),
-          foregroundColor: WidgetStatePropertyAll(colorScheme.onError),
+          backgroundColor: WidgetStatePropertyAll(deleteButtonColor),
+          foregroundColor: WidgetStatePropertyAll(deleteIconColor),
         ),
         onPressed: () => _removeCartItem(item),
       ),

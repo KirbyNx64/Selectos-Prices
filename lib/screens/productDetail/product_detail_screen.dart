@@ -122,14 +122,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   height: 280,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: colorScheme.surfaceContainerLowest,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                       color: colorScheme.outlineVariant.withValues(alpha: 0.5),
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
+                        color: colorScheme.shadow.withValues(alpha: 0.08),
                         blurRadius: 16,
                         offset: const Offset(0, 4),
                       ),
@@ -147,21 +147,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               imagenes[index],
                               fit: BoxFit.contain,
                               errorBuilder: (context, error, stackTrace) =>
-                                  const Center(
+                                  Center(
                                     child: Icon(
                                       Icons.image_not_supported_outlined,
                                       size: 72,
-                                      color: Colors.grey,
+                                      color: colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                             );
                           },
                         )
-                      : const Center(
+                      : Center(
                           child: Icon(
                             Icons.image_outlined,
                             size: 72,
-                            color: Colors.grey,
+                            color: colorScheme.onSurfaceVariant,
                           ),
                         ),
                 ),
@@ -180,7 +180,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       width: isSelected ? 24 : 8,
                       height: 8,
                       decoration: BoxDecoration(
-                        color: isSelected ? selectosLime : Colors.grey.shade300,
+                        color: isSelected
+                            ? selectosLime
+                            : colorScheme.outlineVariant,
                         borderRadius: BorderRadius.circular(4),
                       ),
                     );
@@ -214,12 +216,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             height: 60,
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: colorScheme.surfaceContainerLowest,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: isSelected
                                     ? selectosLime
-                                    : Colors.grey.shade300,
+                                    : colorScheme.outlineVariant,
                                 width: isSelected ? 2 : 1,
                               ),
                             ),
@@ -227,10 +229,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               imagenes[index],
                               fit: BoxFit.contain,
                               errorBuilder: (context, error, stackTrace) =>
-                                  const Icon(
+                                  Icon(
                                     Icons.image_not_supported_outlined,
                                     size: 24,
-                                    color: Colors.grey,
+                                    color: colorScheme.onSurfaceVariant,
                                   ),
                             ),
                           ),

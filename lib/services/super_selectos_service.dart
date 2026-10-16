@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:html/parser.dart' as html_parser;
 import 'package:http/http.dart' as http;
 import 'package:super_selectos/models/product.dart';
+import 'package:super_selectos/services/store_selection_controller.dart';
 
 class PaginationInfo {
   final int paginaActual;
@@ -188,7 +189,19 @@ class SuperSelectosService {
         );
       }
 
-      final productos = _parsearProductos(response.body, null);
+      if (StoreSelectionController.instance.selectedBranchId != null) {
+        return await _searchProductsInSelectedBranch(
+          categoryCode: cleanCode,
+          page: pagina,
+          filters: filters,
+          resolvedTerm: categoryNombre ?? cleanCode,
+          catalogHtml: response.body,
+        );
+      }
+
+      final productos = await _filterBySelectedBranch(
+        _parsearProductos(response.body, null),
+      );
       final paginacion = _parsearPaginacion(response.body);
       final filterGroups = _parsearFiltros(response.body);
 
@@ -226,6 +239,10 @@ class SuperSelectosService {
         'productGroupsIds': null,
         'price': null,
         'availableInAnySchemeId': null,
+        'availableInAnyBranchOfficeId':
+            StoreSelectionController.instance.selectedBranchId == null
+            ? null
+            : [StoreSelectionController.instance.selectedBranchId],
       },
       'searchText': null,
       'page': null,
@@ -628,7 +645,20 @@ class SuperSelectosService {
         );
       }
 
-      var productos = _parsearProductos(response.body, codigoDetectado);
+      if (StoreSelectionController.instance.selectedBranchId != null) {
+        return await _searchProductsInSelectedBranch(
+          searchText: terminoBusqueda,
+          page: pagina,
+          filters: filters,
+          resolvedTerm: terminoBusqueda,
+          barcode: codigoDetectado,
+          catalogHtml: response.body,
+        );
+      }
+
+      var productos = await _filterBySelectedBranch(
+        _parsearProductos(response.body, codigoDetectado),
+      );
       var paginacion = _parsearPaginacion(response.body);
       var filterGroups = _parsearFiltros(response.body);
 
@@ -652,9 +682,8 @@ class SuperSelectosService {
             .timeout(const Duration(seconds: 10));
 
         if (fallbackResponse.statusCode == 200) {
-          final fallbackProductos = _parsearProductos(
-            fallbackResponse.body,
-            codigoDetectado,
+          final fallbackProductos = await _filterBySelectedBranch(
+            _parsearProductos(fallbackResponse.body, codigoDetectado),
           );
           if (fallbackProductos.isNotEmpty) {
             productos = fallbackProductos;
@@ -704,14 +733,17 @@ class SuperSelectosService {
   }
 
   List<Product>? _productosInicioCache;
+  String? _productosInicioCacheBranchId;
 
   /// Obtiene los productos destacados de la página de inicio de Súper Selectos
   Future<List<Product>> obtenerProductosInicio({
     bool forzarRefresco = false,
   }) async {
+    final selectedBranchId = StoreSelectionController.instance.selectedBranchId;
     if (!forzarRefresco &&
         _productosInicioCache != null &&
-        _productosInicioCache!.isNotEmpty) {
+        _productosInicioCache!.isNotEmpty &&
+        _productosInicioCacheBranchId == selectedBranchId) {
       return _productosInicioCache!;
     }
 
@@ -729,17 +761,297 @@ class SuperSelectosService {
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
-        return _productosInicioCache ?? [];
+        if (_productosInicioCacheBranchId == selectedBranchId) {
+          return _productosInicioCache ?? [];
+        }
+        throw StateError(
+          'No se pudo consultar el catálogo (${response.statusCode})',
+        );
       }
 
-      final productos = _parsearProductos(response.body, null);
+      final productos = await _filterBySelectedBranch(
+        _parsearProductos(response.body, null),
+      );
       if (productos.isNotEmpty) {
         _productosInicioCache = productos;
+        _productosInicioCacheBranchId = selectedBranchId;
       }
       return productos;
     } catch (_) {
-      return _productosInicioCache ?? [];
+      if (_productosInicioCacheBranchId == selectedBranchId) {
+        return _productosInicioCache ?? [];
+      }
+      rethrow;
     }
+  }
+
+  Future<List<Product>> _filterBySelectedBranch(List<Product> products) async {
+    final branchId = StoreSelectionController.instance.selectedBranchId;
+    if (branchId == null || products.isEmpty) return products;
+
+    try {
+      final uri = Uri.parse(
+        'https://ecom-exploration.superselectos.com/api/accounts/selectos/products/search',
+      );
+      final payload = jsonEncode({
+        'basicFilters': {
+          'productIds': products.map((product) => product.id).toList(),
+          'isActive': true,
+          'availableOnly': true,
+          'availableInAnyBranchOfficeId': [branchId],
+        },
+        'searchText': null,
+        'page': 1,
+        'top': products.length,
+      });
+
+      final response = await _client
+          .post(
+            uri,
+            headers: const {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: payload,
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode != 200) {
+        throw StateError(
+          'No se pudo comprobar la disponibilidad (${response.statusCode})',
+        );
+      }
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException('Respuesta de disponibilidad inválida');
+      }
+      final items = decoded['items'];
+      if (items is! List<dynamic>) {
+        throw const FormatException('Lista de disponibilidad inválida');
+      }
+
+      final availableIds = items
+          .whereType<Map<String, dynamic>>()
+          .map((item) => item['productId']?.toString())
+          .whereType<String>()
+          .toSet();
+      return products
+          .where((product) => availableIds.contains(product.id))
+          .toList(growable: false);
+    } catch (_) {
+      rethrow;
+    }
+  }
+
+  Future<SearchResponse> _searchProductsInSelectedBranch({
+    String? searchText,
+    String? categoryCode,
+    required int page,
+    required ProductFilterSelection filters,
+    required String resolvedTerm,
+    required String catalogHtml,
+    String? barcode,
+  }) async {
+    final branchId = StoreSelectionController.instance.selectedBranchId;
+    if (branchId == null) {
+      throw StateError('No hay una sala seleccionada');
+    }
+
+    const pageSize = 20;
+    final selectedBrands = filters.selectedFor('brandsnames').toList();
+    final selectedCategories = filters.selectedFor('categoriesnames').toList();
+    final productGroups = <String>[
+      if (categoryCode != null && categoryCode.isNotEmpty) categoryCode,
+      if (categoryCode == null || categoryCode.isEmpty) ...selectedCategories,
+    ];
+
+    final uri = Uri.parse(
+      'https://ecom-exploration.superselectos.com/api/accounts/selectos/products/search',
+    );
+    final payload = jsonEncode({
+      'basicFilters': {
+        'isActive': true,
+        'availableOnly': true,
+        if (selectedBrands.isNotEmpty) 'brandNames': selectedBrands,
+        if (productGroups.isNotEmpty) 'productGroupsIds': productGroups,
+        'availableInAnyBranchOfficeId': [branchId],
+      },
+      'searchText': searchText?.trim().isEmpty ?? true
+          ? null
+          : searchText!.trim(),
+      'page': page,
+      'top': pageSize,
+    });
+
+    final response = await _client
+        .post(
+          uri,
+          headers: const {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: payload,
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode != 200) {
+      throw StateError(
+        'No se pudo consultar la disponibilidad (${response.statusCode})',
+      );
+    }
+
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) {
+      throw const FormatException('Respuesta de productos inválida');
+    }
+    final rawItems = decoded['items'];
+    if (rawItems is! List<dynamic>) {
+      throw const FormatException('Lista de productos inválida');
+    }
+
+    final catalogProducts = {
+      for (final product in _parsearProductos(catalogHtml, barcode))
+        product.id: product,
+    };
+    final baseProducts = rawItems
+        .whereType<Map<String, dynamic>>()
+        .map((item) => _productFromSearchApi(item, barcode))
+        .where((product) => product.id.isNotEmpty)
+        .toList(growable: false);
+
+    final products = await Future.wait(
+      baseProducts.map((baseProduct) async {
+        final catalogProduct = catalogProducts[baseProduct.id];
+        if (catalogProduct != null) {
+          return Product(
+            id: baseProduct.id,
+            nombre: baseProduct.nombre,
+            precio: catalogProduct.precio,
+            precioFinal: catalogProduct.precioFinal,
+            precioOriginal: catalogProduct.precioOriginal,
+            descuento: catalogProduct.descuento,
+            tieneDescuento: catalogProduct.tieneDescuento,
+            promocion: catalogProduct.promocion,
+            imagen: baseProduct.imagen ?? catalogProduct.imagen,
+            imagenes: baseProduct.imagenes.isNotEmpty
+                ? baseProduct.imagenes
+                : catalogProduct.imagenes,
+            descripcion: baseProduct.descripcion,
+            enlace: baseProduct.enlace,
+            supermercado: baseProduct.supermercado,
+            codigoBarra: baseProduct.codigoBarra,
+            categoria: baseProduct.categoria ?? catalogProduct.categoria,
+          );
+        }
+
+        return await obtenerDetalleProductoWeb(
+              baseProduct.id,
+              productoBase: baseProduct,
+            ) ??
+            baseProduct;
+      }),
+    );
+
+    final filteredProducts = _applyLocalPriceFilters(products, filters);
+    final total =
+        (decoded['totalItemCount'] as num?)?.toInt() ?? baseProducts.length;
+    final pageCount = total == 0 ? 1 : (total / pageSize).ceil();
+
+    return SearchResponse(
+      productos: filteredProducts,
+      codigoDetectado: barcode,
+      terminoResuelto: resolvedTerm,
+      paginacion: PaginationInfo(
+        paginaActual: page,
+        paginasDisponibles: List<int>.generate(pageCount, (index) => index + 1),
+        tieneAnterior: page > 1,
+        tieneSiguiente: page < pageCount,
+      ),
+      filterGroups: _parsearFiltros(catalogHtml),
+    );
+  }
+
+  Product _productFromSearchApi(Map<String, dynamic> item, String? barcode) {
+    String? category;
+    final categories = item['categories'];
+    if (categories is List<dynamic> && categories.isNotEmpty) {
+      final first = categories.first;
+      if (first is Map<String, dynamic>) {
+        final fullName = first['name']?.toString() ?? '';
+        category = fullName.contains('->')
+            ? fullName.split('->').last.trim()
+            : fullName.trim();
+      }
+    }
+
+    final images = <String>[];
+    final mainMedia = item['mainMedia'];
+    if (mainMedia is Map<String, dynamic>) {
+      final versions = mainMedia['versions'];
+      if (versions is List<dynamic>) {
+        final sortedVersions = [...versions.whereType<Map<String, dynamic>>()]
+          ..sort((a, b) {
+            const priority = {'Medium': 0, 'Large': 1, 'Small': 2};
+            return (priority[a['version']] ?? 3).compareTo(
+              priority[b['version']] ?? 3,
+            );
+          });
+        for (final version in sortedVersions) {
+          final url = version['url']?.toString();
+          if (url != null && url.isNotEmpty && !images.contains(url)) {
+            images.add(url);
+          }
+        }
+      }
+    }
+
+    final itemBarcodes = item['barcodes'];
+    final resolvedBarcode =
+        barcode ??
+        (itemBarcodes is List<dynamic> && itemBarcodes.isNotEmpty
+            ? itemBarcodes.first.toString()
+            : null);
+    final id = item['productId']?.toString() ?? '';
+
+    return Product(
+      id: id,
+      nombre: item['name']?.toString().trim() ?? '',
+      imagen: images.isEmpty ? null : images.first,
+      imagenes: images,
+      descripcion:
+          item['largeDescription']?.toString().trim().isNotEmpty == true
+          ? item['largeDescription'].toString().trim()
+          : item['shortDescription']?.toString().trim(),
+      enlace: 'https://www.superselectos.com/products?productId=$id',
+      supermercado: 'Súper Selectos',
+      codigoBarra: resolvedBarcode,
+      categoria: category,
+    );
+  }
+
+  List<Product> _applyLocalPriceFilters(
+    List<Product> products,
+    ProductFilterSelection filters,
+  ) {
+    final selectedRanges = filters.selectedFor('prices');
+    if (selectedRanges.isEmpty) return products;
+
+    return products
+        .where((product) {
+          final price = product.precioFinal ?? product.precio;
+          if (price == null) return false;
+          return selectedRanges.any((range) {
+            final match = RegExp(
+              r'([0-9]+(?:\.[0-9]+)?)to([0-9]+(?:\.[0-9]+)?)',
+            ).firstMatch(range);
+            if (match == null) return true;
+            final minimum = double.tryParse(match.group(1)!);
+            final maximum = double.tryParse(match.group(2)!);
+            if (minimum == null || maximum == null) return true;
+            return price >= minimum && price <= maximum;
+          });
+        })
+        .toList(growable: false);
   }
 
   /// Parsea el HTML de Súper Selectos extrayendo los productos
