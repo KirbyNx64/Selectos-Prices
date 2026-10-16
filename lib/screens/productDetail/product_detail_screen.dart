@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
@@ -151,17 +152,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             setState(() => _currentImageIndex = index);
                           },
                           itemBuilder: (context, index) {
-                            return Image.network(
-                              imagenes[index],
+                            return CachedNetworkImage(
+                              imageUrl: imagenes[index],
+                              fadeInDuration: Duration.zero,
+                              fadeOutDuration: Duration.zero,
                               fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Center(
-                                    child: Icon(
-                                      Icons.image_not_supported_outlined,
-                                      size: 72,
-                                      color: colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
+                              errorWidget: (context, url, error) => Center(
+                                child: Icon(
+                                  Icons.image_not_supported_outlined,
+                                  size: 72,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
                             );
                           },
                         )
@@ -233,15 +235,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 width: isSelected ? 2 : 1,
                               ),
                             ),
-                            child: Image.network(
-                              imagenes[index],
+                            child: CachedNetworkImage(
+                              imageUrl: imagenes[index],
+                              fadeInDuration: Duration.zero,
+                              fadeOutDuration: Duration.zero,
                               fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Icon(
-                                    Icons.image_not_supported_outlined,
-                                    size: 24,
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
+                              errorWidget: (context, url, error) => Icon(
+                                Icons.image_not_supported_outlined,
+                                size: 24,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
                             ),
                           ),
                         );

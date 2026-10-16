@@ -18,6 +18,7 @@ dependencies:
   #UIExpressive
   material_3_expressive: ^1.1.6
   smooth_page_indicator: ^3.0.0
+  cached_network_image: ^4.0.4
 
   #state management
   shared_preferences: ^2.5.5

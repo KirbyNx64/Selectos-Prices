@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
@@ -28,6 +29,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  static const int _offerBannerCacheWidth = 1200;
+
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
@@ -157,6 +160,8 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       final content = await _service.obtenerContenidoOfertas();
       if (!mounted) return;
+      await _precacheOfferBanners(content.banners);
+      if (!mounted) return;
       setState(() {
         _offerCampaigns = content.campaigns;
         _offerBanners = content.banners;
@@ -172,6 +177,23 @@ class _MyHomePageState extends State<MyHomePage> {
         _offerCampaignsError = true;
       });
     }
+  }
+
+  Future<void> _precacheOfferBanners(List<OfferCampaign> banners) async {
+    await Future.wait(
+      banners.map((banner) async {
+        try {
+          final provider = ResizeImage.resizeIfNeeded(
+            _offerBannerCacheWidth,
+            null,
+            CachedNetworkImageProvider(banner.imageUrl),
+          );
+          await precacheImage(provider, context);
+        } catch (_) {
+          // Un banner fallido no debe impedir que se muestren los demás.
+        }
+      }),
+    );
   }
 
   void _startOfferBannerTimer() {
@@ -1064,19 +1086,19 @@ class _MyHomePageState extends State<MyHomePage> {
                           borderRadius: BorderRadius.circular(18),
                           semanticLabel: 'Ver oferta ${banner.title}',
                           pressedScale: 0.98,
-                          child: Image.network(
-                            banner.imageUrl,
+                          child: CachedNetworkImage(
+                            imageUrl: banner.imageUrl,
+                            memCacheWidth: _offerBannerCacheWidth,
+                            fadeInDuration: Duration.zero,
+                            fadeOutDuration: Duration.zero,
                             fit: BoxFit.cover,
-                            loadingBuilder: (context, child, progress) {
-                              if (progress == null) return child;
-                              return Center(
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: colorScheme.primary,
-                                ),
-                              );
-                            },
-                            errorBuilder: (_, _, _) => Center(
+                            placeholder: (context, url) => Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: colorScheme.primary,
+                              ),
+                            ),
+                            errorWidget: (_, _, _) => Center(
                               child: Icon(
                                 Icons.image_not_supported_outlined,
                                 color: colorScheme.onSurfaceVariant,
@@ -1421,10 +1443,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 borderRadius: BorderRadius.circular(14),
               ),
               child: product.imagen?.isNotEmpty ?? false
-                  ? Image.network(
-                      product.imagen!,
+                  ? CachedNetworkImage(
+                      imageUrl: product.imagen!,
+                      fadeInDuration: Duration.zero,
+                      fadeOutDuration: Duration.zero,
                       fit: BoxFit.contain,
-                      errorBuilder: (_, _, _) => const Icon(
+                      errorWidget: (_, _, _) => const Icon(
                         Icons.image_not_supported_outlined,
                         color: Colors.grey,
                       ),
@@ -1660,19 +1684,18 @@ class _OfferCampaignCardState extends State<_OfferCampaignCard> {
           child: InkWell(
             onHighlightChanged: (pressed) => setState(() => _pressed = pressed),
             onTap: widget.onTap,
-            child: Image.network(
-              widget.campaign.imageUrl,
+            child: CachedNetworkImage(
+              imageUrl: widget.campaign.imageUrl,
+              fadeInDuration: Duration.zero,
+              fadeOutDuration: Duration.zero,
               fit: BoxFit.cover,
-              loadingBuilder: (context, child, progress) {
-                if (progress == null) return child;
-                return Center(
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: colorScheme.primary,
-                  ),
-                );
-              },
-              errorBuilder: (_, _, _) => Padding(
+              placeholder: (context, url) => Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: colorScheme.primary,
+                ),
+              ),
+              errorWidget: (_, _, _) => Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,

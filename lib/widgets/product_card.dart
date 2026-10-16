@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:super_selectos/models/product.dart';
@@ -60,25 +61,24 @@ class _ProductCardState extends State<ProductCard> {
                     Center(
                       child:
                           product.imagen != null && product.imagen!.isNotEmpty
-                          ? Image.network(
-                              product.imagen!,
+                          ? CachedNetworkImage(
+                              imageUrl: product.imagen!,
+                              fadeInDuration: Duration.zero,
+                              fadeOutDuration: Duration.zero,
                               fit: BoxFit.contain,
-                              cacheWidth: 320,
-                              errorBuilder: (_, e, _) =>
+                              memCacheWidth: 320,
+                              errorWidget: (_, _, _) =>
                                   _buildImagePlaceholder(colorScheme),
-                              loadingBuilder: (_, child, progress) {
-                                if (progress == null) return child;
-                                return const Center(
-                                  child: SizedBox(
-                                    width: 22,
-                                    height: 22,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: brandGreen,
-                                    ),
+                              placeholder: (_, _) => const Center(
+                                child: SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: brandGreen,
                                   ),
-                                );
-                              },
+                                ),
+                              ),
                             )
                           : _buildImagePlaceholder(colorScheme),
                     ),
