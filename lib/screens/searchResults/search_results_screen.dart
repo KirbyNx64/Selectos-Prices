@@ -32,6 +32,8 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   String? _currentCategoryCode;
   String? _currentCategoryNombre;
   String _currentQuery = '';
+  ProductFilterSelection _selectedFilters = const ProductFilterSelection();
+  List<ProductFilterGroup> _filterGroups = const [];
 
   @override
   void initState() {
@@ -79,6 +81,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
         code,
         categoryNombre: nombre,
         pagina: pagina,
+        filters: _selectedFilters,
       );
       if (!mounted) return;
 
@@ -87,6 +90,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
         _isLoading = false;
         if (response.error != null) {
           _errorMessage = response.error;
+        }
+        if (response.filterGroups.isNotEmpty) {
+          _filterGroups = response.filterGroups;
         }
       });
 
@@ -124,6 +130,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
       final response = await _service.buscarProductosDetallado(
         queryLimpio,
         pagina: pagina,
+        filters: _selectedFilters,
       );
       if (!mounted) return;
 
@@ -132,6 +139,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
         _isLoading = false;
         if (response.error != null) {
           _errorMessage = response.error;
+        }
+        if (response.filterGroups.isNotEmpty) {
+          _filterGroups = response.filterGroups;
         }
       });
 
@@ -148,6 +158,169 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
         _isLoading = false;
         _errorMessage = 'Ocurrió un error inesperado al buscar: $e';
       });
+    }
+  }
+
+  void _ejecutarNuevaBusqueda(String query) {
+    setState(() {
+      _selectedFilters = const ProductFilterSelection();
+      _filterGroups = const [];
+    });
+    _ejecutarBusqueda(query);
+  }
+
+  Future<void> _mostrarFiltros() async {
+    final draft = <String, Set<String>>{
+      for (final entry in _selectedFilters.values.entries)
+        entry.key: {...entry.value},
+    };
+
+    final selection = await showModalBottomSheet<ProductFilterSelection>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      useSafeArea: true,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final selectedCount = draft.values.fold<int>(
+              0,
+              (total, values) => total + values.length,
+            );
+
+            return SizedBox(
+              height: MediaQuery.sizeOf(context).height * 0.82,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 12, 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Filtrar productos',
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: selectedCount == 0
+                              ? null
+                              : () => setSheetState(draft.clear),
+                          child: const Text('Limpiar'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
+                      itemCount: _filterGroups.length,
+                      itemBuilder: (context, groupIndex) {
+                        final group = _filterGroups[groupIndex];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 14),
+                          child: Card(
+                            elevation: 0,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainer,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      16,
+                                      8,
+                                      16,
+                                      6,
+                                    ),
+                                    child: Text(
+                                      group.title,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                  ),
+                                  for (final option in group.options)
+                                    CheckboxListTile(
+                                      value:
+                                          draft[group.queryParameter]?.contains(
+                                            option.value,
+                                          ) ??
+                                          false,
+                                      title: Text(option.label),
+                                      controlAffinity:
+                                          ListTileControlAffinity.leading,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                          ),
+                                      visualDensity: VisualDensity.compact,
+                                      onChanged: (checked) {
+                                        setSheetState(() {
+                                          final selected = draft.putIfAbsent(
+                                            group.queryParameter,
+                                            () => <String>{},
+                                          );
+                                          if (checked ?? false) {
+                                            selected.add(option.value);
+                                          } else {
+                                            selected.remove(option.value);
+                                          }
+                                        });
+                                      },
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: () => Navigator.pop(
+                          sheetContext,
+                          ProductFilterSelection(values: draft),
+                        ),
+                        icon: const Icon(Icons.check_rounded),
+                        label: Text(
+                          selectedCount == 0
+                              ? 'Mostrar resultados'
+                              : 'Aplicar $selectedCount ${selectedCount == 1 ? 'filtro' : 'filtros'}',
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (selection == null || !mounted) return;
+    setState(() => _selectedFilters = selection);
+    if (_currentCategoryCode != null && _currentCategoryCode!.isNotEmpty) {
+      _ejecutarBusquedaCategoria(
+        _currentCategoryCode!,
+        _currentCategoryNombre ?? '',
+      );
+    } else {
+      _ejecutarBusqueda(_currentQuery);
     }
   }
 
@@ -208,7 +381,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             hintText: 'Buscar producto...',
             leading: const Icon(Icons.search),
             showClearButton: true,
-            onSubmitted: _ejecutarBusqueda,
+            onSubmitted: _ejecutarNuevaBusqueda,
             contextMenuBuilder: (context, editableTextState) {
               return AdaptiveTextSelectionToolbar.editableText(
                 editableTextState: editableTextState,
@@ -236,7 +409,6 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
       },
     );
   }
-
 
   Widget _buildBody(BuildContext context, List<Product> productos) {
     if (_isLoading) {
@@ -309,10 +481,33 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Intenta con otro término o verifica el código de barras ingresado.',
+                _selectedFilters.count > 0
+                    ? 'No hay productos que coincidan con los filtros seleccionados.'
+                    : 'Intenta con otro término o verifica el código de barras ingresado.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey.shade600),
               ),
+              if (_selectedFilters.count > 0) ...[
+                const SizedBox(height: 20),
+                FilledButton.tonalIcon(
+                  onPressed: () {
+                    setState(() {
+                      _selectedFilters = const ProductFilterSelection();
+                    });
+                    if (_currentCategoryCode != null &&
+                        _currentCategoryCode!.isNotEmpty) {
+                      _ejecutarBusquedaCategoria(
+                        _currentCategoryCode!,
+                        _currentCategoryNombre ?? '',
+                      );
+                    } else {
+                      _ejecutarBusqueda(_currentQuery);
+                    }
+                  },
+                  icon: const Icon(Icons.filter_alt_off_rounded),
+                  label: const Text('Quitar filtros'),
+                ),
+              ],
             ],
           ),
         ),
@@ -354,22 +549,14 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 2),
                 child: Row(
                   children: [
-                    // Botón de filtro de resultados (sin funcionamiento aún)
                     M3EButton.tonal(
-                      onPressed: () {
-                        // Sin funcionamiento aún (placeholder para filtros)
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Filtros próximamente disponibles'),
-                            duration: Duration(seconds: 1),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
+                      onPressed: _filterGroups.isEmpty ? null : _mostrarFiltros,
                       shape: M3EButtonShape.round,
                       icon: const Icon(Icons.tune_rounded, size: 18),
-                      label: const Text(
-                        'Filtros',
+                      label: Text(
+                        _selectedFilters.count == 0
+                            ? 'Filtros'
+                            : 'Filtros (${_selectedFilters.count})',
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ),

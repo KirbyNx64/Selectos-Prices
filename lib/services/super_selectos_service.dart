@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:html/parser.dart' as html_parser;
 import 'package:http/http.dart' as http;
 import 'package:super_selectos/models/product.dart';
@@ -20,6 +21,49 @@ class PaginationInfo {
   bool get tienePaginacion => paginasDisponibles.length > 1;
 }
 
+class ProductFilterOption {
+  final String label;
+  final String value;
+
+  const ProductFilterOption({required this.label, required this.value});
+}
+
+class ProductFilterGroup {
+  final String title;
+  final String queryParameter;
+  final List<ProductFilterOption> options;
+
+  const ProductFilterGroup({
+    required this.title,
+    required this.queryParameter,
+    required this.options,
+  });
+}
+
+class ProductFilterSelection {
+  final Map<String, Set<String>> values;
+
+  const ProductFilterSelection({this.values = const {}});
+
+  bool get isEmpty => values.values.every((items) => items.isEmpty);
+
+  int get count =>
+      values.values.fold(0, (total, items) => total + items.length);
+
+  Set<String> selectedFor(String queryParameter) =>
+      values[queryParameter] ?? const <String>{};
+
+  Map<String, dynamic> toQueryParameters() {
+    final parameters = <String, dynamic>{};
+    for (final entry in values.entries) {
+      if (entry.value.isEmpty) continue;
+      final selected = entry.value.toList();
+      parameters[entry.key] = selected.length == 1 ? selected.first : selected;
+    }
+    return parameters;
+  }
+}
+
 class SearchResponse {
   final List<Product> productos;
   final String? codigoDetectado;
@@ -28,6 +72,7 @@ class SearchResponse {
   final bool esCoincidenciaExacta;
   final String? error;
   final PaginationInfo paginacion;
+  final List<ProductFilterGroup> filterGroups;
 
   const SearchResponse({
     required this.productos,
@@ -37,13 +82,15 @@ class SearchResponse {
     this.esCoincidenciaExacta = false,
     this.error,
     this.paginacion = const PaginationInfo(),
+    this.filterGroups = const [],
   });
 }
 
 class SuperSelectosService {
   final http.Client _client;
 
-  SuperSelectosService({http.Client? client}) : _client = client ?? http.Client();
+  SuperSelectosService({http.Client? client})
+    : _client = client ?? http.Client();
 
   /// Resuelve un código de barras (EAN-8, UPC-12, EAN-13, ITF-14)
   /// consultando Open Food Facts, Open Beauty Facts y Open Products Facts.
@@ -77,7 +124,8 @@ class SuperSelectosService {
             }
 
             String termino;
-            if (marca.isNotEmpty && !nombre.toLowerCase().contains(marca.toLowerCase())) {
+            if (marca.isNotEmpty &&
+                !nombre.toLowerCase().contains(marca.toLowerCase())) {
               termino = '$marca $nombre'.trim();
             } else {
               termino = nombre.isNotEmpty ? nombre : marca;
@@ -106,6 +154,7 @@ class SuperSelectosService {
     String categoryCode, {
     String? categoryNombre,
     int pagina = 1,
+    ProductFilterSelection filters = const ProductFilterSelection(),
   }) async {
     final cleanCode = categoryCode.trim();
     if (cleanCode.isEmpty) {
@@ -113,21 +162,23 @@ class SuperSelectosService {
     }
 
     try {
-      final pageParam = pagina > 1 ? '&page=$pagina' : '';
-      final uri = Uri.parse(
-        'https://www.superselectos.com/products?category=${Uri.encodeQueryComponent(cleanCode)}$pageParam',
+      final uri = _buildProductsUri(
+        primaryParameter: 'category',
+        primaryValue: cleanCode,
+        pagina: pagina,
+        filters: filters,
       );
 
-      final response = await _client.get(
-        uri,
-        headers: {
-          'User-Agent':
-              'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept':
-              'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-          'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-        },
-      ).timeout(const Duration(seconds: 15));
+      final response = await _client
+          .get(
+            uri,
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+              'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
+            },
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
         return SearchResponse(
@@ -139,11 +190,13 @@ class SuperSelectosService {
 
       final productos = _parsearProductos(response.body, null);
       final paginacion = _parsearPaginacion(response.body);
+      final filterGroups = _parsearFiltros(response.body);
 
       return SearchResponse(
         productos: productos,
         terminoResuelto: categoryNombre ?? cleanCode,
         paginacion: paginacion,
+        filterGroups: filterGroups,
       );
     } catch (e) {
       return SearchResponse(
@@ -182,8 +235,7 @@ class SuperSelectosService {
     final headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'User-Agent':
-          'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     };
 
     final response = await _client
@@ -298,23 +350,24 @@ class SuperSelectosService {
       final uri = Uri.parse(
         'https://www.superselectos.com/products?productId=$cleanId',
       );
-      final response = await _client.get(
-        uri,
-        headers: {
-          'User-Agent':
-              'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept':
-              'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-          'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-        },
-      ).timeout(const Duration(seconds: 10));
+      final response = await _client
+          .get(
+            uri,
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+              'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode != 200) {
         return productoBase;
       }
 
       final document = html_parser.parse(response.body);
-      final modal = document.querySelector('.producto-detalle-modal') ??
+      final modal =
+          document.querySelector('.producto-detalle-modal') ??
           document.querySelector('.producto-detalle-content') ??
           document.querySelector('body');
 
@@ -334,7 +387,8 @@ class SuperSelectosService {
 
       double? precioFinal = _parsePrice(precioElem?.text);
       if (precioFinal == null) {
-        final matches = RegExp(r'\$\s*\d+(?:,\d{3})*(?:\.\d{2})?').allMatches(modal.text);
+        final matches = RegExp(r'\$\s*\d+(?:,\d{3})*(?:\.\d{2})?')
+            .allMatches(modal.text);
         if (matches.isNotEmpty) {
           precioFinal = _parsePrice(matches.first.group(0));
         }
@@ -350,8 +404,9 @@ class SuperSelectosService {
         if (descuentoRaw != null) {
           descuento = descuentoRaw;
         } else if (precioFinal != null) {
-          descuento =
-              double.parse((precioOriginal - precioFinal).toStringAsFixed(2));
+          descuento = double.parse(
+            (precioOriginal - precioFinal).toStringAsFixed(2),
+          );
         }
       }
 
@@ -380,7 +435,8 @@ class SuperSelectosService {
           : productoBase?.imagen;
       if (imagenUrl == null) {
         final imgElem = modal.querySelector('img');
-        imagenUrl = imgElem?.attributes['src'] ?? imgElem?.attributes['data-src'];
+        imagenUrl =
+            imgElem?.attributes['src'] ?? imgElem?.attributes['data-src'];
         if (imagenUrl != null && imagenUrl.startsWith('//')) {
           imagenUrl = 'https:$imagenUrl';
         }
@@ -422,7 +478,8 @@ class SuperSelectosService {
         imagen: imagenUrl,
         imagenes: imagenes.isNotEmpty
             ? imagenes
-            : (productoBase?.imagenes ?? (imagenUrl != null ? [imagenUrl] : const [])),
+            : (productoBase?.imagenes ??
+                  (imagenUrl != null ? [imagenUrl] : const [])),
         descripcion: descripcion,
         enlace: 'https://www.superselectos.com/products?productId=$cleanId',
         supermercado: 'Súper Selectos',
@@ -441,12 +498,14 @@ class SuperSelectosService {
     String busqueda, {
     String? categoryCode,
     int pagina = 1,
+    ProductFilterSelection filters = const ProductFilterSelection(),
   }) async {
     if (categoryCode != null && categoryCode.isNotEmpty) {
       return buscarPorCategoria(
         categoryCode,
         categoryNombre: busqueda,
         pagina: pagina,
+        filters: filters,
       );
     }
 
@@ -458,7 +517,8 @@ class SuperSelectosService {
     }
 
     // Detectar si el término ingresado es un código de barras numérico (8 a 14 dígitos)
-    final esCodigoBarra = RegExp(r'^\d+$').hasMatch(terminoBusqueda) &&
+    final esCodigoBarra =
+        RegExp(r'^\d+$').hasMatch(terminoBusqueda) &&
         terminoBusqueda.length >= 8 &&
         terminoBusqueda.length <= 14;
 
@@ -541,21 +601,23 @@ class SuperSelectosService {
     }
 
     try {
-      final pageParam = pagina > 1 ? '&page=$pagina' : '';
-      final uri = Uri.parse(
-        'https://www.superselectos.com/products?keyword=${Uri.encodeQueryComponent(terminoBusqueda)}$pageParam',
+      final uri = _buildProductsUri(
+        primaryParameter: 'keyword',
+        primaryValue: terminoBusqueda,
+        pagina: pagina,
+        filters: filters,
       );
 
-      final response = await _client.get(
-        uri,
-        headers: {
-          'User-Agent':
-              'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept':
-              'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-          'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-        },
-      ).timeout(const Duration(seconds: 15));
+      final response = await _client
+          .get(
+            uri,
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+              'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
+            },
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
         return SearchResponse(
@@ -568,28 +630,37 @@ class SuperSelectosService {
 
       var productos = _parsearProductos(response.body, codigoDetectado);
       var paginacion = _parsearPaginacion(response.body);
+      var filterGroups = _parsearFiltros(response.body);
 
       // Si no hay resultados y el término contiene guiones o caracteres especiales,
       // intentar reemplazando guiones por espacios (ej: Coca-Cola -> Coca Cola)
       if (productos.isEmpty && terminoBusqueda.contains('-')) {
         final terminoSinGuion = terminoBusqueda.replaceAll('-', ' ').trim();
-        final fallbackUri = Uri.parse(
-          'https://www.superselectos.com/products?keyword=${Uri.encodeQueryComponent(terminoSinGuion)}$pageParam',
+        final fallbackUri = _buildProductsUri(
+          primaryParameter: 'keyword',
+          primaryValue: terminoSinGuion,
+          pagina: pagina,
+          filters: filters,
         );
-        final fallbackResponse = await _client.get(
-          fallbackUri,
-          headers: {
-            'User-Agent':
-                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          },
-        ).timeout(const Duration(seconds: 10));
+        final fallbackResponse = await _client
+            .get(
+              fallbackUri,
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+              },
+            )
+            .timeout(const Duration(seconds: 10));
 
         if (fallbackResponse.statusCode == 200) {
-          final fallbackProductos = _parsearProductos(fallbackResponse.body, codigoDetectado);
+          final fallbackProductos = _parsearProductos(
+            fallbackResponse.body,
+            codigoDetectado,
+          );
           if (fallbackProductos.isNotEmpty) {
             productos = fallbackProductos;
             terminoBusqueda = terminoSinGuion;
             paginacion = _parsearPaginacion(fallbackResponse.body);
+            filterGroups = _parsearFiltros(fallbackResponse.body);
           }
         }
       }
@@ -599,6 +670,7 @@ class SuperSelectosService {
         codigoDetectado: codigoDetectado,
         terminoResuelto: terminoBusqueda,
         paginacion: paginacion,
+        filterGroups: filterGroups,
       );
     } catch (e) {
       return SearchResponse(
@@ -610,6 +682,21 @@ class SuperSelectosService {
     }
   }
 
+  Uri _buildProductsUri({
+    required String primaryParameter,
+    required String primaryValue,
+    required int pagina,
+    required ProductFilterSelection filters,
+  }) {
+    final queryParameters = <String, dynamic>{
+      primaryParameter: primaryValue,
+      if (pagina > 1 || !filters.isEmpty) 'page': pagina.toString(),
+      ...filters.toQueryParameters(),
+    };
+
+    return Uri.https('www.superselectos.com', '/products', queryParameters);
+  }
+
   /// Conveniencia para obtener directamente la lista de productos
   Future<List<Product>> buscarProductos(String busqueda) async {
     final res = await buscarProductosDetallado(busqueda);
@@ -619,23 +706,27 @@ class SuperSelectosService {
   List<Product>? _productosInicioCache;
 
   /// Obtiene los productos destacados de la página de inicio de Súper Selectos
-  Future<List<Product>> obtenerProductosInicio({bool forzarRefresco = false}) async {
-    if (!forzarRefresco && _productosInicioCache != null && _productosInicioCache!.isNotEmpty) {
+  Future<List<Product>> obtenerProductosInicio({
+    bool forzarRefresco = false,
+  }) async {
+    if (!forzarRefresco &&
+        _productosInicioCache != null &&
+        _productosInicioCache!.isNotEmpty) {
       return _productosInicioCache!;
     }
 
     try {
       final uri = Uri.parse('https://www.superselectos.com/');
-      final response = await _client.get(
-        uri,
-        headers: {
-          'User-Agent':
-              'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept':
-              'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-          'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-        },
-      ).timeout(const Duration(seconds: 15));
+      final response = await _client
+          .get(
+            uri,
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+              'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
+            },
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
         return _productosInicioCache ?? [];
@@ -657,13 +748,19 @@ class SuperSelectosService {
     final resultados = <String, Product>{};
 
     // Remover elementos del carrito antes de buscar productos
-    for (final cartElem in document.querySelectorAll('.carr-productos, #carretilla-resumen-wrap')) {
+    for (final cartElem in document.querySelectorAll(
+      '.carr-productos, #carretilla-resumen-wrap',
+    )) {
       cartElem.remove();
     }
 
-    var tarjetas = document.querySelectorAll('.listado-productos .producto-box');
+    var tarjetas = document.querySelectorAll(
+      '.listado-productos .producto-box',
+    );
     if (tarjetas.isEmpty) {
-      tarjetas = document.querySelectorAll('.listado-productos li.item-producto');
+      tarjetas = document.querySelectorAll(
+        '.listado-productos li.item-producto',
+      );
     }
     if (tarjetas.isEmpty) {
       tarjetas = document.querySelectorAll('.item-producto .producto-box');
@@ -674,20 +771,23 @@ class SuperSelectosService {
 
     for (final tarjeta in tarjetas) {
       // Buscar enlace con productId o h5
-      final enlace = tarjeta.querySelector('h5 a[href*="productId="]') ??
+      final enlace =
+          tarjeta.querySelector('h5 a[href*="productId="]') ??
           tarjeta.querySelector('h5.prod-nombre a') ??
           tarjeta.querySelector('h5 a') ??
           tarjeta.querySelector('a[href*="productId="]');
 
       if (enlace == null) continue;
 
-      final href = enlace.attributes['href'] ??
+      final href =
+          enlace.attributes['href'] ??
           tarjeta.querySelector('a[href*="productId="]')?.attributes['href'] ??
           '';
       String? id;
 
       // Extraer productId de la URL o tarjeta
-      final idMatch = RegExp(r'productId=(\d+)').firstMatch(href) ??
+      final idMatch =
+          RegExp(r'productId=(\d+)').firstMatch(href) ??
           RegExp(r'productId=(\d+)').firstMatch(tarjeta.outerHtml);
       if (idMatch != null) {
         id = idMatch.group(1);
@@ -697,7 +797,8 @@ class SuperSelectosService {
         continue;
       }
 
-      final nombreElem = tarjeta.querySelector('h5 a') ??
+      final nombreElem =
+          tarjeta.querySelector('h5 a') ??
           tarjeta.querySelector('h5') ??
           tarjeta.querySelector('.prod-nombre') ??
           enlace;
@@ -705,36 +806,45 @@ class SuperSelectosService {
       if (nombre.isEmpty) continue;
 
       // Precios
-      final precioElem = tarjeta.querySelector('.precios .precio, strong.precio');
+      final precioElem = tarjeta.querySelector(
+        '.precios .precio, strong.precio',
+      );
       final antesElem = tarjeta.querySelector('.precios .antes, span.antes');
       final ahorroElem = tarjeta.querySelector('.precios .ahorro, span.ahorro');
-      final promoElem = tarjeta.querySelector('.vinetas-producto .badge, .vinetas-top .badge');
+      final promoElem = tarjeta.querySelector(
+        '.vinetas-producto .badge, .vinetas-top .badge',
+      );
 
       double? precioFinal = _parsePrice(precioElem?.text);
 
       // Fallback para precio si no se encuentra en el elemento específico
       if (precioFinal == null) {
-        final matches = RegExp(r'\$\s*\d+(?:,\d{3})*(?:\.\d{2})?').allMatches(tarjeta.text);
+        final matches = RegExp(r'\$\s*\d+(?:,\d{3})*(?:\.\d{2})?')
+            .allMatches(tarjeta.text);
         if (matches.isEmpty) continue;
         precioFinal = _parsePrice(matches.first.group(0));
       }
 
       final precioOriginal = _parsePrice(antesElem?.text);
       final descuentoRaw = _parsePrice(ahorroElem?.text);
-      final tieneDescuento = precioOriginal != null && precioOriginal > (precioFinal ?? 0);
+      final tieneDescuento =
+          precioOriginal != null && precioOriginal > (precioFinal ?? 0);
 
       double descuento = 0.0;
       if (tieneDescuento) {
         if (descuentoRaw != null) {
           descuento = descuentoRaw;
         } else if (precioFinal != null) {
-          descuento = double.parse((precioOriginal - precioFinal).toStringAsFixed(2));
+          descuento = double.parse(
+            (precioOriginal - precioFinal).toStringAsFixed(2),
+          );
         }
       }
 
       // Imagen
       final imgElem = tarjeta.querySelector('.prod-images img, img');
-      String? imagenUrl = imgElem?.attributes['src'] ?? imgElem?.attributes['data-src'];
+      String? imagenUrl =
+          imgElem?.attributes['src'] ?? imgElem?.attributes['data-src'];
       if (imagenUrl != null && imagenUrl.startsWith('//')) {
         imagenUrl = 'https:$imagenUrl';
       }
@@ -742,14 +852,17 @@ class SuperSelectosService {
       // Enlace completo
       String urlCompleta = href;
       if (!urlCompleta.startsWith('http')) {
-        urlCompleta = 'https://www.superselectos.com${urlCompleta.startsWith('/') ? '' : '/'}$urlCompleta';
+        urlCompleta =
+            'https://www.superselectos.com${urlCompleta.startsWith('/') ? '' : '/'}$urlCompleta';
       }
 
       // Promoción
       final promocion = promoElem?.text.trim();
 
       // Categoría
-      final catElem = tarjeta.querySelector('.medio .cat a, .cat a, .medio .cat, .cat');
+      final catElem = tarjeta.querySelector(
+        '.medio .cat a, .cat a, .medio .cat, .cat',
+      );
       final categoria = catElem?.text.trim();
 
       resultados[id] = Product(
@@ -760,12 +873,16 @@ class SuperSelectosService {
         precioOriginal: tieneDescuento ? precioOriginal : precioFinal,
         descuento: descuento,
         tieneDescuento: tieneDescuento,
-        promocion: (promocion != null && promocion.isNotEmpty) ? promocion : null,
+        promocion: (promocion != null && promocion.isNotEmpty)
+            ? promocion
+            : null,
         imagen: imagenUrl,
         enlace: urlCompleta,
         supermercado: 'Súper Selectos',
         codigoBarra: codigoDetectado,
-        categoria: (categoria != null && categoria.isNotEmpty) ? categoria : null,
+        categoria: (categoria != null && categoria.isNotEmpty)
+            ? categoria
+            : null,
       );
     }
 
@@ -812,6 +929,50 @@ class SuperSelectosService {
       tieneAnterior: tieneAnterior,
       tieneSiguiente: tieneSiguiente,
     );
+  }
+
+  List<ProductFilterGroup> _parsearFiltros(String html) {
+    final document = html_parser.parse(html);
+    final groups = <ProductFilterGroup>[];
+
+    for (final panel in document.querySelectorAll(
+      '#filtros .filter-rz-panel',
+    )) {
+      final title = panel.querySelector('.rz-panel-titlebar h6')?.text.trim();
+      if (title == null || title.isEmpty) continue;
+
+      final normalizedTitle = title.toLowerCase();
+      final queryParameter = switch (normalizedTitle) {
+        'rango de precios' => 'prices',
+        'categorías' || 'categorias' => 'categoriesnames',
+        'marcas' => 'brandsnames',
+        _ => null,
+      };
+      if (queryParameter == null) continue;
+
+      final options = <ProductFilterOption>[];
+      for (final checkbox in panel.querySelectorAll('.rz-checkbox')) {
+        final input = checkbox.querySelector('input[type="checkbox"]');
+        final label = checkbox.querySelector('.rz-chkbox-label')?.text.trim();
+        final value = input?.attributes['value']?.trim();
+        if (label == null || label.isEmpty || value == null || value.isEmpty) {
+          continue;
+        }
+        options.add(ProductFilterOption(label: label, value: value));
+      }
+
+      if (options.isNotEmpty) {
+        groups.add(
+          ProductFilterGroup(
+            title: title,
+            queryParameter: queryParameter,
+            options: options,
+          ),
+        );
+      }
+    }
+
+    return groups;
   }
 
   double? _parsePrice(String? text) {
