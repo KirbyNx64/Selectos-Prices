@@ -9,6 +9,7 @@ import 'package:super_selectos/screens/productDetail/product_detail_screen.dart'
 import 'package:super_selectos/screens/searchResults/search_results_screen.dart';
 import 'package:super_selectos/services/shopping_cart_repository.dart';
 import 'package:super_selectos/services/super_selectos_service.dart';
+import 'package:super_selectos/widgets/app_snackbar.dart';
 import 'package:super_selectos/widgets/product_card.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -886,10 +887,9 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {});
     } catch (_) {
       if (!mounted) return;
-      M3ESnackbar.show(
+      AppSnackbar.error(
         context,
         message: 'No se pudo abrir la lista seleccionada',
-        duration: const Duration(seconds: 2),
       );
     }
   }
@@ -900,31 +900,34 @@ class _MyHomePageState extends State<MyHomePage> {
 
     final shouldDelete = await M3EDialog.show<bool>(
       context,
-      dialog: M3EDialog(
-        title: '¿Eliminar esta lista?',
-        icon: const Icon(Icons.delete_outline_rounded),
-        content: Text(
-          'Se eliminarán la lista del ${selectedList.dateTimeLabel} y todos sus productos.',
-        ),
-        actions: [
-          M3EButton.text(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+      dialog: Material(
+        type: MaterialType.transparency,
+        child: M3EDialog(
+          title: '¿Eliminar esta lista?',
+          icon: const Icon(Icons.delete_outline_rounded),
+          content: Text(
+            'Se eliminará la lista del ${selectedList.dateTimeLabel} y todos sus productos.',
           ),
-          M3EButton.filled(
-            onPressed: () => Navigator.pop(context, true),
-            shape: M3EButtonShape.round,
-            decoration: M3EButtonDecoration(
-              backgroundColor: WidgetStatePropertyAll(
-                Theme.of(context).colorScheme.error,
+          actions: [
+            M3EButton.text(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            M3EButton.filled(
+              onPressed: () => Navigator.pop(context, true),
+              shape: M3EButtonShape.round,
+              decoration: M3EButtonDecoration(
+                backgroundColor: WidgetStatePropertyAll(
+                  Theme.of(context).colorScheme.error,
+                ),
+              ),
+              child: const Text(
+                'Eliminar',
+                style: TextStyle(color: Colors.white),
               ),
             ),
-            child: const Text(
-              'Eliminar',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
 
@@ -934,18 +937,14 @@ class _MyHomePageState extends State<MyHomePage> {
       await _cart.deleteSelectedList();
       if (!mounted) return;
       setState(() {});
-      M3ESnackbar.show(
+      AppSnackbar.success(
         context,
         message: 'Lista eliminada',
-        duration: const Duration(seconds: 2),
+        icon: Icons.playlist_remove_rounded,
       );
     } catch (_) {
       if (!mounted) return;
-      M3ESnackbar.show(
-        context,
-        message: 'No se pudo eliminar la lista',
-        duration: const Duration(seconds: 2),
-      );
+      AppSnackbar.error(context, message: 'No se pudo eliminar la lista');
     }
   }
 
@@ -1114,11 +1113,7 @@ class _MyHomePageState extends State<MyHomePage> {
       await _cart.updateQuantity(item.key, quantity);
     } catch (_) {
       if (!mounted) return;
-      M3ESnackbar.show(
-        context,
-        message: 'No se pudo actualizar la cantidad',
-        duration: const Duration(seconds: 2),
-      );
+      AppSnackbar.error(context, message: 'No se pudo actualizar la cantidad');
     }
   }
 
@@ -1126,18 +1121,14 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       await _cart.removeProduct(item.key);
       if (!mounted) return;
-      M3ESnackbar.show(
+      AppSnackbar.success(
         context,
         message: '${item.product.nombre} eliminado de tu lista',
-        duration: const Duration(seconds: 2),
+        icon: Icons.delete_outline_rounded,
       );
     } catch (_) {
       if (!mounted) return;
-      M3ESnackbar.show(
-        context,
-        message: 'No se pudo eliminar el producto',
-        duration: const Duration(seconds: 2),
-      );
+      AppSnackbar.error(context, message: 'No se pudo eliminar el producto');
     }
   }
 }

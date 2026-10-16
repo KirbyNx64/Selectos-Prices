@@ -4,6 +4,7 @@ import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:super_selectos/models/product.dart';
 import 'package:super_selectos/services/shopping_cart_repository.dart';
 import 'package:super_selectos/services/super_selectos_service.dart';
+import 'package:super_selectos/widgets/app_snackbar.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Product producto;
@@ -539,18 +540,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     try {
       await ShoppingCartRepository.instance.addProduct(_producto, _cantidad);
       if (!mounted) return;
-      M3ESnackbar.show(
+      AppSnackbar.success(
         context,
         message: '${_producto.nombre} ($_cantidad) agregado a tu lista',
-        duration: const Duration(seconds: 2),
+        icon: Icons.add_shopping_cart_rounded,
       );
     } catch (_) {
       if (!mounted) return;
-      M3ESnackbar.show(
-        context,
-        message: 'No se pudo guardar el producto',
-        duration: const Duration(seconds: 2),
-      );
+      AppSnackbar.error(context, message: 'No se pudo guardar el producto');
     }
   }
 

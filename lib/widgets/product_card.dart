@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:super_selectos/models/product.dart';
 import 'package:super_selectos/services/shopping_cart_repository.dart';
+import 'package:super_selectos/widgets/app_snackbar.dart';
 
 class ProductCard extends StatefulWidget {
   final Product product;
@@ -263,18 +264,17 @@ class _ProductCardState extends State<ProductCard> {
                           _cantidad,
                         );
                         if (!context.mounted) return;
-                        M3ESnackbar.show(
+                        AppSnackbar.success(
                           context,
                           message:
                               '${product.nombre} ($_cantidad) agregado a tu lista',
-                          duration: const Duration(seconds: 2),
+                          icon: Icons.add_shopping_cart_rounded,
                         );
                       } catch (_) {
                         if (!context.mounted) return;
-                        M3ESnackbar.show(
+                        AppSnackbar.error(
                           context,
                           message: 'No se pudo guardar el producto',
-                          duration: const Duration(seconds: 2),
                         );
                       }
                     },
