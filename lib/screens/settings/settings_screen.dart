@@ -273,91 +273,103 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
               })
               .toList(growable: false);
 
-    return SizedBox(
-      height: MediaQuery.sizeOf(context).height * 0.82,
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Selecciona una sala',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+    return SafeArea(
+      top: false,
+      child: SizedBox(
+        height: MediaQuery.sizeOf(context).height * 0.82,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Selecciona una sala',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'La app mostrará únicamente productos disponibles en la sala seleccionada.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: SearchBar(
-              controller: _searchController,
-              hintText: 'Buscar sala o ubicación',
-              leading: const Icon(Icons.search_rounded),
-              trailing: [
-                if (_query.isNotEmpty)
-                  IconButton(
-                    tooltip: 'Limpiar búsqueda',
-                    onPressed: () {
-                      _searchController.clear();
-                      setState(() => _query = '');
-                    },
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-              ],
-              onChanged: (value) => setState(() => _query = value),
-            ),
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: filtered.isEmpty
-                ? Center(
-                    child: Text(
-                      'No se encontraron salas',
-                      style: theme.textTheme.bodyLarge,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: SearchBar(
+                controller: _searchController,
+                hintText: 'Buscar sala o ubicación',
+                leading: const Icon(Icons.search_rounded),
+                trailing: [
+                  if (_query.isNotEmpty)
+                    IconButton(
+                      tooltip: 'Limpiar búsqueda',
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() => _query = '');
+                      },
+                      icon: const Icon(Icons.close_rounded),
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: filtered.length,
-                    itemBuilder: (context, index) {
-                      final branch = filtered[index];
-                      final selected = branch.id == widget.selectedBranchId;
-                      return ListTile(
-                        selected: selected,
-                        leading: Icon(
-                          selected
-                              ? Icons.storefront_rounded
-                              : Icons.storefront_outlined,
-                        ),
-                        title: Text(
-                          branch.name,
-                          style: TextStyle(
-                            fontWeight: selected
-                                ? FontWeight.bold
-                                : FontWeight.w500,
+                ],
+                onChanged: (value) => setState(() => _query = value),
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: filtered.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No se encontraron salas',
+                        style: theme.textTheme.bodyLarge,
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, index) {
+                        final branch = filtered[index];
+                        final selected = branch.id == widget.selectedBranchId;
+                        return ListTile(
+                          selected: selected,
+                          leading: Icon(
+                            selected
+                                ? Icons.storefront_rounded
+                                : Icons.storefront_outlined,
                           ),
-                        ),
-                        subtitle: branch.address.isEmpty
-                            ? null
-                            : Text(
-                                branch.address,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                        trailing: selected
-                            ? Icon(
-                                Icons.check_circle_rounded,
-                                color: theme.colorScheme.primary,
-                              )
-                            : null,
-                        onTap: () => Navigator.pop(context, branch),
-                      );
-                    },
-                  ),
-          ),
-        ],
+                          title: Text(
+                            branch.name,
+                            style: TextStyle(
+                              fontWeight: selected
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
+                            ),
+                          ),
+                          subtitle: branch.address.isEmpty
+                              ? null
+                              : Text(
+                                  branch.address,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                          trailing: selected
+                              ? Icon(
+                                  Icons.check_circle_rounded,
+                                  color: theme.colorScheme.primary,
+                                )
+                              : null,
+                          onTap: () => Navigator.pop(context, branch),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }

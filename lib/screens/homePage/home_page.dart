@@ -382,14 +382,44 @@ class _MyHomePageState extends State<MyHomePage> {
                   semanticsLabel: 'Carrito de compras',
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  'Selectos Prices',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: colorScheme.onPrimary,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Selectos Prices',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: colorScheme.onPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      ListenableBuilder(
+                        listenable: StoreSelectionController.instance,
+                        builder: (context, _) {
+                          final branch =
+                              StoreSelectionController.instance.selectedBranch;
+                          if (branch == null) return const SizedBox.shrink();
+                          return Text(
+                            branch.name,
+                            maxLines: 1,
+                            softWrap: false,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onPrimary.withValues(
+                                alpha: 0.82,
+                              ),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 M3EIconButton(
                   icon: const Icon(Icons.settings_rounded),
                   variant: M3EIconButtonVariant.tonal,
