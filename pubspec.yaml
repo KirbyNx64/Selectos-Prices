@@ -47,11 +47,13 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icon_full.png"
+  image_path: "assets/shopping_cart_light_green.png"
   min_sdk_android: 21
-  adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/icon_foreground.png"
+  adaptive_icon_background: "#013810"
+  adaptive_icon_foreground: "assets/shopping_cart_light_green.png"
+  adaptive_icon_foreground_inset: 20
   remove_alpha_ios: true
+  background_color_ios: "#013810"
 
 flutter:
   uses-material-design: true

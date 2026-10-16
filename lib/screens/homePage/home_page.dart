@@ -226,11 +226,16 @@ class _MyHomePageState extends State<MyHomePage> {
       child: scaffold,
       builder: (context, child) {
         return PopScope(
-          canPop: !_searchFocusNode.hasFocus,
+          canPop: !_searchFocusNode.hasFocus && barIndex == 0,
           onPopInvokedWithResult: (didPop, result) {
             if (didPop) return;
-            _searchFocusNode.unfocus();
-            FocusScope.of(context).unfocus();
+            if (_searchFocusNode.hasFocus) {
+              _searchFocusNode.unfocus();
+              FocusScope.of(context).unfocus();
+            }
+            if (barIndex != 0) {
+              setState(() => barIndex = 0);
+            }
           },
           child: child!,
         );
