@@ -274,46 +274,60 @@ class _MyHomePageState extends State<MyHomePage> {
       resizeToAvoidBottomInset: false,
       appBar: _buildAppBar(context, theme, colorScheme),
       body: _buildBody(context, theme, colorScheme),
-      bottomNavigationBar: M3ENavigationBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        controller: _navController,
-        scrollController: barIndex == 0 ? _scrollController : null,
-        hideOnScroll: true,
-        destinations: const [
-          M3ENavigationBarDestination(
-            icon: Icon(M3EIcons.home_outlined),
-            selectedIcon: Icon(M3EIcons.home),
-            label: 'Inicio',
-          ),
-          M3ENavigationBarDestination(
-            icon: Icon(M3EIcons.category_outlined),
-            selectedIcon: Icon(M3EIcons.category),
-            label: 'Categorías',
-          ),
-          M3ENavigationBarDestination(
-            icon: Icon(M3EIcons.local_offer_outlined),
-            selectedIcon: Icon(M3EIcons.local_offer),
-            label: 'Ofertas',
-          ),
-          M3ENavigationBarDestination(
-            icon: Icon(M3EIcons.shopping_cart_outlined),
-            selectedIcon: Icon(M3EIcons.shopping_cart),
-            label: 'Mi lista',
-          ),
-        ],
-        selectedIndex: barIndex,
-        onDestinationSelected: (i) {
-          if (i == 2 && !_offerCampaignsLoaded && !_loadingOfferCampaigns) {
-            _loadOfferCampaigns();
-          }
-          setState(() {
-            barIndex = i;
-            if (i != 0) {
-              _searchFocusNode.unfocus();
-            }
-          });
-        },
+      bottomNavigationBar: ColoredBox(
+        color: colorScheme.surface,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            M3ENavigationBar(
+              backgroundColor: colorScheme.surface,
+              elevation: 0,
+              controller: _navController,
+              scrollController: barIndex == 0 ? _scrollController : null,
+              hideOnScroll: true,
+              safeArea: false,
+              destinations: const [
+                M3ENavigationBarDestination(
+                  icon: Icon(M3EIcons.home_outlined),
+                  selectedIcon: Icon(M3EIcons.home),
+                  label: 'Inicio',
+                ),
+                M3ENavigationBarDestination(
+                  icon: Icon(M3EIcons.category_outlined),
+                  selectedIcon: Icon(M3EIcons.category),
+                  label: 'Categorías',
+                ),
+                M3ENavigationBarDestination(
+                  icon: Icon(M3EIcons.local_offer_outlined),
+                  selectedIcon: Icon(M3EIcons.local_offer),
+                  label: 'Ofertas',
+                ),
+                M3ENavigationBarDestination(
+                  icon: Icon(M3EIcons.shopping_cart_outlined),
+                  selectedIcon: Icon(M3EIcons.shopping_cart),
+                  label: 'Mi lista',
+                ),
+              ],
+              selectedIndex: barIndex,
+              onDestinationSelected: (i) {
+                if (i == 2 &&
+                    !_offerCampaignsLoaded &&
+                    !_loadingOfferCampaigns) {
+                  _loadOfferCampaigns();
+                }
+                setState(() {
+                  barIndex = i;
+                  if (i != 0) {
+                    _searchFocusNode.unfocus();
+                  }
+                });
+              },
+            ),
+            // M3ENavigationBar colapsa toda su altura al ocultarse. Conserva
+            // fuera de ella el área reservada para la navegación del sistema.
+            SizedBox(height: MediaQuery.viewPaddingOf(context).bottom),
+          ],
+        ),
       ),
     );
 
