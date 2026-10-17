@@ -10,6 +10,7 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -36,6 +37,27 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    applicationVariants.all {
+        val variant = this
+        outputs.all {
+            val output = this as? com.android.build.gradle.internal.api.ApkVariantOutputImpl
+            if (output != null && variant.buildType.name == "release") {
+                val abi = output.getFilter("ABI")
+                val version = variant.versionName ?: "1.0.0"
+                val newName = if (abi.isNullOrEmpty()) {
+                    "Selectos-Prices-v$version-universal.apk"
+                } else {
+                    "Selectos-Prices-v$version-$abi.apk"
+                }
+                output.outputFileName = newName
+            }
+        }
+    }
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 
 kotlin {

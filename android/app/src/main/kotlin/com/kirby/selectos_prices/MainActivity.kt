@@ -13,8 +13,15 @@ class MainActivity : FlutterActivity() {
             flutterEngine.dartExecutor.binaryMessenger,
             "com.kirby.selectos_prices/platform_version",
         ).setMethodCallHandler { call, result ->
-            if (call.method == "getSdkInt") {
-                result.success(Build.VERSION.SDK_INT)
+            if (call.method == "getPlatformInfo") {
+                val packageInfo = packageManager.getPackageInfo(packageName, 0)
+                result.success(
+                    mapOf(
+                        "sdkInt" to Build.VERSION.SDK_INT,
+                        "appVersion" to packageInfo.versionName,
+                        "supportedAbis" to Build.SUPPORTED_ABIS.toList(),
+                    ),
+                )
             } else {
                 result.notImplemented()
             }

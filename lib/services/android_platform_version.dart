@@ -9,6 +9,12 @@ class AndroidPlatformVersion {
   );
 
   static int? _sdkInt;
+  static String? _appVersion;
+  static List<String> _supportedAbis = const [];
+
+  static String? get appVersion => _appVersion;
+
+  static List<String> get supportedAbis => List.unmodifiable(_supportedAbis);
 
   static bool get isAndroid16OrNewer {
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
@@ -22,7 +28,14 @@ class AndroidPlatformVersion {
   static Future<void> initialize() async {
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
     try {
-      _sdkInt = await _channel.invokeMethod<int>('getSdkInt');
+      final info = await _channel.invokeMethod<Map<Object?, Object?>>(
+        'getPlatformInfo',
+      );
+      _sdkInt = info?['sdkInt'] as int?;
+      _appVersion = info?['appVersion'] as String?;
+      _supportedAbis = (info?['supportedAbis'] as List<Object?>? ?? const [])
+          .whereType<String>()
+          .toList(growable: false);
     } on PlatformException {
       _sdkInt = 36;
     } on MissingPluginException {

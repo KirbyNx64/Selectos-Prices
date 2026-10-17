@@ -1,7 +1,7 @@
 name: super_selectos
 description: "App para buscar productos del Super Selectos"
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.13.5
@@ -32,6 +32,7 @@ dependencies:
   #api
   connectivity_plus: ^7.3.2
   http: ^1.6.0
+  ota_update: ^7.1.0
 
   #mobile scanner
   mobile_scanner: ^7.4.2
