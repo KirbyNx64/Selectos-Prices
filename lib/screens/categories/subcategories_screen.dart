@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:super_selectos/models/category.dart';
 import 'package:super_selectos/screens/searchResults/search_results_screen.dart';
+import 'package:super_selectos/services/android_platform_version.dart';
 
 class SubcategoriesScreen extends StatefulWidget {
   final MainCategory category;
@@ -12,22 +13,33 @@ class SubcategoriesScreen extends StatefulWidget {
   State<SubcategoriesScreen> createState() => _SubcategoriesScreenState();
 }
 
-class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
+class _SubcategoriesScreenState extends State<SubcategoriesScreen>
+    with WidgetsBindingObserver {
   static const brandGreen = Color(0xFF2E6C37);
 
   final TextEditingController _filterController = TextEditingController();
   final FocusNode _filterFocusNode = FocusNode();
   String _filterQuery = '';
+  bool _consumeBackForActiveFilter = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _filterFocusNode.addListener(_trackActiveFilter);
+  }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _filterFocusNode.removeListener(_trackActiveFilter);
     _filterFocusNode.dispose();
     _filterController.dispose();
     super.dispose();
   }
 
   void _abrirProductos(BuildContext context, String nombre, String codigo) {
-    _filterFocusNode.unfocus();
+    _dismissFilter();
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -35,6 +47,58 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
             SearchResultsScreen(initialQuery: nombre, categoryCode: codigo),
       ),
     );
+  }
+
+  void _trackActiveFilter() {
+    if (_filterFocusNode.hasFocus) {
+      _consumeBackForActiveFilter = true;
+    }
+  }
+
+  @override
+  void didChangeMetrics() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || AndroidPlatformVersion.isAndroid16OrNewer) return;
+      if (MediaQuery.viewInsetsOf(context).bottom == 0 &&
+          _consumeBackForActiveFilter) {
+        setState(() => _consumeBackForActiveFilter = false);
+      }
+    });
+  }
+
+  void _dismissFilter() {
+    _consumeBackForActiveFilter = false;
+    _filterFocusNode.unfocus();
+  }
+
+  void _handleFilterTapOutside(PointerDownEvent event) {
+    final mediaQuery = MediaQuery.of(context);
+    final gestureInsets = mediaQuery.systemGestureInsets;
+    final leftGestureWidth = gestureInsets.left > 32
+        ? gestureInsets.left
+        : 32.0;
+    final rightGestureWidth = gestureInsets.right > 32
+        ? gestureInsets.right
+        : 32.0;
+    final isSystemBackGesture =
+        event.position.dx <= leftGestureWidth ||
+        event.position.dx >= mediaQuery.size.width - rightGestureWidth;
+
+    if (isSystemBackGesture) {
+      _filterFocusNode.unfocus();
+      return;
+    }
+    _dismissFilter();
+  }
+
+  void _handleBack() {
+    if (_consumeBackForActiveFilter) {
+      setState(() => _consumeBackForActiveFilter = false);
+      _filterFocusNode.unfocus();
+      FocusScope.of(context).unfocus();
+      return;
+    }
+    Navigator.pop(context);
   }
 
   int get _totalSubcategorias {
@@ -103,13 +167,7 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
             size: M3EIconButtonSize.sm,
             shape: M3EIconButtonShapeVariant.round,
             tooltip: 'Volver',
-            onPressed: () {
-              if (_filterFocusNode.hasFocus) {
-                _filterFocusNode.unfocus();
-              } else {
-                Navigator.pop(context);
-              }
-            },
+            onPressed: _handleBack,
           ),
         ),
         title: Text(
@@ -241,7 +299,7 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
                 M3ESearchBar(
                   controller: _filterController,
                   focusNode: _filterFocusNode,
-                  onTapOutside: (_) => _filterFocusNode.unfocus(),
+                  onTapOutside: _handleFilterTapOutside,
                   hintText: 'Filtrar en ${widget.category.tituloCompleto}...',
                   leading: const Icon(Icons.search_rounded),
                   showClearButton: true,
@@ -356,11 +414,10 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen> {
       child: scaffold,
       builder: (context, child) {
         return PopScope(
-          canPop: !_filterFocusNode.hasFocus,
+          canPop: false,
           onPopInvokedWithResult: (didPop, result) {
             if (didPop) return;
-            _filterFocusNode.unfocus();
-            FocusScope.of(context).unfocus();
+            _handleBack();
           },
           child: child!,
         );

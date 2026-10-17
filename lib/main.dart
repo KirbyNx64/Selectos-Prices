@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:super_selectos/screens/homePage/home_page.dart';
+import 'package:super_selectos/services/android_platform_version.dart';
 import 'package:super_selectos/services/app_theme_controller.dart';
 import 'package:super_selectos/services/shopping_cart_repository.dart';
 import 'package:super_selectos/services/store_selection_controller.dart';
@@ -10,6 +11,7 @@ import 'package:super_selectos/services/store_selection_controller.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  await AndroidPlatformVersion.initialize();
   await Future.wait([
     ShoppingCartRepository.instance.initialize(),
     AppThemeController.instance.initialize(),

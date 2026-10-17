@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
@@ -15,6 +16,7 @@ import 'package:super_selectos/screens/homePage/barcode_scanner_screen.dart';
 import 'package:super_selectos/screens/productDetail/product_detail_screen.dart';
 import 'package:super_selectos/screens/searchResults/search_results_screen.dart';
 import 'package:super_selectos/screens/settings/settings_screen.dart';
+import 'package:super_selectos/services/android_platform_version.dart';
 import 'package:super_selectos/services/shopping_cart_repository.dart';
 import 'package:super_selectos/services/super_selectos_service.dart';
 import 'package:super_selectos/services/store_selection_controller.dart';
@@ -28,16 +30,21 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage>
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   static const int _offerBannerCacheWidth = 1200;
+  static const double _collapsedHomeAppBarHeight = 64;
+  static const double _expandedHomeAppBarHeight = 124;
 
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
   final PageController _offerBannerController = PageController();
   late final M3ENavigationBarController _navController;
+  late final AnimationController _homeAppBarController;
   Timer? _offerBannerTimer;
   int barIndex = 0;
+  bool _consumeBackForActiveSearch = false;
 
   final SuperSelectosService _service = SuperSelectosService();
   final ShoppingCartRepository _cart = ShoppingCartRepository.instance;
@@ -56,8 +63,16 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    _navController = M3ENavigationBarController();
+    WidgetsBinding.instance.addObserver(this);
+    _homeAppBarController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+      value: 1,
+    )..addListener(_rebuildHomeAppBar);
+    _navController = M3ENavigationBarController()
+      ..addListener(_syncHomeAppBarVisibility);
     _scrollController.addListener(_onScroll);
+    _searchFocusNode.addListener(_trackActiveSearch);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _selectInitialBranchAndLoadProducts();
     });
@@ -116,15 +131,81 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _offerBannerTimer?.cancel();
     _offerBannerController.dispose();
-    _navController.dispose();
+    _navController
+      ..removeListener(_syncHomeAppBarVisibility)
+      ..dispose();
+    _homeAppBarController
+      ..removeListener(_rebuildHomeAppBar)
+      ..dispose();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _searchFocusNode.removeListener(_trackActiveSearch);
     _searchFocusNode.dispose();
     _searchController.dispose();
     _service.dispose();
     super.dispose();
+  }
+
+  void _syncHomeAppBarVisibility() {
+    final target = _navController.visible ? 1.0 : 0.0;
+    if (_homeAppBarController.value == target) return;
+    _homeAppBarController.animateTo(
+      target,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _rebuildHomeAppBar() {
+    if (mounted) setState(() {});
+  }
+
+  void _trackActiveSearch() {
+    if (_searchFocusNode.hasFocus) {
+      _consumeBackForActiveSearch = true;
+    }
+  }
+
+  @override
+  void didChangeMetrics() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || AndroidPlatformVersion.isAndroid16OrNewer) return;
+      if (MediaQuery.viewInsetsOf(context).bottom == 0 &&
+          _consumeBackForActiveSearch) {
+        setState(() => _consumeBackForActiveSearch = false);
+      }
+    });
+  }
+
+  void _dismissSearch() {
+    _consumeBackForActiveSearch = false;
+    _searchFocusNode.unfocus();
+  }
+
+  void _handleSearchTapOutside(PointerDownEvent event) {
+    final mediaQuery = MediaQuery.of(context);
+    final gestureInsets = mediaQuery.systemGestureInsets;
+    final leftGestureWidth = gestureInsets.left > 32
+        ? gestureInsets.left
+        : 32.0;
+    final rightGestureWidth = gestureInsets.right > 32
+        ? gestureInsets.right
+        : 32.0;
+    final isSystemBackGesture =
+        event.position.dx <= leftGestureWidth ||
+        event.position.dx >= mediaQuery.size.width - rightGestureWidth;
+
+    if (isSystemBackGesture) {
+      // Android 16 puede retirar el foco al comenzar el gesto predictivo.
+      // Conservamos la marca hasta que PopScope reciba el final del gesto.
+      _searchFocusNode.unfocus();
+      return;
+    }
+
+    _dismissSearch();
   }
 
   Future<void> _cargarProductosInicio({bool forzarRefresco = false}) async {
@@ -241,7 +322,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final queryLimpio = query.trim();
     if (queryLimpio.isEmpty) return;
 
-    _searchFocusNode.unfocus();
+    _dismissSearch();
 
     Navigator.push(
       context,
@@ -318,7 +399,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 setState(() {
                   barIndex = i;
                   if (i != 0) {
-                    _searchFocusNode.unfocus();
+                    _dismissSearch();
                   }
                 });
               },
@@ -336,16 +417,22 @@ class _MyHomePageState extends State<MyHomePage> {
       child: scaffold,
       builder: (context, child) {
         return PopScope(
-          canPop: !_searchFocusNode.hasFocus && barIndex == 0,
+          // Debe permanecer estable durante todo el gesto predictivo. Android
+          // 16 puede cerrar el IME antes de terminarlo y reconstruir este árbol.
+          canPop: false,
           onPopInvokedWithResult: (didPop, result) {
             if (didPop) return;
-            if (_searchFocusNode.hasFocus) {
+            if (_consumeBackForActiveSearch) {
+              setState(() => _consumeBackForActiveSearch = false);
               _searchFocusNode.unfocus();
               FocusScope.of(context).unfocus();
+              return;
             }
             if (barIndex != 0) {
               setState(() => barIndex = 0);
+              return;
             }
+            SystemNavigator.pop();
           },
           child: child!,
         );
@@ -476,6 +563,12 @@ class _MyHomePageState extends State<MyHomePage> {
       );
     }
 
+    final appBarProgress = _homeAppBarController.value;
+    final toolbarHeight =
+        _collapsedHomeAppBarHeight +
+        (_expandedHomeAppBarHeight - _collapsedHomeAppBarHeight) *
+            appBarProgress;
+
     return AppBar(
       notificationPredicate: (_) => false,
       elevation: 0,
@@ -487,7 +580,7 @@ class _MyHomePageState extends State<MyHomePage> {
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
       ),
       titleSpacing: 12,
-      toolbarHeight: 124,
+      toolbarHeight: toolbarHeight,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -569,46 +662,59 @@ class _MyHomePageState extends State<MyHomePage> {
               ],
             ),
           ),
-          Row(
-            children: [
-              Expanded(
-                child: M3ESearchBar(
-                  focusNode: _searchFocusNode,
-                  onTapOutside: (_) => _searchFocusNode.unfocus(),
-                  margin: 12,
-                  focusedMargin: 0,
-                  expandOnFocus: true,
-                  controller: _searchController,
-                  hintText: '¿Qué estás buscando?',
-                  leading: const Icon(Icons.search),
-                  trailing: [
-                    M3EIconButton(
-                      icon: const Icon(Icons.qr_code_scanner_rounded),
-                      variant: M3EIconButtonVariant.filled,
-                      size: M3EIconButtonSize.sm,
-                      shape: M3EIconButtonShapeVariant.round,
-                      tooltip: 'Escanear código de barras',
-                      onPressed: () {
-                        _searchFocusNode.unfocus();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const BarcodeScannerScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                  showClearButton: true,
-                  onSubmitted: _irAResultados,
-                  contextMenuBuilder: (context, editableTextState) {
-                    return AdaptiveTextSelectionToolbar.editableText(
-                      editableTextState: editableTextState,
-                    );
-                  },
+          ClipRect(
+            child: Align(
+              alignment: Alignment.topCenter,
+              heightFactor: appBarProgress,
+              child: IgnorePointer(
+                ignoring: appBarProgress < 1,
+                child: Opacity(
+                  opacity: appBarProgress,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: M3ESearchBar(
+                          focusNode: _searchFocusNode,
+                          onTapOutside: _handleSearchTapOutside,
+                          margin: 12,
+                          focusedMargin: 0,
+                          expandOnFocus: true,
+                          controller: _searchController,
+                          hintText: '¿Qué estás buscando?',
+                          leading: const Icon(Icons.search),
+                          trailing: [
+                            M3EIconButton(
+                              icon: const Icon(Icons.qr_code_scanner_rounded),
+                              variant: M3EIconButtonVariant.filled,
+                              size: M3EIconButtonSize.sm,
+                              shape: M3EIconButtonShapeVariant.round,
+                              tooltip: 'Escanear código de barras',
+                              onPressed: () {
+                                _dismissSearch();
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        const BarcodeScannerScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                          showClearButton: true,
+                          onSubmitted: _irAResultados,
+                          contextMenuBuilder: (context, editableTextState) {
+                            return AdaptiveTextSelectionToolbar.editableText(
+                              editableTextState: editableTextState,
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ],
+            ),
           ),
         ],
       ),

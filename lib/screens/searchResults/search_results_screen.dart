@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:super_selectos/models/product.dart';
 import 'package:super_selectos/screens/productDetail/product_detail_screen.dart';
+import 'package:super_selectos/services/android_platform_version.dart';
 import 'package:super_selectos/services/super_selectos_service.dart';
 import 'package:super_selectos/widgets/product_card.dart';
 
@@ -22,7 +23,8 @@ class SearchResultsScreen extends StatefulWidget {
   State<SearchResultsScreen> createState() => _SearchResultsScreenState();
 }
 
-class _SearchResultsScreenState extends State<SearchResultsScreen> {
+class _SearchResultsScreenState extends State<SearchResultsScreen>
+    with WidgetsBindingObserver {
   late final TextEditingController _searchController;
   final FocusNode _searchFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
@@ -40,15 +42,18 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   String _currentQuery = '';
   ProductFilterSelection _selectedFilters = const ProductFilterSelection();
   List<ProductFilterGroup> _filterGroups = const [];
+  bool _consumeBackForActiveSearch = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _searchController = TextEditingController(text: widget.initialQuery);
     _currentQuery = widget.initialQuery;
     _currentCategoryCode = widget.categoryCode;
     _currentCategoryNombre = widget.initialQuery;
     _currentLandingUrl = widget.landingUrl;
+    _searchFocusNode.addListener(_trackActiveSearch);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         if (widget.landingUrl != null && widget.landingUrl!.isNotEmpty) {
@@ -67,7 +72,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     final landingUrl = _currentLandingUrl;
     if (landingUrl == null || landingUrl.isEmpty) return;
 
-    FocusManager.instance.primaryFocus?.unfocus();
+    _dismissSearch();
     setState(() {
       _isLoading = true;
       _isOffline = false;
@@ -113,6 +118,8 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _searchFocusNode.removeListener(_trackActiveSearch);
     _searchFocusNode.dispose();
     _searchController.dispose();
     _scrollController.dispose();
@@ -125,7 +132,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     String nombre, {
     int pagina = 1,
   }) async {
-    FocusManager.instance.primaryFocus?.unfocus();
+    _dismissSearch();
     setState(() {
       _isLoading = true;
       _isOffline = false;
@@ -180,7 +187,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     final queryLimpio = query.trim();
     if (queryLimpio.isEmpty) return;
 
-    FocusManager.instance.primaryFocus?.unfocus();
+    _dismissSearch();
     setState(() {
       _isLoading = true;
       _isOffline = false;
@@ -460,6 +467,58 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     );
   }
 
+  void _trackActiveSearch() {
+    if (_searchFocusNode.hasFocus) {
+      _consumeBackForActiveSearch = true;
+    }
+  }
+
+  @override
+  void didChangeMetrics() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || AndroidPlatformVersion.isAndroid16OrNewer) return;
+      if (MediaQuery.viewInsetsOf(context).bottom == 0 &&
+          _consumeBackForActiveSearch) {
+        setState(() => _consumeBackForActiveSearch = false);
+      }
+    });
+  }
+
+  void _dismissSearch() {
+    _consumeBackForActiveSearch = false;
+    _searchFocusNode.unfocus();
+  }
+
+  void _handleSearchTapOutside(PointerDownEvent event) {
+    final mediaQuery = MediaQuery.of(context);
+    final gestureInsets = mediaQuery.systemGestureInsets;
+    final leftGestureWidth = gestureInsets.left > 32
+        ? gestureInsets.left
+        : 32.0;
+    final rightGestureWidth = gestureInsets.right > 32
+        ? gestureInsets.right
+        : 32.0;
+    final isSystemBackGesture =
+        event.position.dx <= leftGestureWidth ||
+        event.position.dx >= mediaQuery.size.width - rightGestureWidth;
+
+    if (isSystemBackGesture) {
+      _searchFocusNode.unfocus();
+      return;
+    }
+    _dismissSearch();
+  }
+
+  void _handleBack() {
+    if (_consumeBackForActiveSearch) {
+      setState(() => _consumeBackForActiveSearch = false);
+      _searchFocusNode.unfocus();
+      FocusScope.of(context).unfocus();
+      return;
+    }
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     final productos = _searchResponse?.productos ?? [];
@@ -484,14 +543,14 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             size: M3EIconButtonSize.sm,
             shape: M3EIconButtonShapeVariant.round,
             tooltip: 'Volver',
-            onPressed: () => Navigator.pop(context),
+            onPressed: _handleBack,
           ),
         ),
         title: Padding(
           padding: const EdgeInsets.only(right: 12),
           child: M3ESearchBar(
             focusNode: _searchFocusNode,
-            onTapOutside: (_) => _searchFocusNode.unfocus(),
+            onTapOutside: _handleSearchTapOutside,
             margin: 12,
             focusedMargin: 0,
             expandOnFocus: true,
@@ -516,11 +575,10 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
       child: scaffold,
       builder: (context, child) {
         return PopScope(
-          canPop: !_searchFocusNode.hasFocus,
+          canPop: false,
           onPopInvokedWithResult: (didPop, result) {
             if (didPop) return;
-            _searchFocusNode.unfocus();
-            FocusScope.of(context).unfocus();
+            _handleBack();
           },
           child: child!,
         );

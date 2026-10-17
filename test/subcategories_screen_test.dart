@@ -42,9 +42,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: SubcategoriesScreen(category: testCategory),
-      ),
+      const MaterialApp(home: SubcategoriesScreen(category: testCategory)),
     );
     await tester.pumpAndSettle();
 
@@ -71,9 +69,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: SubcategoriesScreen(category: testCategory),
-      ),
+      const MaterialApp(home: SubcategoriesScreen(category: testCategory)),
     );
     await tester.pumpAndSettle();
 
@@ -85,5 +81,22 @@ void main() {
     expect(find.text('Alimento para gatos'), findsOneWidget);
     expect(find.text('Alimento seco para gatos adultos'), findsOneWidget);
     expect(find.text('Alimento seco para perros adultos'), findsNothing);
+  });
+
+  testWidgets('Android back closes the filter without leaving the screen', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: SubcategoriesScreen(category: testCategory)),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(M3ESearchBar));
+    await tester.pumpAndSettle();
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SubcategoriesScreen), findsOneWidget);
+    expect(find.text('Cuidado mascotas'), findsAtLeast(1));
   });
 }
