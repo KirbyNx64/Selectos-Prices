@@ -125,6 +125,7 @@ class AppUpdateService {
     for (final abi in AndroidPlatformVersion.supportedAbis) {
       if (apkUrls.containsKey(abi)) return abi;
     }
+    if (apkUrls.containsKey('universal')) return 'universal';
     throw StateError(
       'Arquitectura no compatible: '
       '${AndroidPlatformVersion.supportedAbis.join(', ')}.',
