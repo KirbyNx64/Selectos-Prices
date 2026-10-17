@@ -21,6 +21,18 @@ Aplicación móvil desarrollada en Flutter para la consulta rápida de precios, 
 
 ---
 
+## Capturas de pantalla
+
+| Inicio | Búsqueda | Detalle de Producto |
+| :---: | :---: | :---: |
+| <img src="assets/screenshots/1.jpg" width="240" alt="Inicio" /> | <img src="assets/screenshots/2.jpg" width="240" alt="Búsqueda" /> | <img src="assets/screenshots/3.jpg" width="240" alt="Detalle de Producto" /> |
+
+| Lista de Compras | Ofertas y Promociones | Categorías |
+| :---: | :---: | :---: |
+| <img src="assets/screenshots/4.jpg" width="240" alt="Lista de compras" /> | <img src="assets/screenshots/5.jpg" width="240" alt="Ofertas y Promociones" /> | <img src="assets/screenshots/6.jpg" width="240" alt="Categorías" /> |
+
+---
+
 ## Tecnologías utilizadas
 
 - **Framework:** [Flutter](https://flutter.dev/) (SDK ^3.13.5 / Dart 3)
