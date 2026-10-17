@@ -21,6 +21,7 @@ import 'package:super_selectos/services/shopping_cart_repository.dart';
 import 'package:super_selectos/services/super_selectos_service.dart';
 import 'package:super_selectos/services/store_selection_controller.dart';
 import 'package:super_selectos/widgets/app_snackbar.dart';
+import 'package:super_selectos/widgets/app_update_dialog.dart';
 import 'package:super_selectos/widgets/product_card.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -84,6 +85,9 @@ class _MyHomePageState extends State<MyHomePage>
     // Algunos widget tests construyen esta pantalla sin ejecutar main().
     if (storeController.branches.isEmpty) {
       await _cargarProductosInicio();
+      if (mounted) {
+        AppUpdateDialog.checkOnStartup(context);
+      }
       return;
     }
 
@@ -111,6 +115,8 @@ class _MyHomePageState extends State<MyHomePage>
     }
 
     await _cargarProductosInicio(forzarRefresco: true);
+    if (!mounted) return;
+    AppUpdateDialog.checkOnStartup(context);
   }
 
   void _onScroll() {

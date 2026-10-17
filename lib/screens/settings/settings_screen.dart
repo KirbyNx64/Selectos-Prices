@@ -241,8 +241,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (!update.updateAvailable) {
         AppSnackbar.success(
           context,
-          message:
-              'Ya tienes la versión más reciente (${update.installedVersion})',
+          message: 'Ya tienes la versión más reciente',
           icon: Icons.verified_rounded,
         );
         return;
