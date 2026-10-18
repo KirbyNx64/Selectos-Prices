@@ -47,6 +47,19 @@ void main() {
       expect(selection.count, 2);
     });
 
+    test('omits sorting when the website does not support it', () {
+      const selection = ProductFilterSelection(
+        values: {
+          'brandsnames': {'Mazola'},
+        },
+        sortOrder: ProductSortOrder.highestPrice,
+      );
+
+      expect(selection.toQueryParameters(includeSortOrder: false), {
+        'brandsnames': 'Mazola',
+      });
+    });
+
     test(
       'loads exact pages and checks only their products in the selected store',
       () async {
@@ -141,5 +154,61 @@ void main() {
         expect(normalResponse.productos.single.id, '2053');
       },
     );
+
+    test('keeps the website ranking for keyword searches', () async {
+      SharedPreferences.setMockInitialValues({});
+      await StoreSelectionController.instance.selectBranch(
+        const SelectosBranch(
+          id: '64',
+          name: 'Sonsonate Los Leones',
+          address: 'Sonsonate',
+          zoneId: '',
+        ),
+      );
+
+      var requestCount = 0;
+      final client = MockClient((request) async {
+        requestCount++;
+        if (request.method == 'GET') {
+          expect(
+            request.url.toString(),
+            'https://www.superselectos.com/products?keyword=aceite&page=1',
+          );
+          return http.Response('''
+              <div class="listado-productos">
+                <div class="producto-box">
+                  <div class="precios"><strong class="precio">\$1.70</strong></div>
+                  <h5><a href="/products?productId=100">Aceite Nutrioli de Soya 400 mL</a></h5>
+                </div>
+              </div>
+            ''', 200);
+        }
+
+        final payload = jsonDecode(request.body) as Map<String, dynamic>;
+        expect(payload['basicFilters']['productIds'], ['100']);
+        expect(payload['basicFilters']['availableInAnyBranchOfficeId'], ['64']);
+        expect(payload['searchText'], isNull);
+        return http.Response(
+          jsonEncode({
+            'items': [
+              {'productId': '100'},
+            ],
+            'totalItemCount': 1,
+          }),
+          200,
+        );
+      });
+      final service = SuperSelectosService(client: client);
+      addTearDown(service.dispose);
+
+      final response = await service.buscarProductosDetallado('aceite');
+
+      expect(requestCount, 2);
+      expect(response.productos.single.id, '100');
+      expect(
+        response.productos.single.nombre,
+        'Aceite Nutrioli de Soya 400 mL',
+      );
+    });
   });
 }

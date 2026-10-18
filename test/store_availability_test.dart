@@ -63,6 +63,29 @@ void main() {
     expect(response.productos.any((product) => product.id == '108992'), isTrue);
   }, timeout: const Timeout(Duration(seconds: 45)));
 
+  test('aceite conserva los resultados web en Sonsonate Los Leones', () async {
+    SharedPreferences.setMockInitialValues({});
+    await StoreSelectionController.instance.selectBranch(
+      const SelectosBranch(
+        id: '64',
+        name: 'Sonsonate Los Leones',
+        address: 'Avenida Oidor Ramírez de Quiñonez y Paseo 15 de Septiembre, Sonsonate.',
+        zoneId: 'c4bc6420-14d7-4956-8271-b41711a9d74b',
+      ),
+    );
+
+    final service = SuperSelectosService();
+    addTearDown(service.dispose);
+    final response = await service.buscarProductosDetallado('aceite');
+
+    expect(response.error, isNull);
+    expect(response.productos, hasLength(20));
+    expect(
+      response.productos.first.nombre.replaceAll(RegExp(r'\s+'), ' '),
+      'Aceite Nutrioli de Soya 400 mL',
+    );
+  }, timeout: const Timeout(Duration(seconds: 45)));
+
   test('Sabores ordena los precios dentro de Sonsonate Los Leones', () async {
     SharedPreferences.setMockInitialValues({});
     final storeController = StoreSelectionController.instance;

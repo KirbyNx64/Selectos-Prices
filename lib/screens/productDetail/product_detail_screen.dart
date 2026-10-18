@@ -116,6 +116,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final productoNoDisponible = _disponibleEnSala == false;
     final controlesDeshabilitados =
         _verificandoDisponibilidad || productoNoDisponible;
+    final availabilityContainerColor = productoNoDisponible
+        ? colorScheme.errorContainer
+        : colorScheme.surfaceContainer;
+    final availabilityBorderColor = productoNoDisponible
+        ? colorScheme.error.withValues(alpha: 0.45)
+        : colorScheme.outlineVariant;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -348,6 +354,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               M3ECard(
                 variant: M3ECardVariant.filled,
                 borderRadius: BorderRadius.circular(18),
+                color: availabilityContainerColor,
+                border: BorderSide(color: availabilityBorderColor),
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -418,15 +426,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: productoNoDisponible
-                        ? colorScheme.errorContainer
-                        : colorScheme.surfaceContainer,
+                    color: availabilityContainerColor,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: productoNoDisponible
-                          ? colorScheme.error.withValues(alpha: 0.45)
-                          : colorScheme.outlineVariant,
-                    ),
+                    border: Border.all(color: availabilityBorderColor),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -598,46 +600,109 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   color: colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Total ',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainer,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: colorScheme.outlineVariant),
+                ),
+                child: Column(
+                  children: [
+                    if (tienePrecio && selectedItem.totalSavings > 0) ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Precio regular',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '\$${selectedItem.regularSubtotal.toStringAsFixed(2)}',
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ),
-                  if (tienePrecio) ...[
-                    if (selectedItem.promotionSavings > 0) ...[
-                      Text(
-                        '\$${selectedItem.regularSubtotal.toStringAsFixed(2)}',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                          decoration: TextDecoration.lineThrough,
-                          decorationColor: colorScheme.onSurfaceVariant,
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer.withValues(
+                            alpha: 0.55,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.savings_outlined,
+                              size: 20,
+                              color: colorScheme.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Ahorras',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '−\$${selectedItem.totalSavings.toStringAsFixed(2)}',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: colorScheme.primary,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const Divider(height: 24),
                     ],
-                    Text(
-                      '\$${selectedItem.subtotal.toStringAsFixed(2)}',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.w900,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Total a pagar',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        if (tienePrecio)
+                          Text(
+                            '\$${selectedItem.subtotal.toStringAsFixed(2)}',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          )
+                        else
+                          Text(
+                            'No disponible',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                      ],
                     ),
-                  ] else
-                    Text(
-                      'No disponible',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 12),
               SafeArea(

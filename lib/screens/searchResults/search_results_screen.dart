@@ -286,6 +286,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
   }
 
   Future<void> _mostrarFiltros() async {
+    final supportsSorting =
+        (_currentCategoryCode?.isNotEmpty ?? false) ||
+        (_currentLandingUrl?.isNotEmpty ?? false);
     final draft = <String, Set<String>>{
       for (final entry in _selectedFilters.values.entries)
         entry.key: {...entry.value},
@@ -306,7 +309,10 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
                   0,
                   (total, values) => total + values.length,
                 ) +
-                (draftSortOrder == ProductSortOrder.alphabetically ? 0 : 1);
+                (supportsSorting &&
+                        draftSortOrder != ProductSortOrder.alphabetically
+                    ? 1
+                    : 0);
 
             return SizedBox(
               height: MediaQuery.sizeOf(context).height * 0.82,
@@ -318,7 +324,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
                       children: [
                         Expanded(
                           child: Text(
-                            'Filtros y orden',
+                            supportsSorting ? 'Filtros y orden' : 'Filtros',
                             style: Theme.of(context).textTheme.headlineSmall
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
@@ -341,52 +347,55 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
                     child: ListView(
                       padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 14),
-                          child: Card(
-                            elevation: 0,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .surfaceContainer,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildFilterGroupTitle(
-                                    context,
-                                    'Ordenar por',
-                                  ),
-                                  RadioGroup<ProductSortOrder>(
-                                    groupValue: draftSortOrder,
-                                    onChanged: (value) {
-                                      if (value == null) return;
-                                      setSheetState(
-                                        () => draftSortOrder = value,
-                                      );
-                                    },
-                                    child: Column(
-                                      children: [
-                                        for (final order
-                                            in ProductSortOrder.values)
-                                          RadioListTile<ProductSortOrder>(
-                                            value: order,
-                                            title: Text(order.label),
-                                            contentPadding:
-                                                const EdgeInsets.symmetric(
-                                                  horizontal: 12,
-                                                ),
-                                            visualDensity:
-                                                VisualDensity.compact,
-                                          ),
-                                      ],
+                        if (supportsSorting)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 14),
+                            child: Card(
+                              elevation: 0,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainer,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildFilterGroupTitle(
+                                      context,
+                                      'Ordenar por',
                                     ),
-                                  ),
-                                ],
+                                    RadioGroup<ProductSortOrder>(
+                                      groupValue: draftSortOrder,
+                                      onChanged: (value) {
+                                        if (value == null) return;
+                                        setSheetState(
+                                          () => draftSortOrder = value,
+                                        );
+                                      },
+                                      child: Column(
+                                        children: [
+                                          for (final order
+                                              in ProductSortOrder.values)
+                                            RadioListTile<ProductSortOrder>(
+                                              value: order,
+                                              title: Text(order.label),
+                                              contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                  ),
+                                              visualDensity:
+                                                  VisualDensity.compact,
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
                         for (final group in _filterGroups)
                           Padding(
                             padding: const EdgeInsets.only(bottom: 14),
@@ -451,7 +460,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
                           sheetContext,
                           ProductFilterSelection(
                             values: draft,
-                            sortOrder: draftSortOrder,
+                            sortOrder: supportsSorting
+                                ? draftSortOrder
+                                : ProductSortOrder.alphabetically,
                           ),
                         ),
                         icon: const Icon(Icons.check_rounded),

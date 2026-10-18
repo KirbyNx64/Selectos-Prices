@@ -46,6 +46,9 @@ void main() {
             nombre: 'Producto no disponible',
             precio: 1.25,
             precioFinal: 1.25,
+            precioOriginal: 2.00,
+            descuento: 0.75,
+            tieneDescuento: true,
           ),
           service: service,
         ),
@@ -56,6 +59,14 @@ void main() {
     expect(find.text('No disponible en esta sala'), findsOneWidget);
     expect(find.text('Sonsonate Los Leones'), findsOneWidget);
     expect(find.text('No disponible'), findsOneWidget);
+    expect(find.text('Precio regular'), findsOneWidget);
+    expect(find.text('Ahorras'), findsOneWidget);
+    expect(find.text(r'−$0.75'), findsOneWidget);
+    expect(find.text('Total a pagar'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('Ahorras')).dy,
+      lessThan(tester.getTopLeft(find.text('Total a pagar')).dy),
+    );
     expect(
       tester.getTopLeft(find.text('No disponible en esta sala')).dy,
       greaterThan(tester.getTopLeft(find.text(r'$1.25').first).dy),

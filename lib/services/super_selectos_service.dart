@@ -45,7 +45,7 @@ class ProductFilterGroup {
 }
 
 enum ProductSortOrder {
-  alphabetically('A - Z (Lo normal)', 'AlphabeticallyAsc'),
+  alphabetically('A - Z', 'AlphabeticallyAsc'),
   alphabeticallyDesc('Z - A', 'AlphabeticallyDesc'),
   highestPrice('Precio más alto', 'HighestPrice'),
   lowestPrice('Precio más bajo', 'LowestPrice');
@@ -76,7 +76,7 @@ class ProductFilterSelection {
   Set<String> selectedFor(String queryParameter) =>
       values[queryParameter] ?? const <String>{};
 
-  Map<String, dynamic> toQueryParameters() {
+  Map<String, dynamic> toQueryParameters({bool includeSortOrder = true}) {
     final parameters = <String, dynamic>{};
     for (final entry in values.entries) {
       if (entry.value.isEmpty) continue;
@@ -84,7 +84,7 @@ class ProductFilterSelection {
       parameters[entry.key] = selected.length == 1 ? selected.first : selected;
     }
     final orderBy = sortOrder.queryValue;
-    if (orderBy != null) parameters['orderBy'] = orderBy;
+    if (includeSortOrder && orderBy != null) parameters['orderBy'] = orderBy;
     return parameters;
   }
 }
@@ -799,18 +799,11 @@ class SuperSelectosService {
         );
       }
 
-      if (StoreSelectionController.instance.selectedBranchId != null &&
-          _supportsBranchApiSorting(filters.sortOrder)) {
-        return await _searchProductsInSelectedBranch(
-          searchText: terminoBusqueda,
-          page: pagina,
-          filters: filters,
-          resolvedTerm: terminoBusqueda,
-          barcode: codigoDetectado,
-          catalogHtml: response.body,
-        );
-      }
-
+      // En búsquedas por palabra, la web aplica su propio criterio de
+      // relevancia antes del orden y la paginación. La API de exploración no
+      // reproduce ese criterio (por ejemplo, puede priorizar productos que
+      // apenas contienen el término), por lo que conservamos el listado HTML
+      // como fuente y usamos la API solamente para validar la sala.
       final parsedProducts = _parsearProductos(response.body, codigoDetectado);
       if (parsedProducts.isEmpty &&
           StoreSelectionController.instance.selectedBranchId != null) {
@@ -881,7 +874,9 @@ class SuperSelectosService {
   }) {
     final queryParameters = <String, dynamic>{
       primaryParameter: primaryValue,
-      ...filters.toQueryParameters(),
+      ...filters.toQueryParameters(
+        includeSortOrder: primaryParameter != 'keyword',
+      ),
       'page': pagina.toString(),
     };
 
