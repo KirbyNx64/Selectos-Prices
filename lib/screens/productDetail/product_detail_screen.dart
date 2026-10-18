@@ -5,13 +5,15 @@ import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:super_selectos/models/product.dart';
 import 'package:super_selectos/models/shopping_cart_item.dart';
 import 'package:super_selectos/services/shopping_cart_repository.dart';
+import 'package:super_selectos/services/store_selection_controller.dart';
 import 'package:super_selectos/services/super_selectos_service.dart';
 import 'package:super_selectos/widgets/app_snackbar.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Product producto;
+  final SuperSelectosService? service;
 
-  const ProductDetailScreen({super.key, required this.producto});
+  const ProductDetailScreen({super.key, required this.producto, this.service});
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -22,19 +24,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final PageController _pageController = PageController();
   int _currentImageIndex = 0;
   int _cantidad = 1;
-  final SuperSelectosService _service = SuperSelectosService();
+  bool _verificandoDisponibilidad = false;
+  bool? _disponibleEnSala;
+  bool _falloDisponibilidad = false;
+  late final SuperSelectosService _service;
+  late final bool _ownsService;
 
   @override
   void initState() {
     super.initState();
+    _ownsService = widget.service == null;
+    _service = widget.service ?? SuperSelectosService();
     _producto = widget.producto;
     _cargarDetallesCompletos();
+    _comprobarDisponibilidad();
   }
 
   @override
   void dispose() {
     _pageController.dispose();
-    _service.dispose();
+    if (_ownsService) _service.dispose();
     super.dispose();
   }
 
@@ -59,6 +68,31 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
   }
 
+  Future<void> _comprobarDisponibilidad() async {
+    if (_producto.id.isEmpty ||
+        StoreSelectionController.instance.selectedBranchId == null) {
+      return;
+    }
+
+    _verificandoDisponibilidad = true;
+    try {
+      final disponible = await _service
+          .comprobarDisponibilidadEnSalaSeleccionada(_producto.id);
+      if (!mounted) return;
+      setState(() {
+        _disponibleEnSala = disponible;
+        _verificandoDisponibilidad = false;
+        _falloDisponibilidad = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _verificandoDisponibilidad = false;
+        _falloDisponibilidad = true;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -78,6 +112,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
     final tienePrecio =
         _producto.precioFinal != null || _producto.precio != null;
+    final selectedBranch = StoreSelectionController.instance.selectedBranch;
+    final productoNoDisponible = _disponibleEnSala == false;
+    final controlesDeshabilitados =
+        _verificandoDisponibilidad || productoNoDisponible;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -371,6 +409,87 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
               ),
 
+              if (selectedBranch != null) ...[
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: productoNoDisponible
+                        ? colorScheme.errorContainer
+                        : colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: productoNoDisponible
+                          ? colorScheme.error.withValues(alpha: 0.45)
+                          : colorScheme.outlineVariant,
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_verificandoDisponibilidad)
+                        SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: colorScheme.primary,
+                          ),
+                        )
+                      else
+                        Icon(
+                          productoNoDisponible
+                              ? Icons.location_off_outlined
+                              : _falloDisponibilidad
+                              ? Icons.cloud_off_outlined
+                              : Icons.storefront_outlined,
+                          size: 22,
+                          color: productoNoDisponible
+                              ? colorScheme.error
+                              : colorScheme.primary,
+                        ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _verificandoDisponibilidad
+                                  ? 'Comprobando disponibilidad'
+                                  : productoNoDisponible
+                                  ? 'No disponible en esta sala'
+                                  : _falloDisponibilidad
+                                  ? 'No se pudo comprobar la disponibilidad'
+                                  : 'Disponible en esta sala',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                color: productoNoDisponible
+                                    ? colorScheme.onErrorContainer
+                                    : colorScheme.onSurface,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              selectedBranch.name,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: productoNoDisponible
+                                    ? colorScheme.onErrorContainer
+                                    : colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
               // ── Sección Descripción ──────────────────────────────────
               if (_producto.descripcion != null &&
                   _producto.descripcion!.isNotEmpty) ...[
@@ -536,7 +655,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         children: [
                           IconButton(
                             tooltip: 'Disminuir cantidad',
-                            onPressed: _cantidad > 1
+                            onPressed: !controlesDeshabilitados && _cantidad > 1
                                 ? () => setState(() => _cantidad--)
                                 : null,
                             icon: const Icon(Icons.remove_rounded),
@@ -554,7 +673,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           ),
                           IconButton(
                             tooltip: 'Aumentar cantidad',
-                            onPressed: () => setState(() => _cantidad++),
+                            onPressed: controlesDeshabilitados
+                                ? null
+                                : () => setState(() => _cantidad++),
                             icon: const Icon(Icons.add_rounded),
                           ),
                         ],
@@ -565,18 +686,35 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       child: SizedBox(
                         height: 48,
                         child: M3EButton.filled(
-                          onPressed: _agregarALista,
+                          onPressed: controlesDeshabilitados
+                              ? null
+                              : _agregarALista,
                           shape: M3EButtonShape.round,
                           decoration: M3EButtonDecoration(
                             backgroundColor: WidgetStatePropertyAll(
-                              colorScheme.primary,
+                              controlesDeshabilitados
+                                  ? colorScheme.surfaceContainerHighest
+                                  : colorScheme.primary,
                             ),
                           ),
                           label: Text(
-                            'Agregar',
-                            style: TextStyle(color: colorScheme.onPrimary),
+                            _verificandoDisponibilidad
+                                ? 'Comprobando...'
+                                : productoNoDisponible
+                                ? 'No disponible'
+                                : 'Agregar',
+                            style: TextStyle(
+                              color: controlesDeshabilitados
+                                  ? colorScheme.onSurfaceVariant
+                                  : colorScheme.onPrimary,
+                            ),
                           ),
-                          icon: const Icon(Icons.add_shopping_cart_rounded),
+                          icon: Icon(
+                            Icons.add_shopping_cart_rounded,
+                            color: controlesDeshabilitados
+                                ? colorScheme.onSurfaceVariant
+                                : colorScheme.onPrimary,
+                          ),
                         ),
                       ),
                     ),
@@ -591,6 +729,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Future<void> _agregarALista() async {
+    if (_disponibleEnSala == false || _verificandoDisponibilidad) return;
     try {
       await ShoppingCartRepository.instance.addProduct(_producto, _cantidad);
       if (!mounted) return;

@@ -1,10 +1,40 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:super_selectos/models/selectos_branch.dart';
 import 'package:super_selectos/services/store_selection_controller.dart';
 import 'package:super_selectos/services/super_selectos_service.dart';
 
 void main() {
+  test('producto 102242 no está disponible en Sonsonate Los Leones', () async {
+    SharedPreferences.setMockInitialValues({});
+    await StoreSelectionController.instance.selectBranch(
+      const SelectosBranch(
+        id: '64',
+        name: 'Sonsonate Los Leones',
+        address: 'Avenida Oidor Ramírez de Quiñonez y Paseo 15 de Septiembre, Sonsonate.',
+        zoneId: 'c4bc6420-14d7-4956-8271-b41711a9d74b',
+      ),
+    );
+    final client = MockClient((request) async {
+      final payload = jsonDecode(request.body) as Map<String, dynamic>;
+      expect(payload['basicFilters']['productIds'], ['102242']);
+      expect(payload['basicFilters']['availableInAnyBranchOfficeId'], ['64']);
+      return http.Response(jsonEncode({'items': [], 'totalItemCount': 0}), 200);
+    });
+    final service = SuperSelectosService(client: client);
+    addTearDown(service.dispose);
+
+    final available = await service.comprobarDisponibilidadEnSalaSeleccionada(
+      '102242',
+    );
+
+    expect(available, isFalse);
+  });
+
   test('Sabores incluye el producto 108992 en Sonsonate Los Leones', () async {
     SharedPreferences.setMockInitialValues({});
     final storeController = StoreSelectionController.instance;

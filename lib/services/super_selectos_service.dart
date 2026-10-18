@@ -1041,6 +1041,60 @@ class SuperSelectosService {
     }
   }
 
+  /// Comprueba si un producto está disponible en la sala seleccionada.
+  ///
+  /// Devuelve `null` cuando el usuario todavía no ha seleccionado una sala.
+  /// Los fallos de red o respuestas inválidas se propagan para que la interfaz
+  /// pueda distinguirlos de un producto realmente no disponible.
+  Future<bool?> comprobarDisponibilidadEnSalaSeleccionada(
+    String productId,
+  ) async {
+    final cleanProductId = productId.trim();
+    final branchId = StoreSelectionController.instance.selectedBranchId;
+    if (cleanProductId.isEmpty || branchId == null || branchId.isEmpty) {
+      return null;
+    }
+
+    final uri = Uri.parse(
+      'https://ecom-exploration.superselectos.com/api/accounts/selectos/products/search',
+    );
+    final response = await _client
+        .post(
+          uri,
+          headers: const {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: jsonEncode({
+            'basicFilters': {
+              'productIds': [cleanProductId],
+              'isActive': true,
+              'availableOnly': true,
+              'availableInAnyBranchOfficeId': [branchId],
+            },
+            'searchText': null,
+            'page': 1,
+            'top': 1,
+          }),
+        )
+        .timeout(const Duration(seconds: 10));
+
+    if (response.statusCode != 200) {
+      throw StateError(
+        'No se pudo comprobar la disponibilidad (${response.statusCode})',
+      );
+    }
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic> ||
+        decoded['items'] is! List<dynamic>) {
+      throw const FormatException('Respuesta de disponibilidad inválida');
+    }
+
+    return (decoded['items'] as List<dynamic>)
+        .whereType<Map<String, dynamic>>()
+        .any((item) => item['productId']?.toString() == cleanProductId);
+  }
+
   Future<SearchResponse> _searchProductsInSelectedBranch({
     String? searchText,
     String? categoryCode,
