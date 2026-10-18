@@ -108,6 +108,19 @@ class ShoppingCartRepository extends ChangeNotifier {
     }
   }
 
+  Future<void> updateSelectedListDateTime(DateTime dateTime) async {
+    await _ensureInitialized();
+    final selectedList = _requireSelectedList();
+    await _database.updateListDateTime(selectedList.id, dateTime);
+
+    final updatedList = ShoppingList(id: selectedList.id, createdAt: dateTime);
+    final listIndex = _lists.indexWhere((list) => list.id == selectedList.id);
+    _lists[listIndex] = updatedList;
+    _lists.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    _selectedList = updatedList;
+    notifyListeners();
+  }
+
   Future<void> deleteSelectedList() async {
     await _ensureInitialized();
     final selectedList = _requireSelectedList();

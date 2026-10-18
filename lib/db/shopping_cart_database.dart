@@ -50,6 +50,16 @@ class ShoppingCartDatabase {
     return ShoppingList(id: id, createdAt: createdAt);
   }
 
+  Future<void> updateListDateTime(int listId, DateTime dateTime) async {
+    final db = await database;
+    await db.update(
+      _listsTable,
+      {'created_at': dateTime.millisecondsSinceEpoch},
+      where: 'id = ?',
+      whereArgs: [listId],
+    );
+  }
+
   Future<void> deleteList(int listId) async {
     final db = await database;
     await db.delete(_listsTable, where: 'id = ?', whereArgs: [listId]);

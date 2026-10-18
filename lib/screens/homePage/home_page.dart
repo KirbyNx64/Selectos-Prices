@@ -24,6 +24,8 @@ import 'package:super_selectos/widgets/app_snackbar.dart';
 import 'package:super_selectos/widgets/app_update_dialog.dart';
 import 'package:super_selectos/widgets/product_card.dart';
 
+enum _ShoppingListEditAction { editDate, editTime, delete }
+
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
 
@@ -46,6 +48,7 @@ class _MyHomePageState extends State<MyHomePage>
   Timer? _offerBannerTimer;
   int barIndex = 0;
   bool _consumeBackForActiveSearch = false;
+  bool _isCartSummaryExpanded = false;
 
   final SuperSelectosService _service = SuperSelectosService();
   final ShoppingCartRepository _cart = ShoppingCartRepository.instance;
@@ -516,6 +519,50 @@ class _MyHomePageState extends State<MyHomePage>
         actions: [
           M3EMenu(
             position: M3EMenuAnchorPosition.bottomEnd,
+            onSelected: (value) {
+              if (value is _ShoppingListEditAction) {
+                _handleShoppingListEditAction(value);
+              }
+            },
+            anchorBuilder: (context, openMenu) {
+              return Center(
+                child: M3EIconButton(
+                  icon: const Icon(Icons.edit_calendar_rounded),
+                  variant: M3EIconButtonVariant.tonal,
+                  size: M3EIconButtonSize.sm,
+                  shape: M3EIconButtonShapeVariant.round,
+                  tooltip: 'Editar lista',
+                  onPressed: _cart.selectedList == null ? null : openMenu,
+                ),
+              );
+            },
+            children: const [
+              M3EMenuGroup(
+                label: 'Editar lista',
+                children: [
+                  M3EMenuEntry(
+                    label: 'Editar fecha',
+                    value: _ShoppingListEditAction.editDate,
+                    leading: Icon(Icons.calendar_today_rounded),
+                  ),
+                  M3EMenuEntry(
+                    label: 'Editar hora',
+                    value: _ShoppingListEditAction.editTime,
+                    leading: Icon(Icons.schedule_rounded),
+                  ),
+                  M3EMenuEntry(
+                    label: 'Eliminar lista',
+                    value: _ShoppingListEditAction.delete,
+                    leading: Icon(Icons.delete_outline_rounded),
+                    isDestructive: true,
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(width: 8),
+          M3EMenu(
+            position: M3EMenuAnchorPosition.bottomEnd,
             selectedValue: _cart.selectedList?.id,
             onSelected: (value) {
               if (value is int) {
@@ -553,12 +600,6 @@ class _MyHomePageState extends State<MyHomePage>
                     label: 'Crear nueva lista',
                     value: -1,
                     leading: Icon(Icons.add_rounded),
-                  ),
-                  M3EMenuEntry(
-                    label: 'Eliminar lista actual',
-                    value: -2,
-                    leading: Icon(Icons.delete_outline_rounded),
-                    isDestructive: true,
                   ),
                 ],
               ),
@@ -1361,30 +1402,76 @@ class _MyHomePageState extends State<MyHomePage>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildCartSummaryRow(
-                      label: 'Total de compra',
-                      amount: _cart.purchaseTotal,
-                      theme: theme,
-                      colorScheme: colorScheme,
+                    ClipRect(
+                      child: AnimatedSize(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeInOutCubic,
+                        alignment: Alignment.bottomCenter,
+                        child: _isCartSummaryExpanded
+                            ? Column(
+                                children: [
+                                  _buildCartSummaryRow(
+                                    label: 'Total de compra',
+                                    amount: _cart.purchaseTotal,
+                                    theme: theme,
+                                    colorScheme: colorScheme,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  _buildCartSummaryRow(
+                                    label: 'Ahorro total',
+                                    amount: _cart.totalSavings,
+                                    theme: theme,
+                                    colorScheme: colorScheme,
+                                  ),
+                                  const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 7),
+                                    child: Divider(height: 1),
+                                  ),
+                                ],
+                              )
+                            : const SizedBox.shrink(),
+                      ),
                     ),
-                    const SizedBox(height: 4),
-                    _buildCartSummaryRow(
-                      label: 'Ahorro total',
-                      amount: _cart.totalSavings,
-                      theme: theme,
-                      colorScheme: colorScheme,
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 7),
-                      child: Divider(height: 1),
-                    ),
-                    _buildCartSummaryRow(
-                      label: 'Total final',
-                      amount: _cart.estimatedTotal,
-                      theme: theme,
-                      colorScheme: colorScheme,
-                      emphasized: true,
-                      amountColor: colorScheme.primary,
+                    Semantics(
+                      button: true,
+                      expanded: _isCartSummaryExpanded,
+                      label: _isCartSummaryExpanded
+                          ? 'Ocultar desglose de compra'
+                          : 'Mostrar desglose de compra',
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () => setState(
+                          () =>
+                              _isCartSummaryExpanded = !_isCartSummaryExpanded,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _buildCartSummaryRow(
+                                  label: 'Total final',
+                                  amount: _cart.estimatedTotal,
+                                  theme: theme,
+                                  colorScheme: colorScheme,
+                                  emphasized: true,
+                                  amountColor: colorScheme.primary,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              AnimatedRotation(
+                                turns: _isCartSummaryExpanded ? 0.5 : 0,
+                                duration: const Duration(milliseconds: 250),
+                                curve: Curves.easeInOutCubic,
+                                child: Icon(
+                                  Icons.keyboard_arrow_up_rounded,
+                                  color: colorScheme.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -1438,10 +1525,7 @@ class _MyHomePageState extends State<MyHomePage>
 
   Future<void> _handleShoppingListSelection(int listId) async {
     try {
-      if (listId == -2) {
-        await _confirmDeleteSelectedList();
-        return;
-      } else if (listId == -1) {
+      if (listId == -1) {
         await _cart.createList();
       } else {
         await _cart.selectList(listId);
@@ -1454,6 +1538,86 @@ class _MyHomePageState extends State<MyHomePage>
         context,
         message: 'No se pudo abrir la lista seleccionada',
       );
+    }
+  }
+
+  Future<void> _handleShoppingListEditAction(
+    _ShoppingListEditAction action,
+  ) async {
+    switch (action) {
+      case _ShoppingListEditAction.editDate:
+        await _editSelectedListDate();
+      case _ShoppingListEditAction.editTime:
+        await _editSelectedListTime();
+      case _ShoppingListEditAction.delete:
+        await _confirmDeleteSelectedList();
+    }
+  }
+
+  Future<void> _editSelectedListDate() async {
+    final selectedList = _cart.selectedList;
+    if (selectedList == null) return;
+
+    final selectedDate = await showDatePicker(
+      context: context,
+      initialDate: selectedList.createdAt,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100, 12, 31),
+      helpText: 'Editar fecha de la lista',
+      cancelText: 'Cancelar',
+      confirmText: 'Guardar',
+    );
+    if (selectedDate == null || !mounted) return;
+
+    final updatedDateTime = DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+      selectedList.createdAt.hour,
+      selectedList.createdAt.minute,
+    );
+    await _saveSelectedListDateTime(updatedDateTime, 'Fecha actualizada');
+  }
+
+  Future<void> _editSelectedListTime() async {
+    final selectedList = _cart.selectedList;
+    if (selectedList == null) return;
+
+    final selectedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(selectedList.createdAt),
+      helpText: 'Editar hora de la lista',
+      cancelText: 'Cancelar',
+      confirmText: 'Guardar',
+    );
+    if (selectedTime == null || !mounted) return;
+
+    final updatedDateTime = DateTime(
+      selectedList.createdAt.year,
+      selectedList.createdAt.month,
+      selectedList.createdAt.day,
+      selectedTime.hour,
+      selectedTime.minute,
+    );
+    await _saveSelectedListDateTime(updatedDateTime, 'Hora actualizada');
+  }
+
+  Future<void> _saveSelectedListDateTime(
+    DateTime dateTime,
+    String successMessage,
+  ) async {
+    try {
+      await _cart.updateSelectedListDateTime(dateTime);
+      if (!mounted) return;
+      setState(() {});
+      AppSnackbar.success(
+        context,
+        message: successMessage,
+        icon: Icons.edit_calendar_rounded,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackbar.error(context, message: 'No se pudo actualizar la lista');
     }
   }
 
