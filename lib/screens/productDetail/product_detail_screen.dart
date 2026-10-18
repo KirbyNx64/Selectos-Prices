@@ -133,9 +133,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   decoration: BoxDecoration(
                     color: colorScheme.surfaceContainerLowest,
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-                    ),
                     boxShadow: [
                       BoxShadow(
                         color: colorScheme.shadow.withValues(alpha: 0.08),

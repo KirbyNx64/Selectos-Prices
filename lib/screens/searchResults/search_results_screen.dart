@@ -289,6 +289,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
       for (final entry in _selectedFilters.values.entries)
         entry.key: {...entry.value},
     };
+    var draftSortOrder = _selectedFilters.sortOrder;
 
     final selection = await showModalBottomSheet<ProductFilterSelection>(
       context: context,
@@ -299,10 +300,12 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            final selectedCount = draft.values.fold<int>(
-              0,
-              (total, values) => total + values.length,
-            );
+            final selectedCount =
+                draft.values.fold<int>(
+                  0,
+                  (total, values) => total + values.length,
+                ) +
+                (draftSortOrder == ProductSortOrder.alphabetically ? 0 : 1);
 
             return SizedBox(
               height: MediaQuery.sizeOf(context).height * 0.82,
@@ -314,7 +317,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
                       children: [
                         Expanded(
                           child: Text(
-                            'Filtrar productos',
+                            'Filtros y orden',
                             style: Theme.of(context).textTheme.headlineSmall
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
@@ -322,7 +325,11 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
                         TextButton(
                           onPressed: selectedCount == 0
                               ? null
-                              : () => setSheetState(draft.clear),
+                              : () => setSheetState(() {
+                                  draft.clear();
+                                  draftSortOrder =
+                                      ProductSortOrder.alphabetically;
+                                }),
                           child: const Text('Limpiar'),
                         ),
                       ],
@@ -330,12 +337,10 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
                   ),
                   const Divider(height: 1),
                   Expanded(
-                    child: ListView.builder(
+                    child: ListView(
                       padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
-                      itemCount: _filterGroups.length,
-                      itemBuilder: (context, groupIndex) {
-                        final group = _filterGroups[groupIndex];
-                        return Padding(
+                      children: [
+                        Padding(
                           padding: const EdgeInsets.only(bottom: 14),
                           child: Card(
                             elevation: 0,
@@ -347,58 +352,93 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                      16,
-                                      8,
-                                      16,
-                                      6,
-                                    ),
-                                    child: Text(
-                                      group.title,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.bold,
+                                  _buildFilterGroupTitle(
+                                    context,
+                                    'Ordenar por',
+                                  ),
+                                  RadioGroup<ProductSortOrder>(
+                                    groupValue: draftSortOrder,
+                                    onChanged: (value) {
+                                      if (value == null) return;
+                                      setSheetState(
+                                        () => draftSortOrder = value,
+                                      );
+                                    },
+                                    child: Column(
+                                      children: [
+                                        for (final order
+                                            in ProductSortOrder.values)
+                                          RadioListTile<ProductSortOrder>(
+                                            value: order,
+                                            title: Text(order.label),
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                                  horizontal: 12,
+                                                ),
+                                            visualDensity:
+                                                VisualDensity.compact,
                                           ),
+                                      ],
                                     ),
                                   ),
-                                  for (final option in group.options)
-                                    CheckboxListTile(
-                                      value:
-                                          draft[group.queryParameter]?.contains(
-                                            option.value,
-                                          ) ??
-                                          false,
-                                      title: Text(option.label),
-                                      controlAffinity:
-                                          ListTileControlAffinity.leading,
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                          ),
-                                      visualDensity: VisualDensity.compact,
-                                      onChanged: (checked) {
-                                        setSheetState(() {
-                                          final selected = draft.putIfAbsent(
-                                            group.queryParameter,
-                                            () => <String>{},
-                                          );
-                                          if (checked ?? false) {
-                                            selected.add(option.value);
-                                          } else {
-                                            selected.remove(option.value);
-                                          }
-                                        });
-                                      },
-                                    ),
                                 ],
                               ),
                             ),
                           ),
-                        );
-                      },
+                        ),
+                        for (final group in _filterGroups)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 14),
+                            child: Card(
+                              elevation: 0,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainer,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildFilterGroupTitle(
+                                      context,
+                                      group.title,
+                                    ),
+                                    for (final option in group.options)
+                                      CheckboxListTile(
+                                        value:
+                                            draft[group.queryParameter]
+                                                ?.contains(option.value) ??
+                                            false,
+                                        title: Text(option.label),
+                                        controlAffinity:
+                                            ListTileControlAffinity.leading,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                            ),
+                                        visualDensity: VisualDensity.compact,
+                                        onChanged: (checked) {
+                                          setSheetState(() {
+                                            final selected = draft.putIfAbsent(
+                                              group.queryParameter,
+                                              () => <String>{},
+                                            );
+                                            if (checked ?? false) {
+                                              selected.add(option.value);
+                                            } else {
+                                              selected.remove(option.value);
+                                            }
+                                          });
+                                        },
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                   Padding(
@@ -408,7 +448,10 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
                       child: FilledButton.icon(
                         onPressed: () => Navigator.pop(
                           sheetContext,
-                          ProductFilterSelection(values: draft),
+                          ProductFilterSelection(
+                            values: draft,
+                            sortOrder: draftSortOrder,
+                          ),
                         ),
                         icon: const Icon(Icons.check_rounded),
                         label: Text(
@@ -440,6 +483,17 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
     } else {
       _ejecutarBusqueda(_currentQuery);
     }
+  }
+
+  Widget _buildFilterGroupTitle(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.titleMedium
+            ?.copyWith(fontWeight: FontWeight.bold),
+      ),
+    );
   }
 
   void _irAPagina(int nuevaPagina) {
@@ -752,7 +806,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
                 child: Row(
                   children: [
                     M3EButton.tonal(
-                      onPressed: _filterGroups.isEmpty ? null : _mostrarFiltros,
+                      onPressed: _mostrarFiltros,
                       shape: M3EButtonShape.round,
                       icon: const Icon(Icons.tune_rounded, size: 18),
                       label: Text(

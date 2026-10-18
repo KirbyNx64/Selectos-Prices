@@ -326,7 +326,7 @@ class _DiscountBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(maxWidth: 130),
+      constraints: const BoxConstraints(maxWidth: 180),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: backgroundColor,
@@ -338,7 +338,7 @@ class _DiscountBadge extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: foregroundColor,
-          fontSize: 10,
+          fontSize: 12,
           fontWeight: FontWeight.w800,
           letterSpacing: 0.2,
         ),

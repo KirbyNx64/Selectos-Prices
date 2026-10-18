@@ -1504,7 +1504,7 @@ class _MyHomePageState extends State<MyHomePage>
                     color: emphasized
                         ? (amountColor ?? colorScheme.onSurface)
                         : colorScheme.onSurfaceVariant,
-                    fontSize: emphasized ? 18 : null,
+                    fontSize: emphasized ? 20 : null,
                     fontWeight: emphasized ? FontWeight.w800 : FontWeight.w600,
                   ),
         ),
@@ -1729,8 +1729,8 @@ class _MyHomePageState extends State<MyHomePage>
               height: 72,
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: Colors.white,
                 borderRadius: BorderRadius.circular(14),
+                color: colorScheme.surfaceContainerLowest,
               ),
               child: product.imagen?.isNotEmpty ?? false
                   ? CachedNetworkImage(
@@ -1892,6 +1892,7 @@ class _MyHomePageState extends State<MyHomePage>
                   Text(
                     '\$${item.regularSubtotal.toStringAsFixed(2)}',
                     style: theme.textTheme.labelSmall?.copyWith(
+                      fontSize: 12,
                       color: colorScheme.onSurfaceVariant,
                       decoration: TextDecoration.lineThrough,
                       decorationColor: colorScheme.onSurfaceVariant,
@@ -1900,6 +1901,7 @@ class _MyHomePageState extends State<MyHomePage>
                 Text(
                   '\$${item.subtotal.toStringAsFixed(2)}',
                   style: theme.textTheme.titleSmall?.copyWith(
+                    fontSize: 17,
                     color: item.totalSavings > 0 ? colorScheme.primary : null,
                     fontWeight: FontWeight.w800,
                   ),

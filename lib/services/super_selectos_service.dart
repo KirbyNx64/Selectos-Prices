@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:html/dom.dart' as html_dom;
 import 'package:html/parser.dart' as html_parser;
 import 'package:http/http.dart' as http;
@@ -43,15 +44,34 @@ class ProductFilterGroup {
   });
 }
 
+enum ProductSortOrder {
+  alphabetically('A - Z (Lo normal)', 'AlphabeticallyAsc'),
+  alphabeticallyDesc('Z - A', 'AlphabeticallyDesc'),
+  highestPrice('Precio más alto', 'HighestPrice'),
+  lowestPrice('Precio más bajo', 'LowestPrice');
+
+  const ProductSortOrder(this.label, this.queryValue);
+
+  final String label;
+  final String? queryValue;
+}
+
 class ProductFilterSelection {
   final Map<String, Set<String>> values;
+  final ProductSortOrder sortOrder;
 
-  const ProductFilterSelection({this.values = const {}});
+  const ProductFilterSelection({
+    this.values = const {},
+    this.sortOrder = ProductSortOrder.alphabetically,
+  });
 
-  bool get isEmpty => values.values.every((items) => items.isEmpty);
+  bool get isEmpty =>
+      values.values.every((items) => items.isEmpty) &&
+      sortOrder == ProductSortOrder.alphabetically;
 
   int get count =>
-      values.values.fold(0, (total, items) => total + items.length);
+      values.values.fold(0, (total, items) => total + items.length) +
+      (sortOrder == ProductSortOrder.alphabetically ? 0 : 1);
 
   Set<String> selectedFor(String queryParameter) =>
       values[queryParameter] ?? const <String>{};
@@ -63,6 +83,8 @@ class ProductFilterSelection {
       final selected = entry.value.toList();
       parameters[entry.key] = selected.length == 1 ? selected.first : selected;
     }
+    final orderBy = sortOrder.queryValue;
+    if (orderBy != null) parameters['orderBy'] = orderBy;
     return parameters;
   }
 }
@@ -114,10 +136,7 @@ class SuperSelectosService {
     final response = await _client
         .get(
           Uri.parse('https://www.superselectos.com/'),
-          headers: const {
-            'User-Agent': 'Mozilla/5.0',
-            'Accept': 'text/html,application/xhtml+xml',
-          },
+          headers: _catalogHeaders(),
         )
         .timeout(const Duration(seconds: 12));
     if (response.statusCode != 200) {
@@ -208,15 +227,10 @@ class SuperSelectosService {
       queryParameters['page'] = pagina.toString();
     }
     final pageUri = uri.replace(queryParameters: queryParameters);
+    _logRequestUri(pageUri);
 
     final response = await _client
-        .get(
-          pageUri,
-          headers: const {
-            'User-Agent': 'Mozilla/5.0',
-            'Accept': 'text/html,application/xhtml+xml',
-          },
-        )
+        .get(pageUri, headers: _catalogHeaders())
         .timeout(const Duration(seconds: 12));
     if (response.statusCode != 200) {
       throw StateError('No se pudieron cargar los productos de la campaña');
@@ -320,16 +334,10 @@ class SuperSelectosService {
         pagina: pagina,
         filters: filters,
       );
+      _logRequestUri(uri);
 
       final response = await _client
-          .get(
-            uri,
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-              'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-            },
-          )
+          .get(uri, headers: _catalogHeaders())
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
@@ -340,7 +348,8 @@ class SuperSelectosService {
         );
       }
 
-      if (StoreSelectionController.instance.selectedBranchId != null) {
+      if (StoreSelectionController.instance.selectedBranchId != null &&
+          _supportsBranchApiSorting(filters.sortOrder)) {
         return await _searchProductsInSelectedBranch(
           categoryCode: cleanCode,
           page: pagina,
@@ -350,9 +359,19 @@ class SuperSelectosService {
         );
       }
 
-      final productos = await _filterBySelectedBranch(
-        _parsearProductos(response.body, null),
-      );
+      final parsedProducts = _parsearProductos(response.body, null);
+      if (parsedProducts.isEmpty &&
+          StoreSelectionController.instance.selectedBranchId != null) {
+        return await _searchProductsInSelectedBranch(
+          categoryCode: cleanCode,
+          page: pagina,
+          filters: filters,
+          resolvedTerm: categoryNombre ?? cleanCode,
+          catalogHtml: response.body,
+        );
+      }
+
+      final productos = await _filterBySelectedBranch(parsedProducts);
       final paginacion = _parsearPaginacion(response.body);
       final filterGroups = _parsearFiltros(response.body);
 
@@ -519,14 +538,7 @@ class SuperSelectosService {
         'https://www.superselectos.com/products?productId=$cleanId',
       );
       final response = await _client
-          .get(
-            uri,
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-              'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-            },
-          )
+          .get(uri, headers: _catalogHeaders())
           .timeout(const Duration(seconds: 10));
 
       if (response.statusCode != 200) {
@@ -772,16 +784,10 @@ class SuperSelectosService {
         pagina: pagina,
         filters: filters,
       );
+      _logRequestUri(uri);
 
       final response = await _client
-          .get(
-            uri,
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-              'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-            },
-          )
+          .get(uri, headers: _catalogHeaders())
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
@@ -793,7 +799,8 @@ class SuperSelectosService {
         );
       }
 
-      if (StoreSelectionController.instance.selectedBranchId != null) {
+      if (StoreSelectionController.instance.selectedBranchId != null &&
+          _supportsBranchApiSorting(filters.sortOrder)) {
         return await _searchProductsInSelectedBranch(
           searchText: terminoBusqueda,
           page: pagina,
@@ -804,9 +811,20 @@ class SuperSelectosService {
         );
       }
 
-      var productos = await _filterBySelectedBranch(
-        _parsearProductos(response.body, codigoDetectado),
-      );
+      final parsedProducts = _parsearProductos(response.body, codigoDetectado);
+      if (parsedProducts.isEmpty &&
+          StoreSelectionController.instance.selectedBranchId != null) {
+        return await _searchProductsInSelectedBranch(
+          searchText: terminoBusqueda,
+          page: pagina,
+          filters: filters,
+          resolvedTerm: terminoBusqueda,
+          barcode: codigoDetectado,
+          catalogHtml: response.body,
+        );
+      }
+
+      var productos = await _filterBySelectedBranch(parsedProducts);
       var paginacion = _parsearPaginacion(response.body);
       var filterGroups = _parsearFiltros(response.body);
 
@@ -820,13 +838,9 @@ class SuperSelectosService {
           pagina: pagina,
           filters: filters,
         );
+        _logRequestUri(fallbackUri);
         final fallbackResponse = await _client
-            .get(
-              fallbackUri,
-              headers: {
-                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-              },
-            )
+            .get(fallbackUri, headers: _catalogHeaders())
             .timeout(const Duration(seconds: 10));
 
         if (fallbackResponse.statusCode == 200) {
@@ -867,11 +881,49 @@ class SuperSelectosService {
   }) {
     final queryParameters = <String, dynamic>{
       primaryParameter: primaryValue,
-      if (pagina > 1 || !filters.isEmpty) 'page': pagina.toString(),
       ...filters.toQueryParameters(),
+      'page': pagina.toString(),
     };
 
     return Uri.https('www.superselectos.com', '/products', queryParameters);
+  }
+
+  void _logRequestUri(Uri uri) {
+    debugPrint('[SuperSelectos] GET $uri');
+  }
+
+  Map<String, String> _catalogHeaders() {
+    final branchId = StoreSelectionController.instance.selectedBranchId;
+    final headers = <String, String>{
+      'User-Agent':
+          'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 '
+          '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept':
+          'text/html,application/xhtml+xml,application/xml;q=0.9,'
+          'image/avif,image/webp,*/*;q=0.8',
+      'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
+    };
+    if (branchId == null || branchId.isEmpty) return headers;
+
+    // La tienda seleccionada no forma parte de la URL de productos. El sitio
+    // la conserva en esta cookie y la usa antes de ordenar y paginar, algo
+    // especialmente importante para HighestPrice y LowestPrice.
+    final branchSelection = base64Encode(
+      utf8.encode(
+        jsonEncode({
+          'BranchOfficeId': branchId,
+          'IsHomeDelivery': false,
+          'ExpirationDate': DateTime.now()
+              .toUtc()
+              .add(const Duration(days: 365))
+              .toIso8601String(),
+          'IsExpired': false,
+        }),
+      ),
+    );
+    headers['Cookie'] =
+        'UseCookies=True; BranchOfficeIdselectos=$branchSelection';
+    return headers;
   }
 
   /// Conveniencia para obtener directamente la lista de productos
@@ -898,14 +950,7 @@ class SuperSelectosService {
     try {
       final uri = Uri.parse('https://www.superselectos.com/');
       final response = await _client
-          .get(
-            uri,
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-              'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-            },
-          )
+          .get(uri, headers: _catalogHeaders())
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
@@ -983,9 +1028,14 @@ class SuperSelectosService {
           .map((item) => item['productId']?.toString())
           .whereType<String>()
           .toSet();
-      return products
+      final availableProducts = products
           .where((product) => availableIds.contains(product.id))
           .toList(growable: false);
+      debugPrint(
+        '[SuperSelectos] Sala $branchId: '
+        '${availableProducts.length}/${products.length} productos disponibles',
+      );
+      return availableProducts;
     } catch (_) {
       rethrow;
     }
@@ -1027,6 +1077,7 @@ class SuperSelectosService {
       'searchText': searchText?.trim().isEmpty ?? true
           ? null
           : searchText!.trim(),
+      'orderBy': _branchApiOrderBy(filters.sortOrder),
       'page': page,
       'top': pageSize,
     });
@@ -1117,6 +1168,23 @@ class SuperSelectosService {
       ),
       filterGroups: _parsearFiltros(catalogHtml),
     );
+  }
+
+  bool _supportsBranchApiSorting(ProductSortOrder sortOrder) {
+    return sortOrder == ProductSortOrder.alphabetically ||
+        sortOrder == ProductSortOrder.alphabeticallyDesc;
+  }
+
+  List<Map<String, String>> _branchApiOrderBy(ProductSortOrder sortOrder) {
+    return switch (sortOrder) {
+      ProductSortOrder.alphabetically => const [
+        {'field': 'Name', 'orderType': 'Ascending'},
+      ],
+      ProductSortOrder.alphabeticallyDesc => const [
+        {'field': 'Name', 'orderType': 'Descending'},
+      ],
+      ProductSortOrder.highestPrice || ProductSortOrder.lowestPrice => const [],
+    };
   }
 
   Product _productFromSearchApi(Map<String, dynamic> item, String? barcode) {
@@ -1214,18 +1282,20 @@ class SuperSelectosService {
       cartElem.remove();
     }
 
+    final hasProductListing =
+        document.querySelector('.listado-productos') != null;
     var tarjetas = document.querySelectorAll(
       '.listado-productos .producto-box',
     );
-    if (tarjetas.isEmpty) {
+    if (!hasProductListing && tarjetas.isEmpty) {
       tarjetas = document.querySelectorAll(
         '.listado-productos li.item-producto',
       );
     }
-    if (tarjetas.isEmpty) {
+    if (!hasProductListing && tarjetas.isEmpty) {
       tarjetas = document.querySelectorAll('.item-producto .producto-box');
     }
-    if (tarjetas.isEmpty) {
+    if (!hasProductListing && tarjetas.isEmpty) {
       tarjetas = document.querySelectorAll('.producto-box');
     }
 
