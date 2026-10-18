@@ -2,6 +2,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
+import 'package:photo_view/photo_view.dart';
+import 'package:photo_view/photo_view_gallery.dart';
 import 'package:super_selectos/models/product.dart';
 import 'package:super_selectos/models/shopping_cart_item.dart';
 import 'package:super_selectos/services/shopping_cart_repository.dart';
@@ -27,8 +29,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _verificandoDisponibilidad = false;
   bool? _disponibleEnSala;
   bool _falloDisponibilidad = false;
+  bool _abriendoGaleria = false;
   late final SuperSelectosService _service;
   late final bool _ownsService;
+  late final Future<void> _cargaDetalles;
 
   @override
   void initState() {
@@ -36,7 +40,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     _ownsService = widget.service == null;
     _service = widget.service ?? SuperSelectosService();
     _producto = widget.producto;
-    _cargarDetallesCompletos();
+    _cargaDetalles = _cargarDetallesCompletos();
     _comprobarDisponibilidad();
   }
 
@@ -193,16 +197,45 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             setState(() => _currentImageIndex = index);
                           },
                           itemBuilder: (context, index) {
-                            return CachedNetworkImage(
-                              imageUrl: imagenes[index],
-                              fadeInDuration: Duration.zero,
-                              fadeOutDuration: Duration.zero,
-                              fit: BoxFit.contain,
-                              errorWidget: (context, url, error) => Center(
-                                child: Icon(
-                                  Icons.image_not_supported_outlined,
-                                  size: 72,
-                                  color: colorScheme.onSurfaceVariant,
+                            return Semantics(
+                              button: true,
+                              label: 'Abrir imagen en pantalla completa',
+                              child: GestureDetector(
+                                key: ValueKey('product-image-$index'),
+                                behavior: HitTestBehavior.opaque,
+                                onTap: _abriendoGaleria
+                                    ? null
+                                    : () => _abrirImagenPantallaCompleta(index),
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    CachedNetworkImage(
+                                      imageUrl: imagenes[index],
+                                      fadeInDuration: Duration.zero,
+                                      fadeOutDuration: Duration.zero,
+                                      fit: BoxFit.contain,
+                                      errorWidget: (context, url, error) =>
+                                          Center(
+                                            child: Icon(
+                                              Icons
+                                                  .image_not_supported_outlined,
+                                              size: 72,
+                                              color:
+                                                  colorScheme.onSurfaceVariant,
+                                            ),
+                                          ),
+                                    ),
+                                    if (_abriendoGaleria &&
+                                        index == _currentImageIndex)
+                                      ColoredBox(
+                                        color: colorScheme.surface.withValues(
+                                          alpha: 0.62,
+                                        ),
+                                        child: const Center(
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ),
                             );
@@ -794,6 +827,38 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
+  Future<void> _abrirImagenPantallaCompleta(int requestedIndex) async {
+    if (_abriendoGaleria) return;
+    setState(() => _abriendoGaleria = true);
+
+    await _cargaDetalles;
+    if (!mounted) return;
+
+    final imagenes = _producto.todasLasImagenes;
+    if (imagenes.isEmpty) {
+      setState(() => _abriendoGaleria = false);
+      return;
+    }
+
+    final initialIndex = requestedIndex.clamp(0, imagenes.length - 1);
+    setState(() => _abriendoGaleria = false);
+
+    final selectedIndex = await Navigator.push<int>(
+      context,
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => _FullscreenProductGallery(
+          images: imagenes,
+          initialIndex: initialIndex,
+        ),
+      ),
+    );
+    if (!mounted || selectedIndex == null) return;
+
+    _pageController.jumpToPage(selectedIndex);
+    setState(() => _currentImageIndex = selectedIndex);
+  }
+
   Future<void> _agregarALista() async {
     if (_disponibleEnSala == false || _verificandoDisponibilidad) return;
     try {
@@ -824,6 +889,111 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         content: Text('Código $codigo copiado al portapapeles'),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+}
+
+class _FullscreenProductGallery extends StatefulWidget {
+  const _FullscreenProductGallery({
+    required this.images,
+    required this.initialIndex,
+  });
+
+  final List<String> images;
+  final int initialIndex;
+
+  @override
+  State<_FullscreenProductGallery> createState() =>
+      _FullscreenProductGalleryState();
+}
+
+class _FullscreenProductGalleryState extends State<_FullscreenProductGallery> {
+  late final PageController _pageController;
+  late final List<PhotoViewController> _photoControllers;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+    _photoControllers = List.generate(
+      widget.images.length,
+      (_) => PhotoViewController(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    for (final controller in _photoControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _close() => Navigator.pop(context, _currentIndex);
+
+  PhotoViewScaleState _toggleZoom(PhotoViewScaleState currentState) {
+    return currentState == PhotoViewScaleState.initial
+        ? PhotoViewScaleState.covering
+        : PhotoViewScaleState.initial;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      key: const ValueKey('fullscreen-product-gallery'),
+      backgroundColor: Colors.black,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.black.withValues(alpha: 0.55),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          tooltip: 'Cerrar',
+          onPressed: _close,
+          icon: const Icon(Icons.close_rounded),
+        ),
+        title: Text(
+          widget.images.length > 1
+              ? '${_currentIndex + 1} de ${widget.images.length}'
+              : 'Imagen del producto',
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        centerTitle: true,
+      ),
+      body: PhotoViewGallery.builder(
+        pageController: _pageController,
+        itemCount: widget.images.length,
+        backgroundDecoration: const BoxDecoration(color: Colors.black),
+        onPageChanged: (index) => setState(() => _currentIndex = index),
+        loadingBuilder: (context, progress) => Center(
+          child: CircularProgressIndicator(
+            value: progress?.expectedTotalBytes == null
+                ? null
+                : progress!.cumulativeBytesLoaded /
+                      progress.expectedTotalBytes!,
+            color: Colors.white,
+          ),
+        ),
+        builder: (context, index) => PhotoViewGalleryPageOptions(
+          imageProvider: CachedNetworkImageProvider(widget.images[index]),
+          controller: _photoControllers[index],
+          initialScale: PhotoViewComputedScale.contained,
+          minScale: PhotoViewComputedScale.contained,
+          maxScale: PhotoViewComputedScale.covered * 5,
+          scaleStateCycle: _toggleZoom,
+          filterQuality: FilterQuality.high,
+          errorBuilder: (context, error, stackTrace) => const Center(
+            child: Icon(
+              Icons.image_not_supported_outlined,
+              size: 80,
+              color: Colors.white70,
+            ),
+          ),
+        ),
       ),
     );
   }

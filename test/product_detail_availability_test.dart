@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:photo_view/photo_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:super_selectos/models/product.dart';
 import 'package:super_selectos/models/selectos_branch.dart';
@@ -70,6 +71,94 @@ void main() {
     expect(
       tester.getTopLeft(find.text('No disponible en esta sala')).dy,
       greaterThan(tester.getTopLeft(find.text(r'$1.25').first).dy),
+    );
+  });
+
+  testWidgets('abre la imagen del producto en pantalla completa', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    await StoreSelectionController.instance.selectBranch(
+      const SelectosBranch(
+        id: '64',
+        name: 'Sonsonate Los Leones',
+        address: 'Sonsonate',
+        zoneId: '',
+      ),
+    );
+    final service = _UnavailableProductService();
+    addTearDown(service.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ProductDetailScreen(
+          producto: const Product(
+            id: 'gallery-product',
+            nombre: 'Producto con imágenes',
+            precio: 2,
+            precioFinal: 2,
+            descripcion: 'Descripción',
+            imagenes: [
+              'https://example.invalid/product-1.png',
+              'https://example.invalid/product-2.png',
+            ],
+          ),
+          service: service,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byKey(const ValueKey('product-image-0')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(
+      find.byKey(const ValueKey('fullscreen-product-gallery')),
+      findsOneWidget,
+    );
+    expect(find.byType(PhotoView), findsOneWidget);
+    expect(find.text('1 de 2'), findsOneWidget);
+
+    final viewerFinder = find.byType(PhotoView);
+    final viewer = tester.widget<PhotoView>(viewerFinder);
+    final scaleStateCycle = viewer.scaleStateCycle!;
+    expect(
+      scaleStateCycle(PhotoViewScaleState.initial),
+      PhotoViewScaleState.covering,
+    );
+    expect(
+      scaleStateCycle(PhotoViewScaleState.covering),
+      PhotoViewScaleState.initial,
+    );
+    expect(
+      scaleStateCycle(PhotoViewScaleState.originalSize),
+      PhotoViewScaleState.initial,
+    );
+
+    final center = tester.getCenter(viewerFinder);
+    final firstFinger = await tester.startGesture(
+      center.translate(-24, 0),
+      pointer: 1,
+    );
+    await tester.pump(const Duration(milliseconds: 50));
+    final secondFinger = await tester.startGesture(
+      center.translate(24, 0),
+      pointer: 2,
+    );
+    await firstFinger.moveBy(const Offset(-70, 0));
+    await secondFinger.moveBy(const Offset(70, 0));
+    await tester.pump();
+    await firstFinger.up();
+    await secondFinger.up();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.byIcon(Icons.close_rounded));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('fullscreen-product-gallery')),
+      findsNothing,
     );
   });
 }
