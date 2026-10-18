@@ -595,6 +595,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 'Tu producto',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 6),
@@ -604,8 +605,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     child: Text(
                       'Total ',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w700,
+                        fontSize: 16,
                       ),
                     ),
                   ),

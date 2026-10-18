@@ -2,6 +2,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:super_selectos/models/product.dart';
+import 'package:super_selectos/screens/homePage/barcode_scanner_screen.dart';
 import 'package:super_selectos/screens/productDetail/product_detail_screen.dart';
 import 'package:super_selectos/services/android_platform_version.dart';
 import 'package:super_selectos/services/super_selectos_service.dart';
@@ -610,7 +611,36 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
             expandOnFocus: true,
             controller: _searchController,
             hintText: 'Buscar producto...',
-            leading: const Icon(Icons.search),
+            trailing: [
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _searchController,
+                builder: (context, value, _) {
+                  final hasQuery = value.text.trim().isNotEmpty;
+                  return M3EIconButton(
+                    icon: Icon(
+                      hasQuery
+                          ? Icons.search_rounded
+                          : Icons.qr_code_scanner_rounded,
+                    ),
+                    variant: M3EIconButtonVariant.filled,
+                    size: M3EIconButtonSize.sm,
+                    shape: M3EIconButtonShapeVariant.round,
+                    tooltip: hasQuery ? 'Buscar' : 'Escanear código de barras',
+                    onPressed: hasQuery
+                        ? () => _ejecutarNuevaBusqueda(value.text)
+                        : () {
+                            _dismissSearch();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const BarcodeScannerScreen(),
+                              ),
+                            );
+                          },
+                  );
+                },
+              ),
+            ],
             showClearButton: true,
             onSubmitted: _ejecutarNuevaBusqueda,
             contextMenuBuilder: (context, editableTextState) {

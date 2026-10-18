@@ -59,6 +59,36 @@ void main() {
     },
   );
 
+  testWidgets('QR action becomes search action when text is entered', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
+
+    final searchBar = find.byType(M3ESearchBar);
+    final qrAction = find.widgetWithIcon(
+      M3EIconButton,
+      Icons.qr_code_scanner_rounded,
+    );
+    expect(qrAction, findsOneWidget);
+
+    await tester.enterText(searchBar, 'leche');
+    await tester.pump();
+
+    expect(qrAction, findsNothing);
+    final searchAction = find.widgetWithIcon(
+      M3EIconButton,
+      Icons.search_rounded,
+    );
+    expect(searchAction, findsOneWidget);
+
+    await tester.tap(searchAction);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.byType(SearchResultsScreen), findsOneWidget);
+  });
+
   testWidgets('Android back returns from a navigation section to Inicio', (
     WidgetTester tester,
   ) async {
@@ -94,5 +124,30 @@ void main() {
 
     expect(find.byType(SearchResultsScreen), findsOneWidget);
     expect(find.byType(M3ESearchBar), findsOneWidget);
+  });
+
+  testWidgets('Results QR action becomes search action when text is entered', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: SearchResultsScreen(initialQuery: '')),
+    );
+    await tester.pumpAndSettle();
+
+    final searchBar = find.byType(M3ESearchBar);
+    final qrAction = find.widgetWithIcon(
+      M3EIconButton,
+      Icons.qr_code_scanner_rounded,
+    );
+    expect(qrAction, findsOneWidget);
+
+    await tester.enterText(searchBar, 'arroz');
+    await tester.pump();
+
+    expect(qrAction, findsNothing);
+    expect(
+      find.widgetWithIcon(M3EIconButton, Icons.search_rounded),
+      findsOneWidget,
+    );
   });
 }

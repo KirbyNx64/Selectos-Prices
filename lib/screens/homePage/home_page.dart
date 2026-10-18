@@ -728,22 +728,35 @@ class _MyHomePageState extends State<MyHomePage>
                           expandOnFocus: true,
                           controller: _searchController,
                           hintText: '¿Qué estás buscando?',
-                          leading: const Icon(Icons.search),
                           trailing: [
-                            M3EIconButton(
-                              icon: const Icon(Icons.qr_code_scanner_rounded),
-                              variant: M3EIconButtonVariant.filled,
-                              size: M3EIconButtonSize.sm,
-                              shape: M3EIconButtonShapeVariant.round,
-                              tooltip: 'Escanear código de barras',
-                              onPressed: () {
-                                _dismissSearch();
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        const BarcodeScannerScreen(),
+                            ValueListenableBuilder<TextEditingValue>(
+                              valueListenable: _searchController,
+                              builder: (context, value, _) {
+                                final hasQuery = value.text.trim().isNotEmpty;
+                                return M3EIconButton(
+                                  icon: Icon(
+                                    hasQuery
+                                        ? Icons.search_rounded
+                                        : Icons.qr_code_scanner_rounded,
                                   ),
+                                  variant: M3EIconButtonVariant.filled,
+                                  size: M3EIconButtonSize.sm,
+                                  shape: M3EIconButtonShapeVariant.round,
+                                  tooltip: hasQuery
+                                      ? 'Buscar'
+                                      : 'Escanear código de barras',
+                                  onPressed: hasQuery
+                                      ? () => _irAResultados(value.text)
+                                      : () {
+                                          _dismissSearch();
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const BarcodeScannerScreen(),
+                                            ),
+                                          );
+                                        },
                                 );
                               },
                             ),
