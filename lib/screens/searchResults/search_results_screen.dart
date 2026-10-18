@@ -452,7 +452,12 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      8,
+                      16,
+                      16 + MediaQuery.viewPaddingOf(context).bottom,
+                    ),
                     child: SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(

@@ -12,6 +12,7 @@ import 'package:super_selectos/models/product.dart';
 import 'package:super_selectos/models/selectos_branch.dart';
 import 'package:super_selectos/models/shopping_cart_item.dart';
 import 'package:super_selectos/screens/categories/subcategories_screen.dart';
+import 'package:super_selectos/screens/favorites/favorites_screen.dart';
 import 'package:super_selectos/screens/homePage/barcode_scanner_screen.dart';
 import 'package:super_selectos/screens/productDetail/product_detail_screen.dart';
 import 'package:super_selectos/screens/searchResults/search_results_screen.dart';
@@ -686,6 +687,22 @@ class _MyHomePageState extends State<MyHomePage>
                   ),
                 ),
                 const SizedBox(width: 8),
+                M3EIconButton(
+                  icon: const Icon(Icons.favorite_border_rounded),
+                  variant: M3EIconButtonVariant.tonal,
+                  size: M3EIconButtonSize.sm,
+                  shape: M3EIconButtonShapeVariant.round,
+                  tooltip: 'Mis productos',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const FavoritesScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(width: 4),
                 M3EIconButton(
                   icon: const Icon(Icons.settings_rounded),
                   variant: M3EIconButtonVariant.tonal,

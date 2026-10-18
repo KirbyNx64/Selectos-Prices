@@ -6,6 +6,7 @@ import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:super_selectos/models/product.dart';
 import 'package:super_selectos/models/shopping_cart_item.dart';
+import 'package:super_selectos/services/favorites_repository.dart';
 import 'package:super_selectos/services/shopping_cart_repository.dart';
 import 'package:super_selectos/services/store_selection_controller.dart';
 import 'package:super_selectos/services/super_selectos_service.dart';
@@ -30,6 +31,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool? _disponibleEnSala;
   bool _falloDisponibilidad = false;
   bool _abriendoGaleria = false;
+  bool _actualizandoFavorito = false;
   late final SuperSelectosService _service;
   late final bool _ownsService;
   late final Future<void> _cargaDetalles;
@@ -151,6 +153,33 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
         centerTitle: true,
         actions: [
+          Center(
+            child: ListenableBuilder(
+              listenable: FavoritesRepository.instance,
+              builder: (context, _) {
+                final esFavorito = FavoritesRepository.instance.isFavorite(
+                  _producto,
+                );
+                return M3EIconButton(
+                  icon: Icon(
+                    esFavorito
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                  ),
+                  variant: esFavorito
+                      ? M3EIconButtonVariant.filled
+                      : M3EIconButtonVariant.tonal,
+                  size: M3EIconButtonSize.sm,
+                  shape: M3EIconButtonShapeVariant.round,
+                  tooltip: esFavorito
+                      ? 'Quitar de Mis productos'
+                      : 'Agregar a Mis productos',
+                  onPressed: _actualizandoFavorito ? null : _toggleFavorito,
+                );
+              },
+            ),
+          ),
+          const SizedBox(width: 4),
           Center(
             child: Padding(
               padding: const EdgeInsets.only(right: 12),
@@ -872,6 +901,36 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     } catch (_) {
       if (!mounted) return;
       AppSnackbar.error(context, message: 'No se pudo guardar el producto');
+    }
+  }
+
+  Future<void> _toggleFavorito() async {
+    if (_actualizandoFavorito) return;
+    setState(() => _actualizandoFavorito = true);
+    try {
+      final agregado = await FavoritesRepository.instance.toggle(_producto);
+      if (!mounted) return;
+      if (agregado) {
+        AppSnackbar.success(
+          context,
+          message: '${_producto.nombre} agregado a Mis productos',
+          icon: Icons.favorite_rounded,
+        );
+      } else {
+        AppSnackbar.success(
+          context,
+          message: '${_producto.nombre} eliminado de Mis productos',
+          icon: Icons.favorite_border_rounded,
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackbar.error(
+        context,
+        message: 'No se pudo actualizar Mis productos',
+      );
+    } finally {
+      if (mounted) setState(() => _actualizandoFavorito = false);
     }
   }
 
