@@ -33,7 +33,7 @@ class ShoppingCartRepository extends ChangeNotifier {
       _items.fold(0, (total, item) => total + item.regularSubtotal);
 
   double get totalSavings =>
-      _items.fold(0, (total, item) => total + item.promotionSavings);
+      _items.fold(0, (total, item) => total + item.totalSavings);
 
   double get estimatedTotal =>
       _items.fold(0, (total, item) => total + item.subtotal);

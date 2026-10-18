@@ -1759,13 +1759,45 @@ class _MyHomePageState extends State<MyHomePage>
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    '\$${item.unitPrice.toStringAsFixed(2)} c/u',
-                    style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
-                      fontSize: 12,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        '\$${item.unitPrice.toStringAsFixed(2)} c/u',
+                        style: TextStyle(
+                          color: item.unitDiscount > 0
+                              ? colorScheme.primary
+                              : colorScheme.onSurfaceVariant,
+                          fontSize: 12,
+                          fontWeight: item.unitDiscount > 0
+                              ? FontWeight.w700
+                              : null,
+                        ),
+                      ),
+                      if (item.unitDiscount > 0) ...[
+                        const SizedBox(width: 6),
+                        Text(
+                          '\$${item.regularUnitPrice.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 11,
+                            decoration: TextDecoration.lineThrough,
+                            decorationColor: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
+                  if (item.unitDiscount > 0) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      '-\$${item.unitDiscount.toStringAsFixed(2)} de descuento',
+                      style: TextStyle(
+                        color: colorScheme.error,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                   if (quantityPromotion != null) ...[
                     const SizedBox(height: 2),
                     Text(
@@ -1856,7 +1888,7 @@ class _MyHomePageState extends State<MyHomePage>
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                if (item.promotionSavings > 0)
+                if (item.totalSavings > 0)
                   Text(
                     '\$${item.regularSubtotal.toStringAsFixed(2)}',
                     style: theme.textTheme.labelSmall?.copyWith(
@@ -1868,9 +1900,7 @@ class _MyHomePageState extends State<MyHomePage>
                 Text(
                   '\$${item.subtotal.toStringAsFixed(2)}',
                   style: theme.textTheme.titleSmall?.copyWith(
-                    color: item.promotionSavings > 0
-                        ? colorScheme.primary
-                        : null,
+                    color: item.totalSavings > 0 ? colorScheme.primary : null,
                     fontWeight: FontWeight.w800,
                   ),
                 ),

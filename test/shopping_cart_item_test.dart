@@ -42,6 +42,22 @@ void main() {
     );
   }
 
+  ShoppingCartItem catalogDiscountItem(int quantity) {
+    return ShoppingCartItem(
+      key: 'discounted',
+      quantity: quantity,
+      product: const Product(
+        id: 'discounted',
+        nombre: 'Producto con descuento',
+        precio: 11.75,
+        precioFinal: 11.75,
+        precioOriginal: 13.05,
+        descuento: 1.30,
+        tieneDescuento: true,
+      ),
+    );
+  }
+
   group('ShoppingCartItem quantity promotion', () {
     test('parses the quantity and bundle price', () {
       final promotion = itemWithQuantity(1).quantityPromotion;
@@ -122,6 +138,28 @@ void main() {
       expect(secondUnitDiscountItem(1).promotionSavings, 0);
       expect(secondUnitDiscountItem(2).promotionSavings, closeTo(3.45, 0.0001));
       expect(secondUnitDiscountItem(4).promotionSavings, closeTo(6.90, 0.0001));
+    });
+  });
+
+  group('ShoppingCartItem catalog discount', () {
+    test('keeps the original price and applies the unit discount', () {
+      final item = catalogDiscountItem(1);
+
+      expect(item.regularUnitPrice, closeTo(13.05, 0.0001));
+      expect(item.unitPrice, closeTo(11.75, 0.0001));
+      expect(item.unitDiscount, closeTo(1.30, 0.0001));
+      expect(item.regularSubtotal, closeTo(13.05, 0.0001));
+      expect(item.subtotal, closeTo(11.75, 0.0001));
+      expect(item.totalSavings, closeTo(1.30, 0.0001));
+      expect(item.promotionSavings, 0);
+    });
+
+    test('accumulates the catalog discount for every unit', () {
+      final item = catalogDiscountItem(3);
+
+      expect(item.regularSubtotal, closeTo(39.15, 0.0001));
+      expect(item.subtotal, closeTo(35.25, 0.0001));
+      expect(item.totalSavings, closeTo(3.90, 0.0001));
     });
   });
 }

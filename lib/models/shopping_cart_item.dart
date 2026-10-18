@@ -129,6 +129,22 @@ class ShoppingCartItem {
 
   double get unitPrice => product.precioFinal ?? product.precio ?? 0;
 
+  double get regularUnitPrice {
+    final originalPrice = product.precioOriginal;
+    if (originalPrice != null && originalPrice > unitPrice) {
+      return originalPrice;
+    }
+    if (product.tieneDescuento && product.descuento > 0) {
+      return unitPrice + product.descuento;
+    }
+    return unitPrice;
+  }
+
+  double get unitDiscount {
+    final discount = regularUnitPrice - unitPrice;
+    return discount > 0 ? discount : 0;
+  }
+
   QuantityPromotion? get quantityPromotion =>
       QuantityPromotion.tryParse(product.promocion);
 
@@ -153,7 +169,9 @@ class ShoppingCartItem {
         : secondUnitDeal.discountedUnitsFor(quantity);
   }
 
-  double get regularSubtotal => unitPrice * quantity;
+  double get regularSubtotal => regularUnitPrice * quantity;
+
+  double get discountedSubtotal => unitPrice * quantity;
 
   double get subtotal {
     final quantityDeal = quantityPromotion;
@@ -172,14 +190,19 @@ class ShoppingCartItem {
     if (secondUnitDeal != null) {
       final discountPerUnit =
           unitPrice * (secondUnitDeal.discountPercent / 100);
-      return regularSubtotal -
+      return discountedSubtotal -
           (secondUnitDeal.discountedUnitsFor(quantity) * discountPerUnit);
     }
 
-    return regularSubtotal;
+    return discountedSubtotal;
   }
 
   double get promotionSavings {
+    final savings = discountedSubtotal - subtotal;
+    return savings > 0 ? savings : 0;
+  }
+
+  double get totalSavings {
     final savings = regularSubtotal - subtotal;
     return savings > 0 ? savings : 0;
   }
