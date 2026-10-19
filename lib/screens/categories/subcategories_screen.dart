@@ -480,7 +480,7 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen>
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: colorScheme.primaryContainer,
+                          color: colorScheme.primary,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -488,7 +488,7 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen>
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: colorScheme.onPrimaryContainer,
+                            color: colorScheme.onPrimary,
                           ),
                         ),
                       ),

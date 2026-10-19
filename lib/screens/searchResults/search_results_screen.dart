@@ -765,11 +765,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.search_off_rounded,
-                size: 72,
-                color: Colors.grey.shade400,
-              ),
+              Icon(Icons.search_off_rounded, size: 72),
               const SizedBox(height: 16),
               Text(
                 'No se encontraron productos',
@@ -784,7 +780,6 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
                     ? 'No hay productos que coincidan con los filtros seleccionados.'
                     : 'Intenta con otro término o verifica el código de barras ingresado.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey.shade600),
               ),
               if (_selectedFilters.count > 0) ...[
                 const SizedBox(height: 20),

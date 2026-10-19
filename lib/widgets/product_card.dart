@@ -32,7 +32,6 @@ class _ProductCardState extends State<ProductCard> {
     final colorScheme = m3eTheme.colorScheme;
 
     // Colores de marca Súper Selectos
-    const brandGreen = Color(0xFF2E6C37);
     const discountRed = Color(0xFFB3261E);
     const discountRedContainer = Color(0xFFF9DEDC);
 
@@ -75,7 +74,6 @@ class _ProductCardState extends State<ProductCard> {
                                   height: 22,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: brandGreen,
                                   ),
                                 ),
                               ),

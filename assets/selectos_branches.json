@@ -1,1 +1,906 @@
-[{"id":"119","name":"Acajutla","address":"Centro Comercial Acajutla, avenida Obando y calle Las Conchitas, Sonsonate.","zoneId":"381eabe6-1f79-481f-baa7-9bb4f3e7b03f"},{"id":"85","name":"Aguilares","address":"Avenida central norte y final 2° calle oriente, Aguilares.","zoneId":"d36b4e00-9239-47a7-b71b-9607479b4273"},{"id":"117","name":"Aguilares El Encuentro","address":"Centro Comercial El Encuentro, Hacienda Pishishapa, lote #2, Aguilares, San Salvador.","zoneId":"d36b4e00-9239-47a7-b71b-9607479b4273"},{"id":"69","name":"Ahuachapán","address":"Carretera a Ahuachapán, desvío a Sonsonate.","zoneId":"78626ee5-05bc-47a6-ad58-27805eb67d8d"},{"id":"122","name":"Ahuachapan Mediterráneo","address":"Centro Comercial Mail Mediterraneo, Residencial Eco Tierra Hacienda, cantón Chipilapa, Ahuachapán.","zoneId":"ee718f8c-d713-4b5e-b584-125fcadfffee"},{"id":"49","name":"Apopa Pericentro","address":"Centro Comercial Pericentro Apopa, km 12, carretera Troncal del Norte. ","zoneId":"a7c1e4f9-c554-40b1-b164-3dfdf5a27159"},{"id":"86","name":"Apopa Periplaza","address":"Centro Comercial Peri Plaza, carretera Troncal del Norte km 12, Apopa.","zoneId":"a7c1e4f9-c554-40b1-b164-3dfdf5a27159"},{"id":"112","name":"Apopa Plaza Mundo","address":"Centro Comercial Plaza Mundo local 1, km 12 carretera Troncal del Norte, Apopa.","zoneId":"a7c1e4f9-c554-40b1-b164-3dfdf5a27159"},{"id":"90","name":"Apopa Troncal del Norte","address":"Km 12 1/2, carretera Troncal del Norte, Apopa.","zoneId":"a7c1e4f9-c554-40b1-b164-3dfdf5a27159"},{"id":"104","name":"Atiquizaya","address":"Avenida 5 de Noviembre y Calle #4-107, Barrio El Centro,  Atiquizaya,  Ahuachapán.","zoneId":"ee718f8c-d713-4b5e-b584-125fcadfffee"},{"id":"19","name":"Autopista sur","address":"Calle al estadio Cuscatlan y Autopista Sur, Centro Comercial Autopista Sur,  San Salvador.","zoneId":"22dc8df4-5834-4b47-9c21-280a94d2ebaa"},{"id":"30","name":"Bethoven","address":"Avenida Altamira, Paseo General Escalon, colonia Escalón, San Salvador.","zoneId":"22dc8df4-5834-4b47-9c21-280a94d2ebaa"},{"id":"47","name":"Cara Sucia","address":"Carretera a la frontera, La Hachadura, San Francisco Menéndez, Cara Sucia, Ahuachapán.","zoneId":"fda5f41d-e9d5-4e58-ab62-a686e9be2e93"},{"id":"78","name":"Chalatenango","address":"Calle Morazán y 2 avenida sur, Chalatenango.","zoneId":"41afee00-e38e-49e4-87cc-6453fbec97dc"},{"id":"66","name":"Chalchuapa","address":"Callejón Santa #1-Bis, Chalchuapa Santa Ana.","zoneId":"9b922efb-2f8d-4558-8469-3530d9f27359"},{"id":"25","name":"Ciudad Delgado","address":"Avenida Paleca y calle La Joya, Ciudad Delgado, San Salvador.","zoneId":"8f28508c-b1b7-4623-a6f4-cb7b9939db7d"},{"id":"67","name":"Ciudad Real","address":"Canton Los Amates, Ciudad Real, San Sebastián, Chalchuapa, Santa Ana.","zoneId":"fa1e45dc-ad21-4e36-84c7-a796f31d022a"},{"id":"46","name":"Cojutepeque","address":"1° avenida sur y 4° calle poniente, Cojutepeque, Cuscatlán.","zoneId":"aa97d0ae-4acc-4e3b-a0bb-5772ef05f4e8"},{"id":"95","name":"Cojutepeque Centro","address":"Barrio El Centro y calle Matías Delgado, Cojutepeque, Cuscatlán.","zoneId":"aa97d0ae-4acc-4e3b-a0bb-5772ef05f4e8"},{"id":"107","name":"El Encuentro","address":"Centro Comercial El Encuentro, km 24 1/2 carretera a Santa Ana, Colón, La Libertad.","zoneId":"429868df-b459-4932-811d-d4e3d788413e"},{"id":"54","name":"El Faro","address":"Carretera El Litoral, km 23 1/2, local B1, Centro Comercial El Faro, La Libertad.","zoneId":"53a966c8-037c-481f-a1d3-470fe31cb0b9"},{"id":"101","name":"El Tránsito","address":"Avenida Ferrocarril #5, barrio La Cruz, El Tránsito, San Miguel.","zoneId":"5b2d51b2-eedb-4409-bd9a-bf681cbae0f4"},{"id":"7","name":"Escalón","address":"Centro Comercial El Paseo local #7, Paseo General Escalón, San Salvador.","zoneId":"22dc8df4-5834-4b47-9c21-280a94d2ebaa"},{"id":"28","name":"España","address":"Entre Avenida España y 3° calle poniente, San Salvador.","zoneId":"22dc8df4-5834-4b47-9c21-280a94d2ebaa"},{"id":"60","name":"Gigante (Olimpica)","address":"Avenida Olímpica y 59  avendia sur, colonia Escalón, San Salvador.","zoneId":"22dc8df4-5834-4b47-9c21-280a94d2ebaa"},{"id":"132","name":"Gotera El Encuentro","address":"Centro Comercial El Encuentro San Francisco Gotera, local #1, San Francisco Gotera, Morazán.","zoneId":"3a452523-eeff-4935-9772-025fa7307b5e"},{"id":"74","name":"Ilobasco","address":"4° calle Poniente y 3° avenida sur, Ilobasco, Cabañas.","zoneId":"43e5aa86-fb0c-491e-993b-bfa178ff84c1"},{"id":"75","name":"Ilobasco II","address":"Avenida Carlos Bonilla 1° calle poniente #11, Ilobasco, Cabañas.","zoneId":"43e5aa86-fb0c-491e-993b-bfa178ff84c1"},{"id":"57","name":"Izalco","address":"9° calle poniente y final avenida Morazán, barrio Dolores, Sonsonate.","zoneId":"4ee379a7-1860-4d49-9d9d-d1caad2334cf"},{"id":"96","name":"Jiquilisco","address":"2° avenida sur y 2° calle oriente #1, barrio El Calvario, Jiquilisco, Usulután.","zoneId":"3673e945-7bf3-4ff1-9619-ea132afe98dd"},{"id":"94","name":"Juayua","address":"Calle Mercedes Cáceres oriente y avenida Daniel Cordón, Juayúa Sonsonate.","zoneId":"ffacd283-bff1-4402-b52b-a5b1941bc69a"},{"id":"31","name":"La Cañada","address":"Calle La Cañada y boulevard Merliot, Santa Tecla, La Libertad.","zoneId":"3b3ab39e-344b-466b-bfdc-cec08b373e86"},{"id":"42","name":"La Cima","address":"Calle a Huizúcar entre pasaje Recinos y calle La Constitución, San Salvador.","zoneId":"22dc8df4-5834-4b47-9c21-280a94d2ebaa"},{"id":"55","name":"La Joya","address":"Centro Comercial la Joya, local E, km 12, Santa Tecla, La Libertad.","zoneId":"79eebb1a-fadd-480e-84cb-67e8cb311fac"},{"id":"126","name":"La Libertad El Encuentro","address":"Centro Comercial El Encuentro La Libertad, local 1, jurisdicción del Puerto de La Libertad.","zoneId":"53a966c8-037c-481f-a1d3-470fe31cb0b9"},{"id":"34","name":"la Sultana","address":"Boulevard y avenida La Ceiba #7, Antiguo Cuscatlán, La Libertad.","zoneId":"3b3ab39e-344b-466b-bfdc-cec08b373e86"},{"id":"59","name":"La Union II","address":"3° y 5° avenida sur #2-3, Barrio Concepción, La Unión.","zoneId":"cef91a2e-30c2-4a86-b7d2-20ec0b94293d"},{"id":"103","name":"La Unión III","address":"Barrio Honduras, Calle San Carlos, 4ta. Avenida Sur  #1-1, La Unión.","zoneId":"cef91a2e-30c2-4a86-b7d2-20ec0b94293d"},{"id":"108","name":"Las Cascadas","address":"Centro Comercial Las Cascadas, intersección de la calle Chiltiupán, avenida Masferrer y carretera Panamericana ,  Antiguo Cuscatlán.","zoneId":"3b3ab39e-344b-466b-bfdc-cec08b373e86"},{"id":"97","name":"Las Palmas","address":"Centro Comercial Las Palmas, km 12 1/2 carretera al Puerto de la Libertad,  Santa Tecla, La Libertad.","zoneId":"79eebb1a-fadd-480e-84cb-67e8cb311fac"},{"id":"118","name":"Las Ramblas","address":"Centro Comercial Las Ramblas, local 1, km 10 1/2, carretera Panamericana, Santa Tecla,  La Libertad.","zoneId":"79eebb1a-fadd-480e-84cb-67e8cb311fac"},{"id":"120","name":"Las Ramblas Santa Ana","address":"Centro Comercial Las Ramblas Santa Ana, loca #6, sobre carretera Panamericana y calle  Portezuelo, cantón Comecayo, Santa Ana. ","zoneId":"d39bbc09-74a8-48f6-8864-c0c190ebad0c"},{"id":"4","name":"Los Ángeles","address":"Centro Comercial Los Ángeles, Soyapango, San Salvador.","zoneId":"7fd53a8a-21b9-4652-8bf2-4a6debbf2553"},{"id":"17","name":"Los Santos","address":"Calle a Santa Tecla y calle Amberes, San Salvador.","zoneId":"22dc8df4-5834-4b47-9c21-280a94d2ebaa"},{"id":"82","name":"Lourdes","address":"Avenida 5 de noviembre, carretera a San Salvador, Lourdes, Colón, La Libertad. ","zoneId":"429868df-b459-4932-811d-d4e3d788413e"},{"id":"81","name":"Lourdes Banco Agricola","address":" 2° y 4° calle oriente #1-1, Lourdes, Colón, La Libertad.","zoneId":"429868df-b459-4932-811d-d4e3d788413e"},{"id":"116","name":"Marsella","address":"Centro Comercial Marsella, km 34 1/2 sobre carretera a San Juan Opico, Quezaltepeque, La Libertad.","zoneId":"d839ad5b-ba65-46eb-a297-03be01ce81b9"},{"id":"33","name":"Masferrer","address":"Final Paseo Escalón, frente redondel Masferrer, San Salvador.","zoneId":"22dc8df4-5834-4b47-9c21-280a94d2ebaa"},{"id":"40","name":"Mega Selectos","address":"Entre Calle a Tonacatepeque y Calle Plan del Pino, Soyapango.","zoneId":"7fd53a8a-21b9-4652-8bf2-4a6debbf2553"},{"id":"12","name":"Mejicanos","address":"Final 5° avenida norte universitaria, Mejicanos.","zoneId":"0709eb7b-b522-48dc-b4c2-220bb52400f1"},{"id":"68","name":"Metapán","address":"Carretera a Guatemala, ex cine Orellana, Metapán.","zoneId":"fa0faf9d-562b-4622-ab07-0ff4c6d60dbc"},{"id":"9","name":"Metrocentro 6ta Etapa ","address":"Metrocentro 6a Etapa, San Salvador.","zoneId":"22dc8df4-5834-4b47-9c21-280a94d2ebaa"},{"id":"89","name":"Metrocentro 8av Etapa","address":"Condominio Metrocentro 8av. Etapa, local #281, San Salvador.","zoneId":"22dc8df4-5834-4b47-9c21-280a94d2ebaa"},{"id":"16","name":"Metrópolis ","address":"Centro Comercial Plaza Metropolis, avenica Bernal y calle Zacamil, Mejicanos.","zoneId":"0709eb7b-b522-48dc-b4c2-220bb52400f1"},{"id":"8","name":"Miralvalle Constitución","address":"Boulevard San Antonio Abad, Edificio Balaam Acab, San Salvador.","zoneId":"22dc8df4-5834-4b47-9c21-280a94d2ebaa"},{"id":"39","name":"Miralvalle Motocross","address":"Boulevard Constitución y calle a Motocross, San Salvador.","zoneId":"22dc8df4-5834-4b47-9c21-280a94d2ebaa"},{"id":"51","name":"Multiplaza","address":"Centro Comercial Multiplaza local #3, edificio F, Antiguo Cuscatlán, La Libertad","zoneId":"3b3ab39e-344b-466b-bfdc-cec08b373e86"},{"id":"11","name":"Novocentro","address":"2° calle poniente y 6° avenida sur, Santa Tecla, La Libertad.","zoneId":"79eebb1a-fadd-480e-84cb-67e8cb311fac"},{"id":"133","name":"Nueva Concepción Santander","address":"Mall Santander, prolongación 3° avenida norte, entre 3° calle poniente y pasaje Las Vega, Villa Santander, Nueva Concepción, Chalatenango.","zoneId":"41afee00-e38e-49e4-87cc-6453fbec97dc"},{"id":"114","name":"Opico El Encuentro","address":"Centro Comercial El Encuentro Opico, colonia Oscar Osorio, polígono #2, lote #5, San Juan  Opico.","zoneId":"d839ad5b-ba65-46eb-a297-03be01ce81b9"},{"id":"21","name":"Plaza Merliot","address":"Calle Chiltiupán, entre 17 y 21 avenida norte, Centro Comercial Plaza Merliot, La Libertad.","zoneId":"79eebb1a-fadd-480e-84cb-67e8cb311fac"},{"id":"50","name":"Plaza Mundo ","address":"Centro Comercial Plaza Mundo, local \"A\", km 4 1/2 Boulevard del Ejército, Soyapango.","zoneId":"7fd53a8a-21b9-4652-8bf2-4a6debbf2553"},{"id":"125","name":"Plaza Mundo Usulutan","address":"Centro Comercial Plaza Mundo Usulután,  km 119 carretera del Litoral CA- 2 y ruta nacional Catorce, cantón Ojo de Agua, Usulután.","zoneId":"c66167f2-ffa4-4357-a2ee-006d14de2248"},{"id":"84","name":"Plaza Viva","address":"Centro Comercial Plaza Viva, avenida Roosevelt km 141, San Miguel.","zoneId":"5e44aa4a-a892-4691-85b9-3966290e9dd9"},{"id":"87","name":"Quezaltepeque ","address":"Calle Urrutia y avenida Delgado # 2, Quezaltepeque, La Libertad.","zoneId":"b7e25988-c322-4608-997d-a4c86962be23"},{"id":"83","name":"San Bartolo","address":"Carretera Panamericana km 10 1/2, urbanización Llano Verde, Ilopango.","zoneId":"a7a1e6f8-ebd8-4cbe-aec5-08abe8d7e64c"},{"id":"41","name":"San Benito","address":"Avenida Las Magnolias, polígono \"A\", block \"B\" #11 San Benito, San Salvador.","zoneId":"22dc8df4-5834-4b47-9c21-280a94d2ebaa"},{"id":"77","name":"San Francisco Gotera","address":"Entre 1° Calle Oriente, avenida Thompson norte y barrio El Calvario, San Francisco Gotera, Morazán.","zoneId":"3a452523-eeff-4935-9772-025fa7307b5e"},{"id":"109","name":"San Gabriel","address":"Centro Comercial Metromall San Gabriel, Urbanización San Gabriel, Suchinango, Apopa.","zoneId":"ed5c478b-e689-42e2-b458-d11ec2ad9a84"},{"id":"24","name":"San Jacinto","address":"Calle México y avenida Diplomáticos, Barrio San Jacinto, San Salvador.","zoneId":"22dc8df4-5834-4b47-9c21-280a94d2ebaa"},{"id":"15","name":"San Luis","address":"Calle San Antonio Abad y avenida Izalco, San Salvador.","zoneId":"22dc8df4-5834-4b47-9c21-280a94d2ebaa"},{"id":"110","name":"San Marcos","address":"Centro Comercial El Encuentro San Marcos, calle Antigua a Zacatecoluca, San Marcos.","zoneId":"6112e6a9-d9dc-4dad-8f57-c4b9658ce952"},{"id":"92","name":"San Martín","address":"Avenida Morazán #17 San Martín, San Salvador.","zoneId":"37f30f8c-bf35-4acf-8783-b15d2dad7262"},{"id":"113","name":"San Martin el Encuentro","address":"Centro Comercial El Encuentro San Martín, km 15 1/2 carretera Panamericana, cantón Las Palmas, San Martín.","zoneId":"37f30f8c-bf35-4acf-8783-b15d2dad7262"},{"id":"56","name":"San Miguel Centro","address":"8° calle poniente, entre 3° y avenida norte, barrio San Fancisco, San Miguel.","zoneId":"5e44aa4a-a892-4691-85b9-3966290e9dd9"},{"id":"111","name":"San Miguel El Sitio","address":"Centro Comercial El Encuentro El Sitio, carretera Panamericana y calle antigua a Quelepa, San Miguel.","zoneId":"5e44aa4a-a892-4691-85b9-3966290e9dd9"},{"id":"18","name":"San Miguel Galerías","address":"Avenida Roosevelt y Calle Almendros, San Miguel.","zoneId":"5e44aa4a-a892-4691-85b9-3966290e9dd9"},{"id":"124","name":"San Miguel Panamericana","address":"Centro Comercial Villa Panamericana, cantón Papalón, km 144, carretera a La Unión, San Miguel.","zoneId":"5e44aa4a-a892-4691-85b9-3966290e9dd9"},{"id":"36","name":"San Miguel Terminal","address":"Final 4° avenida norte, ruta militar, San Miguel.","zoneId":"5e44aa4a-a892-4691-85b9-3966290e9dd9"},{"id":"38","name":"San Miguelito","address":"29 calle poniente y 5° avenida sur, San Salvador.","zoneId":"22dc8df4-5834-4b47-9c21-280a94d2ebaa"},{"id":"5","name":"San Miguelito Don Rua","address":"27 calle poniente y 3° avenida norte, San Salvador.","zoneId":"22dc8df4-5834-4b47-9c21-280a94d2ebaa"},{"id":"44","name":"San Vicente","address":"2° avenida sur, ex local Arena, San Vicente.","zoneId":"ea9cd8b6-ac45-42e6-8045-173f74d407a6"},{"id":"23","name":"Santa Ana Centro","address":"2° calle poniente y 2° avenida norte #5, Santa Ana.","zoneId":"d39bbc09-74a8-48f6-8864-c0c190ebad0c"},{"id":"13","name":"Santa Ana Colón","address":"Avenida Moraga sur y 11 calle poniente, Santa Ana.","zoneId":"d39bbc09-74a8-48f6-8864-c0c190ebad0c"},{"id":"129","name":"Santa Ana El Encuentro","address":"Centro Comercial El Encuentro Santa Ana local #1, barrios Santa Cruz y Santa Bárbara, Santa Ana.","zoneId":"d39bbc09-74a8-48f6-8864-c0c190ebad0c"},{"id":"27","name":"Santa Ana Metrocentro","address":"Centro Comercial Metrocentro Santa Ana.","zoneId":"d39bbc09-74a8-48f6-8864-c0c190ebad0c"},{"id":"100","name":"Santa Elena","address":"Avenida Izalco, block #8, boulevard Santa Elena, Antiguo Cuscatlán, la Libertad.","zoneId":"3b3ab39e-344b-466b-bfdc-cec08b373e86"},{"id":"2","name":"Santa Emilia","address":"Avenida Masferrer y 7° calle poniente, colonia Lomas Verdes, San Salvador.","zoneId":"22dc8df4-5834-4b47-9c21-280a94d2ebaa"},{"id":"91","name":"Santa Lucía","address":"Avenida principal, ex cine Renovación, colonia Santa Lucía, Ilopango.","zoneId":"a7a1e6f8-ebd8-4cbe-aec5-08abe8d7e64c"},{"id":"106","name":"Santa Rosa","address":"Centro Comercial Santa Rosa, final Boulevard Monseñor Romero, intercepción con calle Real y prolongacion 9° avenida poniente, Santa Tecla.","zoneId":"79eebb1a-fadd-480e-84cb-67e8cb311fac"},{"id":"98","name":"Santa Rosa de Lima","address":"Avenida Fernando Benítez y 1° calle poniente, Santa Rosa de Lima, La Unión.","zoneId":"9879f2cf-bb90-43e9-a45f-bcc029ac04cd"},{"id":"53","name":"Santa Rosa de Lima II","address":"Barrio El Calvario, Santa Rosa de Lima, La Unión.","zoneId":"9879f2cf-bb90-43e9-a45f-bcc029ac04cd"},{"id":"35","name":"Santa Tecla","address":"2° calle oriente y 3° avenida norte #2-9, Santa Tecla, La Libertad.","zoneId":"79eebb1a-fadd-480e-84cb-67e8cb311fac"},{"id":"102","name":"Santiago de María","address":"Calle Bolivar entre 2° y 4° avenida, barrio El Centro, Santiago de María, Usulután.","zoneId":"a95399f9-c745-4bf6-a5e7-f272d61f068a"},{"id":"105","name":"Santo Tomás","address":"Km 18 sobre carretera a Comalapa y km 13 sobre calle antigua a Zacatecoluca, Santo Tomás.","zoneId":"06aab4af-ae17-4548-8ce7-0efa630e011b"},{"id":"48","name":"Selectos Ahuachapan II","address":"8° calle poniente frente al parque de Ahuchapán, Ahuachapán.","zoneId":"78626ee5-05bc-47a6-ad58-27805eb67d8d"},{"id":"131","name":"Selectos Armenia El Encuentro","address":"Centro Comercial El Encuentro Armenia, local #1, cantón Tres Ceibas, Armenia, Sonsonate.","zoneId":"c4bc6420-14d7-4956-8271-b41711a9d74b"},{"id":"134","name":"Selectos Distrito Los Planes","address":"Centro comercial distrito planes de Renderos, local ancla, km 9 1/2, carretera a los planes de Renderos, distrito de San Marcos, municipio de San Salvador Sur, departamento San Salvador","zoneId":"6112e6a9-d9dc-4dad-8f57-c4b9658ce952"},{"id":"130","name":"Selectos Olocuilta La Estacion","address":"Centro Comercial La Estación, km 23 1/2 carretera a Comalapa, Olocuilta, La Paz.","zoneId":"d619904d-ce7f-4f23-8264-0b9001c768e5"},{"id":"76","name":"Sensuntepeque","address":"4° calle oriente, barrio Santa Bárbara #6, Cabañas.","zoneId":"2dfe53f2-97c4-44dc-80b3-98e5b2279c3f"},{"id":"99","name":"Sonsonate Centro","address":"6°  avenida y calle Obispo Marroquín, Sonsonate.","zoneId":"c4bc6420-14d7-4956-8271-b41711a9d74b"},{"id":"115","name":"Sonsonate El Encuentro","address":"Centro Comercial El Encuentro  Sonsonate, barrio El Ángel, Hacienda El Cañal, Sonsonate.","zoneId":"c4bc6420-14d7-4956-8271-b41711a9d74b"},{"id":"64","name":"Sonsonate Los Leones","address":"Avenida Oidor Ramírez de Quiñonez  y Paseo 15 de Septiembre, Sonsonate.","zoneId":"c4bc6420-14d7-4956-8271-b41711a9d74b"},{"id":"63","name":"Sonsonate Metrocentro","address":"Centro Comercial Metrocentro, local #4, Sonsonate.","zoneId":"c4bc6420-14d7-4956-8271-b41711a9d74b"},{"id":"127","name":"Soyapango Espíritu Santo","address":"Centro Comercial Boulevard Espiritu Santo, km 20 carreterra de Oro,  Soyapango.","zoneId":"7fd53a8a-21b9-4652-8bf2-4a6debbf2553"},{"id":"123","name":"Super Selectos Distrito Zaragoza","address":"Centro Comercial Distrito Zaragoza, km 20, carretera al Puerto de La Libertad y desvío a San José Villanueva, Zaragoza, La Libertad.","zoneId":"4e6f9c71-da2b-4e2a-9021-586dd4f471c2"},{"id":"26","name":"Usulután Centro","address":"1° calle oriente #42, barrio El Calvario, Usulután.","zoneId":"c66167f2-ffa4-4357-a2ee-006d14de2248"},{"id":"73","name":"Usulután Puerta de Oriente","address":"Plaza Comercial Puerta de Oriente, carretera del Litoral, Usulután.","zoneId":"c66167f2-ffa4-4357-a2ee-006d14de2248"},{"id":"121","name":"Valle Dulce","address":"Centro Comercial El Encuentro Valle Dulce, local 1, Hacienda El Ángel, Apopa.","zoneId":"a7c1e4f9-c554-40b1-b164-3dfdf5a27159"},{"id":"20","name":"Zacamil","address":"Centro Comercial Zacamil, 29 avenida norte y calle Zacamil, Mejicanos.","zoneId":"0709eb7b-b522-48dc-b4c2-220bb52400f1"},{"id":"22","name":"Zacatecoluca","address":"Avenida Monterrey  y 1° calle oriente, Zacatecoluca, La Paz.","zoneId":"755edd03-decc-4095-995c-742187066ed8"},{"id":"128","name":"Zacatecoluca El Encuentro","address":"Centro Comercial El Encuentro, local #1, cantón Ulapa, Zacatecoluca, La Paz.","zoneId":"755edd03-decc-4095-995c-742187066ed8"},{"id":"58","name":"Zaragoza ","address":"Condominio Plaza Zaragoza, 1° avenida norte, local L-1 #15, La Libertad.","zoneId":"4e6f9c71-da2b-4e2a-9021-586dd4f471c2"}]
+[
+  {
+    "id": "119",
+    "name": "Acajutla",
+    "address": "Centro Comercial Acajutla, avenida Obando y calle Las Conchitas, Sonsonate.",
+    "zoneId": "381eabe6-1f79-481f-baa7-9bb4f3e7b03f",
+    "department": "Sonsonate",
+    "municipality": "Acajutla"
+  },
+  {
+    "id": "85",
+    "name": "Aguilares",
+    "address": "Avenida central norte y final 2° calle oriente, Aguilares.",
+    "zoneId": "d36b4e00-9239-47a7-b71b-9607479b4273",
+    "department": "San Salvador",
+    "municipality": "Aguilares"
+  },
+  {
+    "id": "117",
+    "name": "Aguilares El Encuentro",
+    "address": "Centro Comercial El Encuentro, Hacienda Pishishapa, lote #2, Aguilares, San Salvador.",
+    "zoneId": "d36b4e00-9239-47a7-b71b-9607479b4273",
+    "department": "San Salvador",
+    "municipality": "Aguilares"
+  },
+  {
+    "id": "69",
+    "name": "Ahuachapán",
+    "address": "Carretera a Ahuachapán, desvío a Sonsonate.",
+    "zoneId": "78626ee5-05bc-47a6-ad58-27805eb67d8d",
+    "department": "Ahuachapán",
+    "municipality": "Ahuachapán"
+  },
+  {
+    "id": "122",
+    "name": "Ahuachapan Mediterráneo",
+    "address": "Centro Comercial Mail Mediterraneo, Residencial Eco Tierra Hacienda, cantón Chipilapa, Ahuachapán.",
+    "zoneId": "ee718f8c-d713-4b5e-b584-125fcadfffee",
+    "department": "Ahuachapán",
+    "municipality": "Ahuachapán"
+  },
+  {
+    "id": "49",
+    "name": "Apopa Pericentro",
+    "address": "Centro Comercial Pericentro Apopa, km 12, carretera Troncal del Norte. ",
+    "zoneId": "a7c1e4f9-c554-40b1-b164-3dfdf5a27159",
+    "department": "San Salvador",
+    "municipality": "Apopa"
+  },
+  {
+    "id": "86",
+    "name": "Apopa Periplaza",
+    "address": "Centro Comercial Peri Plaza, carretera Troncal del Norte km 12, Apopa.",
+    "zoneId": "a7c1e4f9-c554-40b1-b164-3dfdf5a27159",
+    "department": "San Salvador",
+    "municipality": "Apopa"
+  },
+  {
+    "id": "112",
+    "name": "Apopa Plaza Mundo",
+    "address": "Centro Comercial Plaza Mundo local 1, km 12 carretera Troncal del Norte, Apopa.",
+    "zoneId": "a7c1e4f9-c554-40b1-b164-3dfdf5a27159",
+    "department": "San Salvador",
+    "municipality": "Apopa"
+  },
+  {
+    "id": "90",
+    "name": "Apopa Troncal del Norte",
+    "address": "Km 12 1/2, carretera Troncal del Norte, Apopa.",
+    "zoneId": "a7c1e4f9-c554-40b1-b164-3dfdf5a27159",
+    "department": "San Salvador",
+    "municipality": "Apopa"
+  },
+  {
+    "id": "104",
+    "name": "Atiquizaya",
+    "address": "Avenida 5 de Noviembre y Calle #4-107, Barrio El Centro,  Atiquizaya,  Ahuachapán.",
+    "zoneId": "ee718f8c-d713-4b5e-b584-125fcadfffee",
+    "department": "Ahuachapán",
+    "municipality": "Atiquizaya"
+  },
+  {
+    "id": "19",
+    "name": "Autopista sur",
+    "address": "Calle al estadio Cuscatlan y Autopista Sur, Centro Comercial Autopista Sur,  San Salvador.",
+    "zoneId": "22dc8df4-5834-4b47-9c21-280a94d2ebaa",
+    "department": "San Salvador",
+    "municipality": "San Salvador"
+  },
+  {
+    "id": "30",
+    "name": "Bethoven",
+    "address": "Avenida Altamira, Paseo General Escalon, colonia Escalón, San Salvador.",
+    "zoneId": "22dc8df4-5834-4b47-9c21-280a94d2ebaa",
+    "department": "San Salvador",
+    "municipality": "San Salvador"
+  },
+  {
+    "id": "47",
+    "name": "Cara Sucia",
+    "address": "Carretera a la frontera, La Hachadura, San Francisco Menéndez, Cara Sucia, Ahuachapán.",
+    "zoneId": "fda5f41d-e9d5-4e58-ab62-a686e9be2e93",
+    "department": "Ahuachapán",
+    "municipality": "San Francisco Menéndez"
+  },
+  {
+    "id": "78",
+    "name": "Chalatenango",
+    "address": "Calle Morazán y 2 avenida sur, Chalatenango.",
+    "zoneId": "41afee00-e38e-49e4-87cc-6453fbec97dc",
+    "department": "Chalatenango",
+    "municipality": "Chalatenango"
+  },
+  {
+    "id": "66",
+    "name": "Chalchuapa",
+    "address": "Callejón Santa #1-Bis, Chalchuapa Santa Ana.",
+    "zoneId": "9b922efb-2f8d-4558-8469-3530d9f27359",
+    "department": "Santa Ana",
+    "municipality": "Chalchuapa"
+  },
+  {
+    "id": "25",
+    "name": "Ciudad Delgado",
+    "address": "Avenida Paleca y calle La Joya, Ciudad Delgado, San Salvador.",
+    "zoneId": "8f28508c-b1b7-4623-a6f4-cb7b9939db7d",
+    "department": "San Salvador",
+    "municipality": "Ciudad Delgado"
+  },
+  {
+    "id": "67",
+    "name": "Ciudad Real",
+    "address": "Canton Los Amates, Ciudad Real, San Sebastián, Chalchuapa, Santa Ana.",
+    "zoneId": "fa1e45dc-ad21-4e36-84c7-a796f31d022a",
+    "department": "Santa Ana",
+    "municipality": "Chalchuapa"
+  },
+  {
+    "id": "46",
+    "name": "Cojutepeque",
+    "address": "1° avenida sur y 4° calle poniente, Cojutepeque, Cuscatlán.",
+    "zoneId": "aa97d0ae-4acc-4e3b-a0bb-5772ef05f4e8",
+    "department": "Cuscatlán",
+    "municipality": "Cojutepeque"
+  },
+  {
+    "id": "95",
+    "name": "Cojutepeque Centro",
+    "address": "Barrio El Centro y calle Matías Delgado, Cojutepeque, Cuscatlán.",
+    "zoneId": "aa97d0ae-4acc-4e3b-a0bb-5772ef05f4e8",
+    "department": "Cuscatlán",
+    "municipality": "Cojutepeque"
+  },
+  {
+    "id": "107",
+    "name": "El Encuentro",
+    "address": "Centro Comercial El Encuentro, km 24 1/2 carretera a Santa Ana, Colón, La Libertad.",
+    "zoneId": "429868df-b459-4932-811d-d4e3d788413e",
+    "department": "La Libertad",
+    "municipality": "Colón"
+  },
+  {
+    "id": "54",
+    "name": "El Faro",
+    "address": "Carretera El Litoral, km 23 1/2, local B1, Centro Comercial El Faro, La Libertad.",
+    "zoneId": "53a966c8-037c-481f-a1d3-470fe31cb0b9",
+    "department": "La Libertad",
+    "municipality": "La Libertad"
+  },
+  {
+    "id": "101",
+    "name": "El Tránsito",
+    "address": "Avenida Ferrocarril #5, barrio La Cruz, El Tránsito, San Miguel.",
+    "zoneId": "5b2d51b2-eedb-4409-bd9a-bf681cbae0f4",
+    "department": "San Miguel",
+    "municipality": "El Tránsito"
+  },
+  {
+    "id": "7",
+    "name": "Escalón",
+    "address": "Centro Comercial El Paseo local #7, Paseo General Escalón, San Salvador.",
+    "zoneId": "22dc8df4-5834-4b47-9c21-280a94d2ebaa",
+    "department": "San Salvador",
+    "municipality": "San Salvador"
+  },
+  {
+    "id": "28",
+    "name": "España",
+    "address": "Entre Avenida España y 3° calle poniente, San Salvador.",
+    "zoneId": "22dc8df4-5834-4b47-9c21-280a94d2ebaa",
+    "department": "San Salvador",
+    "municipality": "San Salvador"
+  },
+  {
+    "id": "60",
+    "name": "Gigante (Olimpica)",
+    "address": "Avenida Olímpica y 59  avendia sur, colonia Escalón, San Salvador.",
+    "zoneId": "22dc8df4-5834-4b47-9c21-280a94d2ebaa",
+    "department": "San Salvador",
+    "municipality": "San Salvador"
+  },
+  {
+    "id": "132",
+    "name": "Gotera El Encuentro",
+    "address": "Centro Comercial El Encuentro San Francisco Gotera, local #1, San Francisco Gotera, Morazán.",
+    "zoneId": "3a452523-eeff-4935-9772-025fa7307b5e",
+    "department": "Morazán",
+    "municipality": "San Francisco Gotera"
+  },
+  {
+    "id": "74",
+    "name": "Ilobasco",
+    "address": "4° calle Poniente y 3° avenida sur, Ilobasco, Cabañas.",
+    "zoneId": "43e5aa86-fb0c-491e-993b-bfa178ff84c1",
+    "department": "Cabañas",
+    "municipality": "Ilobasco"
+  },
+  {
+    "id": "75",
+    "name": "Ilobasco II",
+    "address": "Avenida Carlos Bonilla 1° calle poniente #11, Ilobasco, Cabañas.",
+    "zoneId": "43e5aa86-fb0c-491e-993b-bfa178ff84c1",
+    "department": "Cabañas",
+    "municipality": "Ilobasco"
+  },
+  {
+    "id": "57",
+    "name": "Izalco",
+    "address": "9° calle poniente y final avenida Morazán, barrio Dolores, Sonsonate.",
+    "zoneId": "4ee379a7-1860-4d49-9d9d-d1caad2334cf",
+    "department": "Sonsonate",
+    "municipality": "Izalco"
+  },
+  {
+    "id": "96",
+    "name": "Jiquilisco",
+    "address": "2° avenida sur y 2° calle oriente #1, barrio El Calvario, Jiquilisco, Usulután.",
+    "zoneId": "3673e945-7bf3-4ff1-9619-ea132afe98dd",
+    "department": "Usulután",
+    "municipality": "Jiquilisco"
+  },
+  {
+    "id": "94",
+    "name": "Juayua",
+    "address": "Calle Mercedes Cáceres oriente y avenida Daniel Cordón, Juayúa Sonsonate.",
+    "zoneId": "ffacd283-bff1-4402-b52b-a5b1941bc69a",
+    "department": "Sonsonate",
+    "municipality": "Juayúa"
+  },
+  {
+    "id": "31",
+    "name": "La Cañada",
+    "address": "Calle La Cañada y boulevard Merliot, Santa Tecla, La Libertad.",
+    "zoneId": "3b3ab39e-344b-466b-bfdc-cec08b373e86",
+    "department": "La Libertad",
+    "municipality": "Santa Tecla"
+  },
+  {
+    "id": "42",
+    "name": "La Cima",
+    "address": "Calle a Huizúcar entre pasaje Recinos y calle La Constitución, San Salvador.",
+    "zoneId": "22dc8df4-5834-4b47-9c21-280a94d2ebaa",
+    "department": "San Salvador",
+    "municipality": "San Salvador"
+  },
+  {
+    "id": "55",
+    "name": "La Joya",
+    "address": "Centro Comercial la Joya, local E, km 12, Santa Tecla, La Libertad.",
+    "zoneId": "79eebb1a-fadd-480e-84cb-67e8cb311fac",
+    "department": "La Libertad",
+    "municipality": "Santa Tecla"
+  },
+  {
+    "id": "126",
+    "name": "La Libertad El Encuentro",
+    "address": "Centro Comercial El Encuentro La Libertad, local 1, jurisdicción del Puerto de La Libertad.",
+    "zoneId": "53a966c8-037c-481f-a1d3-470fe31cb0b9",
+    "department": "La Libertad",
+    "municipality": "La Libertad"
+  },
+  {
+    "id": "34",
+    "name": "la Sultana",
+    "address": "Boulevard y avenida La Ceiba #7, Antiguo Cuscatlán, La Libertad.",
+    "zoneId": "3b3ab39e-344b-466b-bfdc-cec08b373e86",
+    "department": "La Libertad",
+    "municipality": "Antiguo Cuscatlán"
+  },
+  {
+    "id": "59",
+    "name": "La Union II",
+    "address": "3° y 5° avenida sur #2-3, Barrio Concepción, La Unión.",
+    "zoneId": "cef91a2e-30c2-4a86-b7d2-20ec0b94293d",
+    "department": "La Unión",
+    "municipality": "La Unión"
+  },
+  {
+    "id": "103",
+    "name": "La Unión III",
+    "address": "Barrio Honduras, Calle San Carlos, 4ta. Avenida Sur  #1-1, La Unión.",
+    "zoneId": "cef91a2e-30c2-4a86-b7d2-20ec0b94293d",
+    "department": "La Unión",
+    "municipality": "La Unión"
+  },
+  {
+    "id": "108",
+    "name": "Las Cascadas",
+    "address": "Centro Comercial Las Cascadas, intersección de la calle Chiltiupán, avenida Masferrer y carretera Panamericana ,  Antiguo Cuscatlán.",
+    "zoneId": "3b3ab39e-344b-466b-bfdc-cec08b373e86",
+    "department": "La Libertad",
+    "municipality": "Antiguo Cuscatlán"
+  },
+  {
+    "id": "97",
+    "name": "Las Palmas",
+    "address": "Centro Comercial Las Palmas, km 12 1/2 carretera al Puerto de la Libertad,  Santa Tecla, La Libertad.",
+    "zoneId": "79eebb1a-fadd-480e-84cb-67e8cb311fac",
+    "department": "La Libertad",
+    "municipality": "Santa Tecla"
+  },
+  {
+    "id": "118",
+    "name": "Las Ramblas",
+    "address": "Centro Comercial Las Ramblas, local 1, km 10 1/2, carretera Panamericana, Santa Tecla,  La Libertad.",
+    "zoneId": "79eebb1a-fadd-480e-84cb-67e8cb311fac",
+    "department": "La Libertad",
+    "municipality": "Santa Tecla"
+  },
+  {
+    "id": "120",
+    "name": "Las Ramblas Santa Ana",
+    "address": "Centro Comercial Las Ramblas Santa Ana, loca #6, sobre carretera Panamericana y calle  Portezuelo, cantón Comecayo, Santa Ana. ",
+    "zoneId": "d39bbc09-74a8-48f6-8864-c0c190ebad0c",
+    "department": "Santa Ana",
+    "municipality": "Santa Ana"
+  },
+  {
+    "id": "4",
+    "name": "Los Ángeles",
+    "address": "Centro Comercial Los Ángeles, Soyapango, San Salvador.",
+    "zoneId": "7fd53a8a-21b9-4652-8bf2-4a6debbf2553",
+    "department": "San Salvador",
+    "municipality": "Soyapango"
+  },
+  {
+    "id": "17",
+    "name": "Los Santos",
+    "address": "Calle a Santa Tecla y calle Amberes, San Salvador.",
+    "zoneId": "22dc8df4-5834-4b47-9c21-280a94d2ebaa",
+    "department": "San Salvador",
+    "municipality": "San Salvador"
+  },
+  {
+    "id": "82",
+    "name": "Lourdes",
+    "address": "Avenida 5 de noviembre, carretera a San Salvador, Lourdes, Colón, La Libertad. ",
+    "zoneId": "429868df-b459-4932-811d-d4e3d788413e",
+    "department": "La Libertad",
+    "municipality": "Colón"
+  },
+  {
+    "id": "81",
+    "name": "Lourdes Banco Agricola",
+    "address": " 2° y 4° calle oriente #1-1, Lourdes, Colón, La Libertad.",
+    "zoneId": "429868df-b459-4932-811d-d4e3d788413e",
+    "department": "La Libertad",
+    "municipality": "Colón"
+  },
+  {
+    "id": "116",
+    "name": "Marsella",
+    "address": "Centro Comercial Marsella, km 34 1/2 sobre carretera a San Juan Opico, Quezaltepeque, La Libertad.",
+    "zoneId": "d839ad5b-ba65-46eb-a297-03be01ce81b9",
+    "department": "La Libertad",
+    "municipality": "Quezaltepeque"
+  },
+  {
+    "id": "33",
+    "name": "Masferrer",
+    "address": "Final Paseo Escalón, frente redondel Masferrer, San Salvador.",
+    "zoneId": "22dc8df4-5834-4b47-9c21-280a94d2ebaa",
+    "department": "San Salvador",
+    "municipality": "San Salvador"
+  },
+  {
+    "id": "40",
+    "name": "Mega Selectos",
+    "address": "Entre Calle a Tonacatepeque y Calle Plan del Pino, Soyapango.",
+    "zoneId": "7fd53a8a-21b9-4652-8bf2-4a6debbf2553",
+    "department": "San Salvador",
+    "municipality": "Soyapango"
+  },
+  {
+    "id": "12",
+    "name": "Mejicanos",
+    "address": "Final 5° avenida norte universitaria, Mejicanos.",
+    "zoneId": "0709eb7b-b522-48dc-b4c2-220bb52400f1",
+    "department": "San Salvador",
+    "municipality": "Mejicanos"
+  },
+  {
+    "id": "68",
+    "name": "Metapán",
+    "address": "Carretera a Guatemala, ex cine Orellana, Metapán.",
+    "zoneId": "fa0faf9d-562b-4622-ab07-0ff4c6d60dbc",
+    "department": "Santa Ana",
+    "municipality": "Metapán"
+  },
+  {
+    "id": "9",
+    "name": "Metrocentro 6ta Etapa ",
+    "address": "Metrocentro 6a Etapa, San Salvador.",
+    "zoneId": "22dc8df4-5834-4b47-9c21-280a94d2ebaa",
+    "department": "San Salvador",
+    "municipality": "San Salvador"
+  },
+  {
+    "id": "89",
+    "name": "Metrocentro 8av Etapa",
+    "address": "Condominio Metrocentro 8av. Etapa, local #281, San Salvador.",
+    "zoneId": "22dc8df4-5834-4b47-9c21-280a94d2ebaa",
+    "department": "San Salvador",
+    "municipality": "San Salvador"
+  },
+  {
+    "id": "16",
+    "name": "Metrópolis ",
+    "address": "Centro Comercial Plaza Metropolis, avenica Bernal y calle Zacamil, Mejicanos.",
+    "zoneId": "0709eb7b-b522-48dc-b4c2-220bb52400f1",
+    "department": "San Salvador",
+    "municipality": "Mejicanos"
+  },
+  {
+    "id": "8",
+    "name": "Miralvalle Constitución",
+    "address": "Boulevard San Antonio Abad, Edificio Balaam Acab, San Salvador.",
+    "zoneId": "22dc8df4-5834-4b47-9c21-280a94d2ebaa",
+    "department": "San Salvador",
+    "municipality": "San Salvador"
+  },
+  {
+    "id": "39",
+    "name": "Miralvalle Motocross",
+    "address": "Boulevard Constitución y calle a Motocross, San Salvador.",
+    "zoneId": "22dc8df4-5834-4b47-9c21-280a94d2ebaa",
+    "department": "San Salvador",
+    "municipality": "San Salvador"
+  },
+  {
+    "id": "51",
+    "name": "Multiplaza",
+    "address": "Centro Comercial Multiplaza local #3, edificio F, Antiguo Cuscatlán, La Libertad",
+    "zoneId": "3b3ab39e-344b-466b-bfdc-cec08b373e86",
+    "department": "La Libertad",
+    "municipality": "Antiguo Cuscatlán"
+  },
+  {
+    "id": "11",
+    "name": "Novocentro",
+    "address": "2° calle poniente y 6° avenida sur, Santa Tecla, La Libertad.",
+    "zoneId": "79eebb1a-fadd-480e-84cb-67e8cb311fac",
+    "department": "La Libertad",
+    "municipality": "Santa Tecla"
+  },
+  {
+    "id": "133",
+    "name": "Nueva Concepción Santander",
+    "address": "Mall Santander, prolongación 3° avenida norte, entre 3° calle poniente y pasaje Las Vega, Villa Santander, Nueva Concepción, Chalatenango.",
+    "zoneId": "41afee00-e38e-49e4-87cc-6453fbec97dc",
+    "department": "Chalatenango",
+    "municipality": "Nueva Concepción"
+  },
+  {
+    "id": "114",
+    "name": "Opico El Encuentro",
+    "address": "Centro Comercial El Encuentro Opico, colonia Oscar Osorio, polígono #2, lote #5, San Juan  Opico.",
+    "zoneId": "d839ad5b-ba65-46eb-a297-03be01ce81b9",
+    "department": "La Libertad",
+    "municipality": "San Juan Opico"
+  },
+  {
+    "id": "21",
+    "name": "Plaza Merliot",
+    "address": "Calle Chiltiupán, entre 17 y 21 avenida norte, Centro Comercial Plaza Merliot, La Libertad.",
+    "zoneId": "79eebb1a-fadd-480e-84cb-67e8cb311fac",
+    "department": "La Libertad",
+    "municipality": "Santa Tecla"
+  },
+  {
+    "id": "50",
+    "name": "Plaza Mundo ",
+    "address": "Centro Comercial Plaza Mundo, local \"A\", km 4 1/2 Boulevard del Ejército, Soyapango.",
+    "zoneId": "7fd53a8a-21b9-4652-8bf2-4a6debbf2553",
+    "department": "San Salvador",
+    "municipality": "Soyapango"
+  },
+  {
+    "id": "125",
+    "name": "Plaza Mundo Usulutan",
+    "address": "Centro Comercial Plaza Mundo Usulután,  km 119 carretera del Litoral CA- 2 y ruta nacional Catorce, cantón Ojo de Agua, Usulután.",
+    "zoneId": "c66167f2-ffa4-4357-a2ee-006d14de2248",
+    "department": "Usulután",
+    "municipality": "Usulután"
+  },
+  {
+    "id": "84",
+    "name": "Plaza Viva",
+    "address": "Centro Comercial Plaza Viva, avenida Roosevelt km 141, San Miguel.",
+    "zoneId": "5e44aa4a-a892-4691-85b9-3966290e9dd9",
+    "department": "San Miguel",
+    "municipality": "San Miguel"
+  },
+  {
+    "id": "87",
+    "name": "Quezaltepeque ",
+    "address": "Calle Urrutia y avenida Delgado # 2, Quezaltepeque, La Libertad.",
+    "zoneId": "b7e25988-c322-4608-997d-a4c86962be23",
+    "department": "La Libertad",
+    "municipality": "Quezaltepeque"
+  },
+  {
+    "id": "83",
+    "name": "San Bartolo",
+    "address": "Carretera Panamericana km 10 1/2, urbanización Llano Verde, Ilopango.",
+    "zoneId": "a7a1e6f8-ebd8-4cbe-aec5-08abe8d7e64c",
+    "department": "San Salvador",
+    "municipality": "Ilopango"
+  },
+  {
+    "id": "41",
+    "name": "San Benito",
+    "address": "Avenida Las Magnolias, polígono \"A\", block \"B\" #11 San Benito, San Salvador.",
+    "zoneId": "22dc8df4-5834-4b47-9c21-280a94d2ebaa",
+    "department": "San Salvador",
+    "municipality": "San Salvador"
+  },
+  {
+    "id": "77",
+    "name": "San Francisco Gotera",
+    "address": "Entre 1° Calle Oriente, avenida Thompson norte y barrio El Calvario, San Francisco Gotera, Morazán.",
+    "zoneId": "3a452523-eeff-4935-9772-025fa7307b5e",
+    "department": "Morazán",
+    "municipality": "San Francisco Gotera"
+  },
+  {
+    "id": "109",
+    "name": "San Gabriel",
+    "address": "Centro Comercial Metromall San Gabriel, Urbanización San Gabriel, Suchinango, Apopa.",
+    "zoneId": "ed5c478b-e689-42e2-b458-d11ec2ad9a84",
+    "department": "San Salvador",
+    "municipality": "Apopa"
+  },
+  {
+    "id": "24",
+    "name": "San Jacinto",
+    "address": "Calle México y avenida Diplomáticos, Barrio San Jacinto, San Salvador.",
+    "zoneId": "22dc8df4-5834-4b47-9c21-280a94d2ebaa",
+    "department": "San Salvador",
+    "municipality": "San Salvador"
+  },
+  {
+    "id": "15",
+    "name": "San Luis",
+    "address": "Calle San Antonio Abad y avenida Izalco, San Salvador.",
+    "zoneId": "22dc8df4-5834-4b47-9c21-280a94d2ebaa",
+    "department": "San Salvador",
+    "municipality": "San Salvador"
+  },
+  {
+    "id": "110",
+    "name": "San Marcos",
+    "address": "Centro Comercial El Encuentro San Marcos, calle Antigua a Zacatecoluca, San Marcos.",
+    "zoneId": "6112e6a9-d9dc-4dad-8f57-c4b9658ce952",
+    "department": "San Salvador",
+    "municipality": "San Marcos"
+  },
+  {
+    "id": "92",
+    "name": "San Martín",
+    "address": "Avenida Morazán #17 San Martín, San Salvador.",
+    "zoneId": "37f30f8c-bf35-4acf-8783-b15d2dad7262",
+    "department": "San Salvador",
+    "municipality": "San Martín"
+  },
+  {
+    "id": "113",
+    "name": "San Martin el Encuentro",
+    "address": "Centro Comercial El Encuentro San Martín, km 15 1/2 carretera Panamericana, cantón Las Palmas, San Martín.",
+    "zoneId": "37f30f8c-bf35-4acf-8783-b15d2dad7262",
+    "department": "San Salvador",
+    "municipality": "San Martín"
+  },
+  {
+    "id": "56",
+    "name": "San Miguel Centro",
+    "address": "8° calle poniente, entre 3° y avenida norte, barrio San Fancisco, San Miguel.",
+    "zoneId": "5e44aa4a-a892-4691-85b9-3966290e9dd9",
+    "department": "San Miguel",
+    "municipality": "San Miguel"
+  },
+  {
+    "id": "111",
+    "name": "San Miguel El Sitio",
+    "address": "Centro Comercial El Encuentro El Sitio, carretera Panamericana y calle antigua a Quelepa, San Miguel.",
+    "zoneId": "5e44aa4a-a892-4691-85b9-3966290e9dd9",
+    "department": "San Miguel",
+    "municipality": "San Miguel"
+  },
+  {
+    "id": "18",
+    "name": "San Miguel Galerías",
+    "address": "Avenida Roosevelt y Calle Almendros, San Miguel.",
+    "zoneId": "5e44aa4a-a892-4691-85b9-3966290e9dd9",
+    "department": "San Miguel",
+    "municipality": "San Miguel"
+  },
+  {
+    "id": "124",
+    "name": "San Miguel Panamericana",
+    "address": "Centro Comercial Villa Panamericana, cantón Papalón, km 144, carretera a La Unión, San Miguel.",
+    "zoneId": "5e44aa4a-a892-4691-85b9-3966290e9dd9",
+    "department": "San Miguel",
+    "municipality": "San Miguel"
+  },
+  {
+    "id": "36",
+    "name": "San Miguel Terminal",
+    "address": "Final 4° avenida norte, ruta militar, San Miguel.",
+    "zoneId": "5e44aa4a-a892-4691-85b9-3966290e9dd9",
+    "department": "San Miguel",
+    "municipality": "San Miguel"
+  },
+  {
+    "id": "38",
+    "name": "San Miguelito",
+    "address": "29 calle poniente y 5° avenida sur, San Salvador.",
+    "zoneId": "22dc8df4-5834-4b47-9c21-280a94d2ebaa",
+    "department": "San Salvador",
+    "municipality": "San Salvador"
+  },
+  {
+    "id": "5",
+    "name": "San Miguelito Don Rua",
+    "address": "27 calle poniente y 3° avenida norte, San Salvador.",
+    "zoneId": "22dc8df4-5834-4b47-9c21-280a94d2ebaa",
+    "department": "San Salvador",
+    "municipality": "San Salvador"
+  },
+  {
+    "id": "44",
+    "name": "San Vicente",
+    "address": "2° avenida sur, ex local Arena, San Vicente.",
+    "zoneId": "ea9cd8b6-ac45-42e6-8045-173f74d407a6",
+    "department": "San Vicente",
+    "municipality": "San Vicente"
+  },
+  {
+    "id": "23",
+    "name": "Santa Ana Centro",
+    "address": "2° calle poniente y 2° avenida norte #5, Santa Ana.",
+    "zoneId": "d39bbc09-74a8-48f6-8864-c0c190ebad0c",
+    "department": "Santa Ana",
+    "municipality": "Santa Ana"
+  },
+  {
+    "id": "13",
+    "name": "Santa Ana Colón",
+    "address": "Avenida Moraga sur y 11 calle poniente, Santa Ana.",
+    "zoneId": "d39bbc09-74a8-48f6-8864-c0c190ebad0c",
+    "department": "Santa Ana",
+    "municipality": "Santa Ana"
+  },
+  {
+    "id": "129",
+    "name": "Santa Ana El Encuentro",
+    "address": "Centro Comercial El Encuentro Santa Ana local #1, barrios Santa Cruz y Santa Bárbara, Santa Ana.",
+    "zoneId": "d39bbc09-74a8-48f6-8864-c0c190ebad0c",
+    "department": "Santa Ana",
+    "municipality": "Santa Ana"
+  },
+  {
+    "id": "27",
+    "name": "Santa Ana Metrocentro",
+    "address": "Centro Comercial Metrocentro Santa Ana.",
+    "zoneId": "d39bbc09-74a8-48f6-8864-c0c190ebad0c",
+    "department": "Santa Ana",
+    "municipality": "Santa Ana"
+  },
+  {
+    "id": "100",
+    "name": "Santa Elena",
+    "address": "Avenida Izalco, block #8, boulevard Santa Elena, Antiguo Cuscatlán, la Libertad.",
+    "zoneId": "3b3ab39e-344b-466b-bfdc-cec08b373e86",
+    "department": "La Libertad",
+    "municipality": "Antiguo Cuscatlán"
+  },
+  {
+    "id": "2",
+    "name": "Santa Emilia",
+    "address": "Avenida Masferrer y 7° calle poniente, colonia Lomas Verdes, San Salvador.",
+    "zoneId": "22dc8df4-5834-4b47-9c21-280a94d2ebaa",
+    "department": "San Salvador",
+    "municipality": "San Salvador"
+  },
+  {
+    "id": "91",
+    "name": "Santa Lucía",
+    "address": "Avenida principal, ex cine Renovación, colonia Santa Lucía, Ilopango.",
+    "zoneId": "a7a1e6f8-ebd8-4cbe-aec5-08abe8d7e64c",
+    "department": "San Salvador",
+    "municipality": "Ilopango"
+  },
+  {
+    "id": "106",
+    "name": "Santa Rosa",
+    "address": "Centro Comercial Santa Rosa, final Boulevard Monseñor Romero, intercepción con calle Real y prolongacion 9° avenida poniente, Santa Tecla.",
+    "zoneId": "79eebb1a-fadd-480e-84cb-67e8cb311fac",
+    "department": "La Libertad",
+    "municipality": "Santa Tecla"
+  },
+  {
+    "id": "98",
+    "name": "Santa Rosa de Lima",
+    "address": "Avenida Fernando Benítez y 1° calle poniente, Santa Rosa de Lima, La Unión.",
+    "zoneId": "9879f2cf-bb90-43e9-a45f-bcc029ac04cd",
+    "department": "La Unión",
+    "municipality": "Santa Rosa de Lima"
+  },
+  {
+    "id": "53",
+    "name": "Santa Rosa de Lima II",
+    "address": "Barrio El Calvario, Santa Rosa de Lima, La Unión.",
+    "zoneId": "9879f2cf-bb90-43e9-a45f-bcc029ac04cd",
+    "department": "La Unión",
+    "municipality": "Santa Rosa de Lima"
+  },
+  {
+    "id": "35",
+    "name": "Santa Tecla",
+    "address": "2° calle oriente y 3° avenida norte #2-9, Santa Tecla, La Libertad.",
+    "zoneId": "79eebb1a-fadd-480e-84cb-67e8cb311fac",
+    "department": "La Libertad",
+    "municipality": "Santa Tecla"
+  },
+  {
+    "id": "102",
+    "name": "Santiago de María",
+    "address": "Calle Bolivar entre 2° y 4° avenida, barrio El Centro, Santiago de María, Usulután.",
+    "zoneId": "a95399f9-c745-4bf6-a5e7-f272d61f068a",
+    "department": "Usulután",
+    "municipality": "Santiago de María"
+  },
+  {
+    "id": "105",
+    "name": "Santo Tomás",
+    "address": "Km 18 sobre carretera a Comalapa y km 13 sobre calle antigua a Zacatecoluca, Santo Tomás.",
+    "zoneId": "06aab4af-ae17-4548-8ce7-0efa630e011b",
+    "department": "San Salvador",
+    "municipality": "Santo Tomás"
+  },
+  {
+    "id": "48",
+    "name": "Selectos Ahuachapan II",
+    "address": "8° calle poniente frente al parque de Ahuchapán, Ahuachapán.",
+    "zoneId": "78626ee5-05bc-47a6-ad58-27805eb67d8d",
+    "department": "Ahuachapán",
+    "municipality": "Ahuachapán"
+  },
+  {
+    "id": "131",
+    "name": "Selectos Armenia El Encuentro",
+    "address": "Centro Comercial El Encuentro Armenia, local #1, cantón Tres Ceibas, Armenia, Sonsonate.",
+    "zoneId": "c4bc6420-14d7-4956-8271-b41711a9d74b",
+    "department": "Sonsonate",
+    "municipality": "Armenia"
+  },
+  {
+    "id": "134",
+    "name": "Selectos Distrito Los Planes",
+    "address": "Centro comercial distrito planes de Renderos, local ancla, km 9 1/2, carretera a los planes de Renderos, distrito de San Marcos, municipio de San Salvador Sur, departamento San Salvador",
+    "zoneId": "6112e6a9-d9dc-4dad-8f57-c4b9658ce952",
+    "department": "San Salvador",
+    "municipality": "San Marcos"
+  },
+  {
+    "id": "130",
+    "name": "Selectos Olocuilta La Estacion",
+    "address": "Centro Comercial La Estación, km 23 1/2 carretera a Comalapa, Olocuilta, La Paz.",
+    "zoneId": "d619904d-ce7f-4f23-8264-0b9001c768e5",
+    "department": "La Paz",
+    "municipality": "Olocuilta"
+  },
+  {
+    "id": "76",
+    "name": "Sensuntepeque",
+    "address": "4° calle oriente, barrio Santa Bárbara #6, Cabañas.",
+    "zoneId": "2dfe53f2-97c4-44dc-80b3-98e5b2279c3f",
+    "department": "Cabañas",
+    "municipality": "Sensuntepeque"
+  },
+  {
+    "id": "99",
+    "name": "Sonsonate Centro",
+    "address": "6°  avenida y calle Obispo Marroquín, Sonsonate.",
+    "zoneId": "c4bc6420-14d7-4956-8271-b41711a9d74b",
+    "department": "Sonsonate",
+    "municipality": "Sonsonate"
+  },
+  {
+    "id": "115",
+    "name": "Sonsonate El Encuentro",
+    "address": "Centro Comercial El Encuentro  Sonsonate, barrio El Ángel, Hacienda El Cañal, Sonsonate.",
+    "zoneId": "c4bc6420-14d7-4956-8271-b41711a9d74b",
+    "department": "Sonsonate",
+    "municipality": "Sonsonate"
+  },
+  {
+    "id": "64",
+    "name": "Sonsonate Los Leones",
+    "address": "Avenida Oidor Ramírez de Quiñonez  y Paseo 15 de Septiembre, Sonsonate.",
+    "zoneId": "c4bc6420-14d7-4956-8271-b41711a9d74b",
+    "department": "Sonsonate",
+    "municipality": "Sonsonate"
+  },
+  {
+    "id": "63",
+    "name": "Sonsonate Metrocentro",
+    "address": "Centro Comercial Metrocentro, local #4, Sonsonate.",
+    "zoneId": "c4bc6420-14d7-4956-8271-b41711a9d74b",
+    "department": "Sonsonate",
+    "municipality": "Sonsonate"
+  },
+  {
+    "id": "127",
+    "name": "Soyapango Espíritu Santo",
+    "address": "Centro Comercial Boulevard Espiritu Santo, km 20 carreterra de Oro,  Soyapango.",
+    "zoneId": "7fd53a8a-21b9-4652-8bf2-4a6debbf2553",
+    "department": "San Salvador",
+    "municipality": "Soyapango"
+  },
+  {
+    "id": "123",
+    "name": "Super Selectos Distrito Zaragoza",
+    "address": "Centro Comercial Distrito Zaragoza, km 20, carretera al Puerto de La Libertad y desvío a San José Villanueva, Zaragoza, La Libertad.",
+    "zoneId": "4e6f9c71-da2b-4e2a-9021-586dd4f471c2",
+    "department": "La Libertad",
+    "municipality": "Zaragoza"
+  },
+  {
+    "id": "26",
+    "name": "Usulután Centro",
+    "address": "1° calle oriente #42, barrio El Calvario, Usulután.",
+    "zoneId": "c66167f2-ffa4-4357-a2ee-006d14de2248",
+    "department": "Usulután",
+    "municipality": "Usulután"
+  },
+  {
+    "id": "73",
+    "name": "Usulután Puerta de Oriente",
+    "address": "Plaza Comercial Puerta de Oriente, carretera del Litoral, Usulután.",
+    "zoneId": "c66167f2-ffa4-4357-a2ee-006d14de2248",
+    "department": "Usulután",
+    "municipality": "Usulután"
+  },
+  {
+    "id": "121",
+    "name": "Valle Dulce",
+    "address": "Centro Comercial El Encuentro Valle Dulce, local 1, Hacienda El Ángel, Apopa.",
+    "zoneId": "a7c1e4f9-c554-40b1-b164-3dfdf5a27159",
+    "department": "San Salvador",
+    "municipality": "Apopa"
+  },
+  {
+    "id": "20",
+    "name": "Zacamil",
+    "address": "Centro Comercial Zacamil, 29 avenida norte y calle Zacamil, Mejicanos.",
+    "zoneId": "0709eb7b-b522-48dc-b4c2-220bb52400f1",
+    "department": "San Salvador",
+    "municipality": "Mejicanos"
+  },
+  {
+    "id": "22",
+    "name": "Zacatecoluca",
+    "address": "Avenida Monterrey  y 1° calle oriente, Zacatecoluca, La Paz.",
+    "zoneId": "755edd03-decc-4095-995c-742187066ed8",
+    "department": "La Paz",
+    "municipality": "Zacatecoluca"
+  },
+  {
+    "id": "128",
+    "name": "Zacatecoluca El Encuentro",
+    "address": "Centro Comercial El Encuentro, local #1, cantón Ulapa, Zacatecoluca, La Paz.",
+    "zoneId": "755edd03-decc-4095-995c-742187066ed8",
+    "department": "La Paz",
+    "municipality": "Zacatecoluca"
+  },
+  {
+    "id": "58",
+    "name": "Zaragoza ",
+    "address": "Condominio Plaza Zaragoza, 1° avenida norte, local L-1 #15, La Libertad.",
+    "zoneId": "4e6f9c71-da2b-4e2a-9021-586dd4f471c2",
+    "department": "La Libertad",
+    "municipality": "Zaragoza"
+  }
+]

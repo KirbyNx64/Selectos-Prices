@@ -481,8 +481,26 @@ class BranchPickerSheet extends StatefulWidget {
 }
 
 class _BranchPickerSheetState extends State<BranchPickerSheet> {
+  String? _selectedDepartment;
+  String? _selectedMunicipality;
+  SelectosBranch? _selectedBranch;
+
+  bool _isDirectSearchMode = false;
   final TextEditingController _searchController = TextEditingController();
-  String _query = '';
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.selectedBranchId != null) {
+      final match = widget.branches.where((b) => b.id == widget.selectedBranchId).firstOrNull;
+      if (match != null) {
+        _selectedBranch = match;
+        _selectedDepartment = _getDepartment(match);
+        _selectedMunicipality = _getMunicipality(match);
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -490,23 +508,367 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
     super.dispose();
   }
 
+  String _getDepartment(SelectosBranch branch) {
+    if (branch.department.trim().isNotEmpty) return branch.department.trim();
+    final addr = branch.address.toLowerCase();
+    final name = branch.name.toLowerCase();
+    if (addr.contains('sonsonate') || name.contains('sonsonate') || addr.contains('izalco') || addr.contains('juayua') || addr.contains('acajutla') || addr.contains('armenia')) return 'Sonsonate';
+    if (addr.contains('ahuachap') || name.contains('ahuachap') || addr.contains('atiquizaya') || name.contains('cara sucia')) return 'Ahuachapán';
+    if (addr.contains('cabañas') || addr.contains('ilobasco') || name.contains('sensuntepeque')) return 'Cabañas';
+    if (addr.contains('chalatenango') || name.contains('nueva concepción')) return 'Chalatenango';
+    if (addr.contains('cojutepeque') || (addr.contains('cuscatlán') && !addr.contains('antiguo cuscatlán'))) return 'Cuscatlán';
+    if (addr.contains('morazán') || name.contains('gotera')) return 'Morazán';
+    if (addr.contains('la paz') || name.contains('zacatecoluca') || name.contains('olocuilta')) return 'La Paz';
+    if (addr.contains('la unión') || addr.contains('la union') || name.contains('santa rosa de lima')) return 'La Unión';
+    if (addr.contains('san vicente')) return 'San Vicente';
+    if (addr.contains('usulután') || addr.contains('usulutan') || name.contains('jiquilisco') || name.contains('santiago de maría')) return 'Usulután';
+    if (addr.contains('san miguel') || name.contains('san miguel') || name.contains('el tránsito')) return 'San Miguel';
+    if (addr.contains('santa ana') || name.contains('chalchuapa') || name.contains('metapán')) return 'Santa Ana';
+    if (addr.contains('la libertad') || addr.contains('santa tecla') || addr.contains('antiguo cuscatlán') || addr.contains('merliot') || addr.contains('lourdes') || addr.contains('colón') || addr.contains('quezaltepeque') || addr.contains('zaragoza')) return 'La Libertad';
+    return 'San Salvador';
+  }
+
+  String _getMunicipality(SelectosBranch branch) {
+    if (branch.municipality.trim().isNotEmpty) return branch.municipality.trim();
+    return branch.name;
+  }
+
+  List<String> get _departments {
+    final set = <String>{};
+    for (final b in widget.branches) {
+      final d = _getDepartment(b);
+      if (d.isNotEmpty) set.add(d);
+    }
+    final list = set.toList()..sort((a, b) => a.compareTo(b));
+    return list;
+  }
+
+  List<String> get _municipalities {
+    if (_selectedDepartment == null) return const [];
+    final set = <String>{};
+    for (final b in widget.branches) {
+      if (_getDepartment(b) == _selectedDepartment) {
+        final m = _getMunicipality(b);
+        if (m.isNotEmpty) set.add(m);
+      }
+    }
+    final list = set.toList()..sort((a, b) => a.compareTo(b));
+    return list;
+  }
+
+  List<SelectosBranch> get _availableBranches {
+    if (_selectedDepartment == null || _selectedMunicipality == null) return const [];
+    return widget.branches
+        .where((b) =>
+            _getDepartment(b) == _selectedDepartment &&
+            _getMunicipality(b) == _selectedMunicipality)
+        .toList()
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+  }
+
+  Future<void> _pickDepartment() async {
+    final depts = _departments;
+    final chosen = await _showOptionsSheet<String>(
+      title: 'Departamento',
+      subtitle: 'Selecciona el departamento de retiro',
+      items: depts,
+      selectedItem: _selectedDepartment,
+      labelOf: (d) => d,
+      icon: Icons.map_outlined,
+    );
+
+    if (chosen != null && chosen != _selectedDepartment) {
+      setState(() {
+        _selectedDepartment = chosen;
+        _selectedMunicipality = null;
+        _selectedBranch = null;
+      });
+    }
+  }
+
+  Future<void> _pickMunicipality() async {
+    final muns = _municipalities;
+    final chosen = await _showOptionsSheet<String>(
+      title: 'Municipio',
+      subtitle: 'Selecciona el municipio en $_selectedDepartment',
+      items: muns,
+      selectedItem: _selectedMunicipality,
+      labelOf: (m) => m,
+      icon: Icons.location_city_outlined,
+    );
+
+    if (chosen != null && chosen != _selectedMunicipality) {
+      setState(() {
+        _selectedMunicipality = chosen;
+        _selectedBranch = null;
+      });
+    }
+  }
+
+  Future<void> _pickBranch() async {
+    final branches = _availableBranches;
+    final chosen = await _showOptionsSheet<SelectosBranch>(
+      title: 'Sala de venta',
+      subtitle: 'Salas en $_selectedMunicipality, $_selectedDepartment',
+      items: branches,
+      selectedItem: _selectedBranch,
+      labelOf: (b) => b.name,
+      subtitleOf: (b) => b.address.isNotEmpty ? b.address : null,
+      icon: Icons.storefront_rounded,
+    );
+
+    if (chosen != null) {
+      setState(() {
+        _selectedBranch = chosen;
+      });
+    }
+  }
+
+  Future<T?> _showOptionsSheet<T>({
+    required String title,
+    required String subtitle,
+    required List<T> items,
+    required T? selectedItem,
+    required String Function(T) labelOf,
+    String? Function(T)? subtitleOf,
+    required IconData icon,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return showModalBottomSheet<T>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      useSafeArea: true,
+      backgroundColor: colorScheme.surfaceContainerLow,
+      builder: (sheetContext) {
+        String filter = '';
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final filtered = filter.isEmpty
+                ? items
+                : items.where((item) {
+                    final normalizedItem = _normalize(labelOf(item));
+                    final normalizedFilter = _normalize(filter);
+                    final sub = subtitleOf != null ? _normalize(subtitleOf(item) ?? '') : '';
+                    return normalizedItem.contains(normalizedFilter) || sub.contains(normalizedFilter);
+                  }).toList(growable: false);
+
+            return SafeArea(
+              top: false,
+              child: SizedBox(
+                height: MediaQuery.sizeOf(context).height * 0.75,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(icon, color: colorScheme.primary, size: 24),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  title,
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            subtitle,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (items.length > 4)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        child: SearchBar(
+                          hintText: 'Buscar $title...',
+                          leading: const Icon(Icons.search_rounded),
+                          trailing: filter.isNotEmpty
+                              ? [
+                                  IconButton(
+                                    icon: const Icon(Icons.close_rounded),
+                                    onPressed: () => setModalState(() => filter = ''),
+                                  ),
+                                ]
+                              : null,
+                          onChanged: (val) => setModalState(() => filter = val),
+                        ),
+                      ),
+                    const Divider(height: 1),
+                    Expanded(
+                      child: filtered.isEmpty
+                          ? Center(
+                              child: Text(
+                                'No se encontraron resultados',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            )
+                          : ListView.separated(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              itemCount: filtered.length,
+                              separatorBuilder: (context, index) => const Divider(height: 1, indent: 16, endIndent: 16),
+                              itemBuilder: (context, index) {
+                                final item = filtered[index];
+                                final isSelected = selectedItem != null &&
+                                    labelOf(item) == labelOf(selectedItem);
+                                final subText = subtitleOf?.call(item);
+
+                                return ListTile(
+                                  leading: Icon(
+                                    isSelected
+                                        ? Icons.check_circle_rounded
+                                        : Icons.radio_button_unchecked_rounded,
+                                    color: isSelected
+                                        ? colorScheme.primary
+                                        : colorScheme.outline,
+                                  ),
+                                  title: Text(
+                                    labelOf(item),
+                                    style: TextStyle(
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                    ),
+                                  ),
+                                  subtitle: subText != null
+                                      ? Text(
+                                          subText,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        )
+                                      : null,
+                                  onTap: () => Navigator.pop(sheetContext, item),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildDropdownCard({
+    required String label,
+    required String? value,
+    required String placeholder,
+    required bool enabled,
+    required VoidCallback onTap,
+    VoidCallback? onClear,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final hasValue = value != null && value.trim().isNotEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Text(
+              label,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+                height: 1.25,
+              ),
+            ),
+          ),
+          InkWell(
+            onTap: enabled ? onTap : null,
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: enabled
+                    ? colorScheme.surfaceContainerLowest
+                    : colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: enabled
+                      ? (hasValue
+                          ? colorScheme.outline.withValues(alpha: 0.4)
+                          : colorScheme.outlineVariant)
+                      : colorScheme.outlineVariant.withValues(alpha: 0.3),
+                  width: 1.2,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      hasValue ? value : placeholder,
+                      style: hasValue
+                          ? theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.onSurface,
+                            )
+                          : theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.65),
+                            ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (hasValue && enabled && onClear != null) ...[
+                    const SizedBox(width: 4),
+                    InkResponse(
+                      radius: 16,
+                      onTap: onClear,
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 20,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                  ],
+                  Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 22,
+                    color: enabled
+                        ? colorScheme.onSurfaceVariant
+                        : colorScheme.outline.withValues(alpha: 0.5),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final normalizedQuery = _normalize(_query);
-    final filtered = normalizedQuery.isEmpty
-        ? widget.branches
-        : widget.branches
-              .where((branch) {
-                return _normalize(branch.name).contains(normalizedQuery) ||
-                    _normalize(branch.address).contains(normalizedQuery);
-              })
-              .toList(growable: false);
+    final colorScheme = theme.colorScheme;
 
     return SafeArea(
       top: false,
       child: SizedBox(
-        height: MediaQuery.sizeOf(context).height * 0.82,
+        height: MediaQuery.sizeOf(context).height * 0.85,
         child: Column(
           children: [
             Padding(
@@ -514,93 +876,290 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Selecciona una sala',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Selecciona una sala',
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: _isDirectSearchMode ? 'Filtro por departamento' : 'Buscar por nombre',
+                        icon: Icon(
+                          _isDirectSearchMode ? Icons.filter_alt_outlined : Icons.search_rounded,
+                          color: colorScheme.primary,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isDirectSearchMode = !_isDirectSearchMode;
+                          });
+                        },
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'La app mostrará únicamente productos disponibles en la sala seleccionada.',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: SearchBar(
-                controller: _searchController,
-                hintText: 'Buscar sala o ubicación',
-                leading: const Icon(Icons.search_rounded),
-                trailing: [
-                  if (_query.isNotEmpty)
-                    IconButton(
-                      tooltip: 'Limpiar búsqueda',
-                      onPressed: () {
-                        _searchController.clear();
-                        setState(() => _query = '');
-                      },
-                      icon: const Icon(Icons.close_rounded),
-                    ),
-                ],
-                onChanged: (value) => setState(() => _query = value),
-              ),
-            ),
             const Divider(height: 1),
             Expanded(
-              child: filtered.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No se encontraron salas',
-                        style: theme.textTheme.bodyLarge,
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      itemCount: filtered.length,
-                      itemBuilder: (context, index) {
-                        final branch = filtered[index];
-                        final selected = branch.id == widget.selectedBranchId;
-                        return ListTile(
-                          selected: selected,
-                          leading: Icon(
-                            selected
-                                ? Icons.storefront_rounded
-                                : Icons.storefront_outlined,
-                          ),
-                          title: Text(
-                            branch.name,
-                            style: TextStyle(
-                              fontWeight: selected
-                                  ? FontWeight.bold
-                                  : FontWeight.w500,
-                            ),
-                          ),
-                          subtitle: branch.address.isEmpty
-                              ? null
-                              : Text(
-                                  branch.address,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                          trailing: selected
-                              ? Icon(
-                                  Icons.check_circle_rounded,
-                                  color: theme.colorScheme.primary,
-                                )
-                              : null,
-                          onTap: () => Navigator.pop(context, branch),
-                        );
-                      },
-                    ),
+              child: _isDirectSearchMode
+                  ? _buildDirectSearchList(context)
+                  : _buildWebCascadingSelector(context),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildWebCascadingSelector(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildDropdownCard(
+                  label: 'Departamento de la sala de venta dónde desea retirar los productos',
+                  value: _selectedDepartment,
+                  placeholder: 'Seleccione el departamento',
+                  enabled: true,
+                  onTap: _pickDepartment,
+                  onClear: () {
+                    setState(() {
+                      _selectedDepartment = null;
+                      _selectedMunicipality = null;
+                      _selectedBranch = null;
+                    });
+                  },
+                ),
+                _buildDropdownCard(
+                  label: 'Municipio de la sala de venta dónde desea retirar los productos',
+                  value: _selectedMunicipality,
+                  placeholder: _selectedDepartment == null
+                      ? 'Primero seleccione un departamento'
+                      : 'Seleccione el municipio',
+                  enabled: _selectedDepartment != null,
+                  onTap: _pickMunicipality,
+                  onClear: () {
+                    setState(() {
+                      _selectedMunicipality = null;
+                      _selectedBranch = null;
+                    });
+                  },
+                ),
+                _buildDropdownCard(
+                  label: 'Seleccione la sala de venta dónde retirará los productos',
+                  value: _selectedBranch?.name,
+                  placeholder: _selectedMunicipality == null
+                      ? 'Primero seleccione un municipio'
+                      : 'Seleccione la sala de venta',
+                  enabled: _selectedMunicipality != null,
+                  onTap: _pickBranch,
+                  onClear: () {
+                    setState(() {
+                      _selectedBranch = null;
+                    });
+                  },
+                ),
+                if (_selectedBranch != null) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainer,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: colorScheme.primary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primaryContainer,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.storefront_rounded,
+                            color: colorScheme.onPrimaryContainer,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _selectedBranch!.name,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              if (_selectedBranch!.address.isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  _selectedBranch!.address,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.surfaceContainerHighest,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  '$_selectedMunicipality, $_selectedDepartment',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerLow,
+            border: Border(
+              top: BorderSide(
+                color: colorScheme.outlineVariant.withValues(alpha: 0.4),
+              ),
+            ),
+          ),
+          child: SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: FilledButton.icon(
+              onPressed: _selectedBranch != null
+                  ? () => Navigator.pop(context, _selectedBranch)
+                  : null,
+              icon: const Icon(Icons.check_rounded),
+              label: const Text(
+                'Confirmar sala',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDirectSearchList(BuildContext context) {
+    final theme = Theme.of(context);
+    final normalizedQuery = _normalize(_searchQuery);
+    final filtered = normalizedQuery.isEmpty
+        ? widget.branches
+        : widget.branches
+            .where((branch) {
+              return _normalize(branch.name).contains(normalizedQuery) ||
+                  _normalize(branch.address).contains(normalizedQuery) ||
+                  _normalize(_getDepartment(branch)).contains(normalizedQuery) ||
+                  _normalize(_getMunicipality(branch)).contains(normalizedQuery);
+            })
+            .toList(growable: false);
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: SearchBar(
+            controller: _searchController,
+            hintText: 'Buscar sala por nombre o dirección',
+            leading: const Icon(Icons.search_rounded),
+            trailing: [
+              if (_searchQuery.isNotEmpty)
+                IconButton(
+                  tooltip: 'Limpiar búsqueda',
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() => _searchQuery = '');
+                  },
+                  icon: const Icon(Icons.close_rounded),
+                ),
+            ],
+            onChanged: (value) => setState(() => _searchQuery = value),
+          ),
+        ),
+        const Divider(height: 1),
+        Expanded(
+          child: filtered.isEmpty
+              ? Center(
+                  child: Text(
+                    'No se encontraron salas',
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: filtered.length,
+                  itemBuilder: (context, index) {
+                    final branch = filtered[index];
+                    final selected = branch.id == (_selectedBranch?.id ?? widget.selectedBranchId);
+                    return ListTile(
+                      selected: selected,
+                      leading: Icon(
+                        selected ? Icons.storefront_rounded : Icons.storefront_outlined,
+                      ),
+                      title: Text(
+                        branch.name,
+                        style: TextStyle(
+                          fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+                        ),
+                      ),
+                      subtitle: branch.address.isEmpty
+                          ? null
+                          : Text(
+                              branch.address,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                      trailing: selected
+                          ? Icon(
+                              Icons.check_circle_rounded,
+                              color: theme.colorScheme.primary,
+                            )
+                          : null,
+                      onTap: () => Navigator.pop(context, branch),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 
