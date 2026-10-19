@@ -25,7 +25,7 @@ import 'package:super_selectos/widgets/app_snackbar.dart';
 import 'package:super_selectos/widgets/app_update_dialog.dart';
 import 'package:super_selectos/widgets/product_card.dart';
 
-enum _ShoppingListEditAction { editDate, editTime, delete }
+enum _ShoppingListEditAction { editName, editDate, editTime, delete }
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -493,9 +493,17 @@ class _MyHomePageState extends State<MyHomePage>
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Lista de compras',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            ListenableBuilder(
+              listenable: _cart,
+              builder: (context, _) {
+                final selectedList = _cart.selectedList;
+                return Text(
+                  selectedList?.displayName ?? 'Lista de compras',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                );
+              },
             ),
             ListenableBuilder(
               listenable: _cart,
@@ -541,6 +549,11 @@ class _MyHomePageState extends State<MyHomePage>
               M3EMenuGroup(
                 label: 'Editar lista',
                 children: [
+                  M3EMenuEntry(
+                    label: 'Cambiar nombre',
+                    value: _ShoppingListEditAction.editName,
+                    leading: Icon(Icons.drive_file_rename_outline_rounded),
+                  ),
                   M3EMenuEntry(
                     label: 'Editar fecha',
                     value: _ShoppingListEditAction.editDate,
@@ -588,7 +601,8 @@ class _MyHomePageState extends State<MyHomePage>
                 children: [
                   for (final list in _cart.lists)
                     M3EMenuSelectable(
-                      label: list.dateTimeLabel,
+                      label: list.displayName,
+                      supportingText: list.dateTimeLabel,
                       value: list.id,
                       selected: list.id == _cart.selectedList?.id,
                       leading: const Icon(Icons.shopping_bag_outlined),
@@ -1556,7 +1570,7 @@ class _MyHomePageState extends State<MyHomePage>
   Future<void> _handleShoppingListSelection(int listId) async {
     try {
       if (listId == -1) {
-        await _cart.createList();
+        await _promptCreateNewList();
       } else {
         await _cart.selectList(listId);
       }
@@ -1571,16 +1585,144 @@ class _MyHomePageState extends State<MyHomePage>
     }
   }
 
+  Future<void> _promptCreateNewList() async {
+    final colorScheme = Theme.of(context).colorScheme;
+    final controller = TextEditingController();
+
+    final confirmed = await M3EDialog.show<bool>(
+      context,
+      dialog: Material(
+        type: MaterialType.transparency,
+        child: M3EDialog(
+          title: 'Nueva lista de compras',
+          icon: Icon(
+            Icons.add_shopping_cart_rounded,
+            color: colorScheme.primary,
+          ),
+          content: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: TextField(
+              controller: controller,
+              autofocus: true,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: InputDecoration(
+                hintText: 'Ej. Supermercado semanal (opcional)',
+                labelText: 'Nombre de la lista',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onSubmitted: (_) => Navigator.pop(context, true),
+            ),
+          ),
+          actions: [
+            M3EButton.text(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            M3EButton.filled(
+              onPressed: () => Navigator.pop(context, true),
+              shape: M3EButtonShape.round,
+              child: const Text('Crear'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final name = controller.text.trim();
+    await _cart.createList(name: name.isEmpty ? null : name);
+    if (!mounted) return;
+    setState(() {});
+    AppSnackbar.success(
+      context,
+      message: 'Lista creada',
+      icon: Icons.playlist_add_rounded,
+    );
+  }
+
   Future<void> _handleShoppingListEditAction(
     _ShoppingListEditAction action,
   ) async {
     switch (action) {
+      case _ShoppingListEditAction.editName:
+        await _editSelectedListName();
       case _ShoppingListEditAction.editDate:
         await _editSelectedListDate();
       case _ShoppingListEditAction.editTime:
         await _editSelectedListTime();
       case _ShoppingListEditAction.delete:
         await _confirmDeleteSelectedList();
+    }
+  }
+
+  Future<void> _editSelectedListName() async {
+    final selectedList = _cart.selectedList;
+    if (selectedList == null) return;
+    final colorScheme = Theme.of(context).colorScheme;
+    final controller = TextEditingController(text: selectedList.name ?? '');
+
+    final newName = await M3EDialog.show<String>(
+      context,
+      dialog: Material(
+        type: MaterialType.transparency,
+        child: M3EDialog(
+          title: 'Nombre de la lista',
+          icon: Icon(
+            Icons.drive_file_rename_outline_rounded,
+            color: colorScheme.primary,
+          ),
+          content: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: TextField(
+              controller: controller,
+              autofocus: true,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: InputDecoration(
+                hintText: 'Ej. Supermercado semanal',
+                labelText: 'Nombre',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.clear_rounded),
+                  onPressed: () => controller.clear(),
+                ),
+              ),
+              onSubmitted: (value) => Navigator.pop(context, value),
+            ),
+          ),
+          actions: [
+            M3EButton.text(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            M3EButton.filled(
+              onPressed: () => Navigator.pop(context, controller.text),
+              shape: M3EButtonShape.round,
+              child: const Text('Guardar'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (newName == null || !mounted) return;
+
+    try {
+      await _cart.updateSelectedListName(newName);
+      if (!mounted) return;
+      setState(() {});
+      AppSnackbar.success(
+        context,
+        message: 'Nombre actualizado',
+        icon: Icons.drive_file_rename_outline_rounded,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackbar.error(context, message: 'No se pudo actualizar el nombre');
     }
   }
 

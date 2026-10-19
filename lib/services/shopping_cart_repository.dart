@@ -85,12 +85,31 @@ class ShoppingCartRepository extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> createList() async {
+  Future<void> createList({String? name}) async {
     await _ensureInitialized();
-    final list = await _database.createList(DateTime.now());
+    final list = await _database.createList(DateTime.now(), name: name);
     _lists.insert(0, list);
     _selectedList = list;
     _items.clear();
+    notifyListeners();
+  }
+
+  Future<void> updateSelectedListName(String? name) async {
+    await _ensureInitialized();
+    final selectedList = _requireSelectedList();
+    final cleanName = name?.trim().isEmpty == true ? null : name?.trim();
+    await _database.updateListName(selectedList.id, cleanName);
+
+    final updatedList = ShoppingList(
+      id: selectedList.id,
+      createdAt: selectedList.createdAt,
+      name: cleanName,
+    );
+    final listIndex = _lists.indexWhere((list) => list.id == selectedList.id);
+    if (listIndex != -1) {
+      _lists[listIndex] = updatedList;
+    }
+    _selectedList = updatedList;
     notifyListeners();
   }
 
@@ -113,7 +132,11 @@ class ShoppingCartRepository extends ChangeNotifier {
     final selectedList = _requireSelectedList();
     await _database.updateListDateTime(selectedList.id, dateTime);
 
-    final updatedList = ShoppingList(id: selectedList.id, createdAt: dateTime);
+    final updatedList = ShoppingList(
+      id: selectedList.id,
+      createdAt: dateTime,
+      name: selectedList.name,
+    );
     final listIndex = _lists.indexWhere((list) => list.id == selectedList.id);
     _lists[listIndex] = updatedList;
     _lists.sort((a, b) => b.createdAt.compareTo(a.createdAt));

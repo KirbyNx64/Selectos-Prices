@@ -9,7 +9,7 @@ class ShoppingCartDatabase {
   static final ShoppingCartDatabase instance = ShoppingCartDatabase._();
 
   static const _databaseName = 'selectos_prices.db';
-  static const _databaseVersion = 2;
+  static const _databaseVersion = 3;
   static const _itemsTable = 'shopping_cart';
   static const _listsTable = 'shopping_lists';
 
@@ -33,6 +33,9 @@ class ShoppingCartDatabase {
         if (oldVersion < 2) {
           await _migrateToMultipleLists(db);
         }
+        if (oldVersion < 3) {
+          await db.execute('ALTER TABLE $_listsTable ADD COLUMN name TEXT');
+        }
       },
     );
     return _database!;
@@ -44,10 +47,20 @@ class ShoppingCartDatabase {
     return rows.map(ShoppingList.fromMap).toList();
   }
 
-  Future<ShoppingList> createList(DateTime createdAt) async {
+  Future<ShoppingList> createList(DateTime createdAt, {String? name}) async {
     final db = await database;
-    final id = await _insertList(db, createdAt);
-    return ShoppingList(id: id, createdAt: createdAt);
+    final id = await _insertList(db, createdAt, name: name);
+    return ShoppingList(id: id, createdAt: createdAt, name: name);
+  }
+
+  Future<void> updateListName(int listId, String? name) async {
+    final db = await database;
+    await db.update(
+      _listsTable,
+      {'name': name?.trim().isEmpty == true ? null : name?.trim()},
+      where: 'id = ?',
+      whereArgs: [listId],
+    );
   }
 
   Future<void> updateListDateTime(int listId, DateTime dateTime) async {
@@ -65,13 +78,16 @@ class ShoppingCartDatabase {
     await db.delete(_listsTable, where: 'id = ?', whereArgs: [listId]);
   }
 
-  Future<ShoppingList> deleteAllListsAndCreate(DateTime createdAt) async {
+  Future<ShoppingList> deleteAllListsAndCreate(
+    DateTime createdAt, {
+    String? name,
+  }) async {
     final db = await database;
     return db.transaction((transaction) async {
       await transaction.delete(_itemsTable);
       await transaction.delete(_listsTable);
-      final id = await _insertList(transaction, createdAt);
-      return ShoppingList(id: id, createdAt: createdAt);
+      final id = await _insertList(transaction, createdAt, name: name);
+      return ShoppingList(id: id, createdAt: createdAt, name: name);
     });
   }
 
@@ -148,6 +164,7 @@ class ShoppingCartDatabase {
     await db.execute('''
       CREATE TABLE $_listsTable (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
         created_at INTEGER NOT NULL
       )
     ''');
@@ -180,8 +197,13 @@ class ShoppingCartDatabase {
         ''');
   }
 
-  static Future<int> _insertList(DatabaseExecutor db, DateTime createdAt) {
+  static Future<int> _insertList(
+    DatabaseExecutor db,
+    DateTime createdAt, {
+    String? name,
+  }) {
     return db.insert(_listsTable, {
+      'name': name?.trim().isEmpty == true ? null : name?.trim(),
       'created_at': createdAt.millisecondsSinceEpoch,
     });
   }
