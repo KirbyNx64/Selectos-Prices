@@ -349,14 +349,18 @@ class SuperSelectosService {
       }
 
       if (StoreSelectionController.instance.selectedBranchId != null &&
+          cleanCode.length > 3 &&
           _supportsBranchApiSorting(filters.sortOrder)) {
-        return await _searchProductsInSelectedBranch(
+        final branchResult = await _searchProductsInSelectedBranch(
           categoryCode: cleanCode,
           page: pagina,
           filters: filters,
           resolvedTerm: categoryNombre ?? cleanCode,
           catalogHtml: response.body,
         );
+        if (branchResult.productos.isNotEmpty) {
+          return branchResult;
+        }
       }
 
       final parsedProducts = _parsearProductos(response.body, null);
