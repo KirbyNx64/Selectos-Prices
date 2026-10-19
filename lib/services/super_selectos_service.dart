@@ -697,6 +697,59 @@ class SuperSelectosService {
       return const SearchResponse(productos: []);
     }
 
+    // Detectar si el término ingresado es un enlace con productId o texto con productId
+    final extractedProductId = extraerProductId(terminoBusqueda);
+    if (extractedProductId != null) {
+      try {
+        Product? producto = await obtenerDetalleProductoWeb(extractedProductId);
+        if (producto == null || producto.nombre.trim().isEmpty) {
+          producto = await _buscarProductoPorIdApi(extractedProductId);
+        }
+        if (producto != null) {
+          return SearchResponse(
+            productos: [producto],
+            terminoResuelto: producto.nombre,
+            esCoincidenciaExacta: true,
+            paginacion: const PaginationInfo(
+              paginaActual: 1,
+              paginasDisponibles: [1],
+              tieneAnterior: false,
+              tieneSiguiente: false,
+            ),
+          );
+        }
+      } catch (e) {
+        debugPrint('[SuperSelectos] Error al resolver enlace de producto: $e');
+      }
+    }
+
+    // Detectar si el término ingresado es un enlace de categoría
+    final extractedCategory = extraerCategoryCode(terminoBusqueda);
+    if (extractedCategory != null) {
+      return buscarPorCategoria(
+        extractedCategory,
+        categoryNombre: extractedCategory,
+        pagina: pagina,
+        filters: filters,
+      );
+    }
+
+    // Detectar si el término es un enlace de landing o promociones
+    if (terminoBusqueda.contains('/landing/') ||
+        terminoBusqueda.contains('/offers/')) {
+      return obtenerProductosLanding(
+        terminoBusqueda,
+        pagina: pagina,
+        filters: filters,
+      );
+    }
+
+    // Si el enlace contiene `keyword=`, extraer el término
+    final extractedKeyword = extraerKeyword(terminoBusqueda);
+    if (extractedKeyword != null && extractedKeyword.isNotEmpty) {
+      terminoBusqueda = extractedKeyword;
+    }
+
     // Detectar si el término ingresado es un código de barras numérico (8 a 14 dígitos)
     final esCodigoBarra =
         RegExp(r'^\d+$').hasMatch(terminoBusqueda) &&
@@ -1321,6 +1374,95 @@ class SuperSelectosService {
           });
         })
         .toList(growable: false);
+  }
+
+  /// Extrae el productId de un enlace web o texto si contiene uno.
+  static String? extraerProductId(String input) {
+    final clean = input.trim();
+    if (clean.isEmpty) return null;
+
+    final matchParam = RegExp(
+      r'(?:[?&]productId=|^productId[:=\s]+)(\d+)',
+      caseSensitive: false,
+    ).firstMatch(clean);
+    if (matchParam != null) {
+      return matchParam.group(1);
+    }
+
+    final matchPath = RegExp(
+      r'/(?:products?|productId)/(\d+)(?:[/?#]|$)',
+      caseSensitive: false,
+    ).firstMatch(clean);
+    if (matchPath != null) {
+      return matchPath.group(1);
+    }
+
+    return null;
+  }
+
+  /// Extrae el código de categoría de un enlace si contiene uno y no tiene productId.
+  static String? extraerCategoryCode(String input) {
+    final clean = input.trim();
+    if (clean.isEmpty) return null;
+
+    final match = RegExp(
+      r'(?:[?&]category=|^category[:=\s]+)([0-9a-zA-Z]+)',
+      caseSensitive: false,
+    ).firstMatch(clean);
+    return match?.group(1);
+  }
+
+  /// Extrae la palabra clave de búsqueda de un enlace si contiene `keyword=`.
+  static String? extraerKeyword(String input) {
+    final clean = input.trim();
+    if (clean.isEmpty) return null;
+
+    final match = RegExp(
+      r'[?&]keyword=([^&#]+)',
+      caseSensitive: false,
+    ).firstMatch(clean);
+    if (match != null) {
+      return Uri.decodeQueryComponent(match.group(1)!);
+    }
+    return null;
+  }
+
+  Future<Product?> _buscarProductoPorIdApi(String productId) async {
+    final cleanId = productId.trim();
+    if (cleanId.isEmpty) return null;
+    try {
+      final uri = Uri.parse(
+        'https://ecom-exploration.superselectos.com/api/accounts/selectos/products/search',
+      );
+      final response = await _client
+          .post(
+            uri,
+            headers: const {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({
+              'basicFilters': {
+                'productIds': [cleanId],
+                'isActive': true,
+              },
+              'page': 1,
+              'top': 1,
+            }),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode != 200) return null;
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) return null;
+      final items = decoded['items'];
+      if (items is! List<dynamic> || items.isEmpty) return null;
+      final first = items.first;
+      if (first is! Map<String, dynamic>) return null;
+      return _productFromSearchApi(first, null);
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Parsea el HTML de Súper Selectos extrayendo los productos

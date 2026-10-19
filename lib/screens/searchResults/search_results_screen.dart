@@ -219,6 +219,13 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
         if (response.filterGroups.isNotEmpty) {
           _filterGroups = response.filterGroups;
         }
+        if (response.esCoincidenciaExacta &&
+            response.terminoResuelto != null &&
+            response.terminoResuelto!.isNotEmpty &&
+            (_currentQuery.contains('http') ||
+                _currentQuery.toLowerCase().contains('productid'))) {
+          _searchController.text = response.terminoResuelto!;
+        }
       });
 
       if (_scrollController.hasClients) {

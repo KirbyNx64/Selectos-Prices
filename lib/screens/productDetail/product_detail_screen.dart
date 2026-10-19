@@ -416,8 +416,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               M3ECard(
                 variant: M3ECardVariant.filled,
                 borderRadius: BorderRadius.circular(18),
-                color: availabilityContainerColor,
-                border: BorderSide(color: availabilityBorderColor),
+                color: colorScheme.surfaceContainer,
+                border: BorderSide(
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+                ),
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
