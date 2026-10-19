@@ -326,12 +326,21 @@ class _SubcategoriesScreenState extends State<SubcategoriesScreen>
                   child: Center(
                     child: Column(
                       children: [
-                        Icon(
-                          Icons.search_off_rounded,
-                          size: 48,
-                          color: colorScheme.outline,
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primaryContainer.withValues(
+                              alpha: 0.4,
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.search_off_rounded,
+                            size: 48,
+                            color: colorScheme.primary,
+                          ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 16),
                         Text(
                           'No se encontraron subcategorías para "$_filterQuery"',
                           textAlign: TextAlign.center,

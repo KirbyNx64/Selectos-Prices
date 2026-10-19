@@ -694,6 +694,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
   }
 
   Widget _buildBody(BuildContext context, List<Product> productos) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     if (_isLoading) {
       return Center(
         child: Column(
@@ -701,7 +704,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
           children: [
             M3ELoadingIndicator(
               size: 48,
-              color: Theme.of(context).colorScheme.primary,
+              color: colorScheme.primary,
             ),
           ],
         ),
@@ -718,14 +721,14 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
               Icon(
                 _isOffline ? Icons.wifi_off_rounded : Icons.cloud_off_rounded,
                 size: 64,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                color: colorScheme.onSurfaceVariant,
               ),
               const SizedBox(height: 16),
               Text(
                 _isOffline
                     ? 'Sin conexión a Internet'
                     : 'No se pudo completar la búsqueda',
-                style: Theme.of(context).textTheme.titleMedium
+                style: theme.textTheme.titleMedium
                     ?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
@@ -735,7 +738,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
                     : 'Inténtalo nuevamente en unos momentos.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  color: colorScheme.onSurfaceVariant,
                   fontSize: 13,
                 ),
               ),
@@ -745,18 +748,18 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
                 shape: M3EButtonShape.round,
                 decoration: M3EButtonDecoration(
                   backgroundColor: WidgetStatePropertyAll(
-                    Theme.of(context).colorScheme.primary,
+                    colorScheme.primary,
                   ),
                 ),
                 label: Text(
                   'Reintentar',
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onPrimary,
+                    color: colorScheme.onPrimary,
                   ),
                 ),
                 icon: Icon(
                   Icons.refresh,
-                  color: Theme.of(context).colorScheme.onPrimary,
+                  color: colorScheme.onPrimary,
                 ),
               ),
             ],
@@ -772,11 +775,24 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.search_off_rounded, size: 72),
-              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer.withValues(
+                    alpha: 0.4,
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.search_off_rounded,
+                  size: 64,
+                  color: colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 24),
               Text(
                 'No se encontraron productos',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   letterSpacing: -0.3,
                 ),
@@ -787,6 +803,11 @@ class _SearchResultsScreenState extends State<SearchResultsScreen>
                     ? 'No hay productos que coincidan con los filtros seleccionados.'
                     : 'Intenta con otro término o verifica el código de barras ingresado.',
                 textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: colorScheme.onSurfaceVariant,
+                  height: 1.4,
+                ),
               ),
               if (_selectedFilters.count > 0) ...[
                 const SizedBox(height: 20),

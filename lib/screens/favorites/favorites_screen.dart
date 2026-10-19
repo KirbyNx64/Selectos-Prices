@@ -370,12 +370,21 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.favorite_border_rounded,
-                        size: 72,
-                        color: colorScheme.primary,
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer.withValues(
+                            alpha: 0.4,
+                          ),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.favorite_border_rounded,
+                          size: 64,
+                          color: colorScheme.primary,
+                        ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 24),
                       Text(
                         'Aún no tienes productos favoritos',
                         textAlign: TextAlign.center,
@@ -405,12 +414,21 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.search_off_rounded,
-                        size: 72,
-                        color: colorScheme.primary,
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer.withValues(
+                            alpha: 0.4,
+                          ),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.search_off_rounded,
+                          size: 64,
+                          color: colorScheme.primary,
+                        ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 24),
                       Text(
                         'No hay favoritos que coincidan',
                         textAlign: TextAlign.center,
