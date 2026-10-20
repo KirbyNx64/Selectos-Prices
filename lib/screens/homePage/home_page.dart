@@ -62,6 +62,10 @@ class _MyHomePageState extends State<MyHomePage>
   bool _loadingOfferCampaigns = false;
   bool _offerCampaignsLoaded = false;
   bool _offerCampaignsError = false;
+  List<Product> _officialAppOffers = const [];
+  bool _loadingOfficialAppOffers = false;
+  bool _officialAppOffersLoaded = false;
+  bool _officialAppOffersError = false;
 
   final List<MainCategory> _categorias = listaCategoriasPrincipales;
 
@@ -270,6 +274,32 @@ class _MyHomePageState extends State<MyHomePage>
     }
   }
 
+  Future<void> _loadOfficialAppOffers({bool forceRefresh = false}) async {
+    if (_loadingOfficialAppOffers) return;
+    setState(() {
+      _loadingOfficialAppOffers = true;
+      _officialAppOffersError = false;
+    });
+    try {
+      final products = await _service.obtenerOfertasAppOficial(
+        forzarRefresco: forceRefresh,
+      );
+      if (!mounted) return;
+      setState(() {
+        _officialAppOffers = products;
+        _loadingOfficialAppOffers = false;
+        _officialAppOffersLoaded = true;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loadingOfficialAppOffers = false;
+        _officialAppOffersLoaded = true;
+        _officialAppOffersError = true;
+      });
+    }
+  }
+
   Future<void> _precacheOfferBanners(List<OfferCampaign> banners) async {
     await Future.wait(
       banners.map((banner) async {
@@ -405,6 +435,11 @@ class _MyHomePageState extends State<MyHomePage>
                     !_offerCampaignsLoaded &&
                     !_loadingOfferCampaigns) {
                   _loadOfferCampaigns();
+                }
+                if (i == 2 &&
+                    !_officialAppOffersLoaded &&
+                    !_loadingOfficialAppOffers) {
+                  _loadOfficialAppOffers();
                 }
                 setState(() {
                   barIndex = i;
@@ -734,6 +769,9 @@ class _MyHomePageState extends State<MyHomePage>
                     if (previousBranchId !=
                         StoreSelectionController.instance.selectedBranchId) {
                       _cargarProductosInicio(forzarRefresco: true);
+                      if (_officialAppOffersLoaded) {
+                        _loadOfficialAppOffers(forceRefresh: true);
+                      }
                     }
                   },
                 ),
@@ -930,7 +968,6 @@ class _MyHomePageState extends State<MyHomePage>
                   ),
                 ),
                 const SizedBox(height: 14),
-
               ],
             ),
           ),
@@ -941,10 +978,7 @@ class _MyHomePageState extends State<MyHomePage>
           SliverFillRemaining(
             hasScrollBody: false,
             child: Center(
-              child: M3ELoadingIndicator(
-                size: 40,
-                color: colorScheme.primary,
-              ),
+              child: M3ELoadingIndicator(size: 40, color: colorScheme.primary),
             ),
           )
         else if (_errorProductosInicio != null)
@@ -1015,9 +1049,7 @@ class _MyHomePageState extends State<MyHomePage>
             child: Center(
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 30),
-                child: Text(
-                  'No hay productos disponibles por el momento.',
-                ),
+                child: Text('No hay productos disponibles por el momento.'),
               ),
             ),
           )
@@ -1177,13 +1209,14 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Widget _buildOfertasView(ThemeData theme, ColorScheme colorScheme) {
-    if (_loadingOfferCampaigns || !_offerCampaignsLoaded) {
+    if ((_loadingOfferCampaigns || !_offerCampaignsLoaded) &&
+        (_loadingOfficialAppOffers || !_officialAppOffersLoaded)) {
       return Center(
         child: M3ELoadingIndicator(size: 48, color: colorScheme.primary),
       );
     }
 
-    if (_offerCampaignsError) {
+    if (_offerCampaignsError && _officialAppOffersError) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -1211,7 +1244,10 @@ class _MyHomePageState extends State<MyHomePage>
               ),
               const SizedBox(height: 20),
               M3EButton.filled(
-                onPressed: _loadOfferCampaigns,
+                onPressed: () {
+                  _loadOfferCampaigns();
+                  _loadOfficialAppOffers(forceRefresh: true);
+                },
                 label: const Text('Reintentar'),
                 icon: const Icon(Icons.refresh_rounded),
               ),
@@ -1221,7 +1257,9 @@ class _MyHomePageState extends State<MyHomePage>
       );
     }
 
-    if (_offerCampaigns.isEmpty) {
+    if (_offerCampaigns.isEmpty &&
+        _officialAppOffers.isEmpty &&
+        !_loadingOfficialAppOffers) {
       return Center(
         child: Text(
           'No hay campañas disponibles por el momento.',
@@ -1232,7 +1270,7 @@ class _MyHomePageState extends State<MyHomePage>
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final crossAxisCount = constraints.maxWidth >= 1000
+        final campaignCrossAxisCount = constraints.maxWidth >= 1000
             ? 6
             : (constraints.maxWidth >= 700
                   ? 4
@@ -1242,30 +1280,108 @@ class _MyHomePageState extends State<MyHomePage>
           slivers: [
             if (_offerBanners.isNotEmpty)
               SliverToBoxAdapter(child: _buildOfferBannerCarousel(colorScheme)),
-            SliverPadding(
-              padding: EdgeInsets.fromLTRB(
-                12,
-                _offerBanners.isEmpty ? 12 : 4,
-                12,
-                24,
-              ),
-              sliver: SliverGrid(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 1,
+            if (_offerCampaigns.isNotEmpty)
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(
+                  12,
+                  _offerBanners.isEmpty ? 12 : 4,
+                  12,
+                  24,
                 ),
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final campaign = _offerCampaigns[index];
-                  return _OfferCampaignCard(
-                    campaign: campaign,
-                    colorScheme: colorScheme,
-                    onTap: () => _openOfferCampaign(campaign),
-                  );
-                }, childCount: _offerCampaigns.length),
+                sliver: SliverGrid(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: campaignCrossAxisCount,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 1,
+                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final campaign = _offerCampaigns[index];
+                    return _OfferCampaignCard(
+                      campaign: campaign,
+                      colorScheme: colorScheme,
+                      onTap: () => _openOfferCampaign(campaign),
+                    );
+                  }, childCount: _offerCampaigns.length),
+                ),
+              ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                child: Text(
+                  'Más ofertas',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
             ),
+            if (_loadingOfficialAppOffers || !_officialAppOffersLoaded)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 36),
+                  child: Center(
+                    child: M3ELoadingIndicator(
+                      size: 40,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                ),
+              )
+            else if (_officialAppOffersError)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+                  child: Column(
+                    children: [
+                      Text(
+                        'No se pudieron cargar las ofertas de productos.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: colorScheme.onSurfaceVariant),
+                      ),
+                      const SizedBox(height: 12),
+                      M3EButton.outlined(
+                        onPressed: () =>
+                            _loadOfficialAppOffers(forceRefresh: true),
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('Reintentar'),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else if (_officialAppOffers.isEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+                  child: Text(
+                    'No hay ofertas de productos disponibles por el momento.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: colorScheme.onSurfaceVariant),
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
+                sliver: SliverGrid(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: constraints.maxWidth >= 1000
+                        ? 4
+                        : (constraints.maxWidth >= 700 ? 3 : 2),
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 0.54,
+                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final product = _officialAppOffers[index];
+                    return ProductCard(
+                      product: product,
+                      onTap: () => _mostrarDetalleProducto(product),
+                    );
+                  }, childCount: _officialAppOffers.length),
+                ),
+              ),
           ],
         );
       },

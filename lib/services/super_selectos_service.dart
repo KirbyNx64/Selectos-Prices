@@ -986,6 +986,106 @@ class SuperSelectosService {
 
   List<Product>? _productosInicioCache;
   String? _productosInicioCacheBranchId;
+  List<Product>? _ofertasAppCache;
+  String? _ofertasAppCacheBranchId;
+
+  /// Obtiene las ofertas publicadas para la aplicación oficial.
+  ///
+  /// La app de Selectos consulta el índice de exploración con la lista de
+  /// precios 9006 y `onlyPriceOff`, en vez de usar un grupo de productos o una
+  /// landing del sitio web. Después se consulta el detalle web para completar
+  /// precios y etiquetas promocionales, datos que el índice no incluye en la
+  /// respuesta.
+  Future<List<Product>> obtenerOfertasAppOficial({
+    bool forzarRefresco = false,
+  }) async {
+    final branchId = StoreSelectionController.instance.selectedBranchId;
+    if (!forzarRefresco &&
+        _ofertasAppCache != null &&
+        _ofertasAppCache!.isNotEmpty &&
+        _ofertasAppCacheBranchId == branchId) {
+      return _ofertasAppCache!;
+    }
+
+    final uri = Uri.parse(
+      'https://ecom-exploration.superselectos.com/api/accounts/selectos/products/search',
+    );
+    final response = await _client
+        .post(
+          uri,
+          headers: const {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: jsonEncode({
+            'basicFilters': {
+              'isActive': true,
+              'availableOnly': true,
+              'categoriesNames': null,
+              'brandNames': null,
+              'productGroupsIds': null,
+              'price': {
+                'priceListId': '9006',
+                'priceSince': null,
+                'priceUntil': null,
+                'onlyPriceOff': true,
+              },
+              'availableInAnySchemeId': null,
+              if (branchId != null && branchId.isNotEmpty)
+                'availableInAnyBranchOfficeId': [branchId],
+            },
+            'searchText': null,
+            'orderBy': const [
+              {'field': 'Name', 'orderType': 'Ascending'},
+            ],
+            'page': 1,
+            'top': 20,
+          }),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode != 200) {
+      if (_ofertasAppCacheBranchId == branchId) {
+        return _ofertasAppCache ?? const [];
+      }
+      throw StateError(
+        'No se pudieron consultar las ofertas de la app '
+        '(${response.statusCode})',
+      );
+    }
+
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic> ||
+        decoded['items'] is! List<dynamic>) {
+      throw const FormatException('Respuesta de ofertas inválida');
+    }
+
+    final baseProducts = (decoded['items'] as List<dynamic>)
+        .whereType<Map<String, dynamic>>()
+        .map((item) => _productFromSearchApi(item, null))
+        .where((product) => product.id.isNotEmpty)
+        .toList(growable: false);
+
+    final products = await Future.wait(
+      baseProducts.map((product) async {
+        try {
+          return await obtenerDetalleProductoWeb(
+                product.id,
+                productoBase: product,
+              ) ??
+              product;
+        } catch (_) {
+          return product;
+        }
+      }),
+    );
+
+    if (products.isNotEmpty) {
+      _ofertasAppCache = products;
+      _ofertasAppCacheBranchId = branchId;
+    }
+    return products;
+  }
 
   /// Obtiene los productos destacados de la página de inicio de Súper Selectos
   Future<List<Product>> obtenerProductosInicio({
