@@ -493,7 +493,9 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
   void initState() {
     super.initState();
     if (widget.selectedBranchId != null) {
-      final match = widget.branches.where((b) => b.id == widget.selectedBranchId).firstOrNull;
+      final match = widget.branches
+          .where((b) => b.id == widget.selectedBranchId)
+          .firstOrNull;
       if (match != null) {
         _selectedBranch = match;
         _selectedDepartment = _getDepartment(match);
@@ -512,24 +514,65 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
     if (branch.department.trim().isNotEmpty) return branch.department.trim();
     final addr = branch.address.toLowerCase();
     final name = branch.name.toLowerCase();
-    if (addr.contains('sonsonate') || name.contains('sonsonate') || addr.contains('izalco') || addr.contains('juayua') || addr.contains('acajutla') || addr.contains('armenia')) return 'Sonsonate';
-    if (addr.contains('ahuachap') || name.contains('ahuachap') || addr.contains('atiquizaya') || name.contains('cara sucia')) return 'Ahuachapán';
-    if (addr.contains('cabañas') || addr.contains('ilobasco') || name.contains('sensuntepeque')) return 'Cabañas';
-    if (addr.contains('chalatenango') || name.contains('nueva concepción')) return 'Chalatenango';
-    if (addr.contains('cojutepeque') || (addr.contains('cuscatlán') && !addr.contains('antiguo cuscatlán'))) return 'Cuscatlán';
+    if (addr.contains('sonsonate') ||
+        name.contains('sonsonate') ||
+        addr.contains('izalco') ||
+        addr.contains('juayua') ||
+        addr.contains('acajutla') ||
+        addr.contains('armenia'))
+      return 'Sonsonate';
+    if (addr.contains('ahuachap') ||
+        name.contains('ahuachap') ||
+        addr.contains('atiquizaya') ||
+        name.contains('cara sucia'))
+      return 'Ahuachapán';
+    if (addr.contains('cabañas') ||
+        addr.contains('ilobasco') ||
+        name.contains('sensuntepeque'))
+      return 'Cabañas';
+    if (addr.contains('chalatenango') || name.contains('nueva concepción'))
+      return 'Chalatenango';
+    if (addr.contains('cojutepeque') ||
+        (addr.contains('cuscatlán') && !addr.contains('antiguo cuscatlán')))
+      return 'Cuscatlán';
     if (addr.contains('morazán') || name.contains('gotera')) return 'Morazán';
-    if (addr.contains('la paz') || name.contains('zacatecoluca') || name.contains('olocuilta')) return 'La Paz';
-    if (addr.contains('la unión') || addr.contains('la union') || name.contains('santa rosa de lima')) return 'La Unión';
+    if (addr.contains('la paz') ||
+        name.contains('zacatecoluca') ||
+        name.contains('olocuilta'))
+      return 'La Paz';
+    if (addr.contains('la unión') ||
+        addr.contains('la union') ||
+        name.contains('santa rosa de lima'))
+      return 'La Unión';
     if (addr.contains('san vicente')) return 'San Vicente';
-    if (addr.contains('usulután') || addr.contains('usulutan') || name.contains('jiquilisco') || name.contains('santiago de maría')) return 'Usulután';
-    if (addr.contains('san miguel') || name.contains('san miguel') || name.contains('el tránsito')) return 'San Miguel';
-    if (addr.contains('santa ana') || name.contains('chalchuapa') || name.contains('metapán')) return 'Santa Ana';
-    if (addr.contains('la libertad') || addr.contains('santa tecla') || addr.contains('antiguo cuscatlán') || addr.contains('merliot') || addr.contains('lourdes') || addr.contains('colón') || addr.contains('quezaltepeque') || addr.contains('zaragoza')) return 'La Libertad';
+    if (addr.contains('usulután') ||
+        addr.contains('usulutan') ||
+        name.contains('jiquilisco') ||
+        name.contains('santiago de maría'))
+      return 'Usulután';
+    if (addr.contains('san miguel') ||
+        name.contains('san miguel') ||
+        name.contains('el tránsito'))
+      return 'San Miguel';
+    if (addr.contains('santa ana') ||
+        name.contains('chalchuapa') ||
+        name.contains('metapán'))
+      return 'Santa Ana';
+    if (addr.contains('la libertad') ||
+        addr.contains('santa tecla') ||
+        addr.contains('antiguo cuscatlán') ||
+        addr.contains('merliot') ||
+        addr.contains('lourdes') ||
+        addr.contains('colón') ||
+        addr.contains('quezaltepeque') ||
+        addr.contains('zaragoza'))
+      return 'La Libertad';
     return 'San Salvador';
   }
 
   String _getMunicipality(SelectosBranch branch) {
-    if (branch.municipality.trim().isNotEmpty) return branch.municipality.trim();
+    if (branch.municipality.trim().isNotEmpty)
+      return branch.municipality.trim();
     return branch.name;
   }
 
@@ -557,11 +600,14 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
   }
 
   List<SelectosBranch> get _availableBranches {
-    if (_selectedDepartment == null || _selectedMunicipality == null) return const [];
+    if (_selectedDepartment == null || _selectedMunicipality == null)
+      return const [];
     return widget.branches
-        .where((b) =>
-            _getDepartment(b) == _selectedDepartment &&
-            _getMunicipality(b) == _selectedMunicipality)
+        .where(
+          (b) =>
+              _getDepartment(b) == _selectedDepartment &&
+              _getMunicipality(b) == _selectedMunicipality,
+        )
         .toList()
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
   }
@@ -648,12 +694,17 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
           builder: (context, setModalState) {
             final filtered = filter.isEmpty
                 ? items
-                : items.where((item) {
-                    final normalizedItem = _normalize(labelOf(item));
-                    final normalizedFilter = _normalize(filter);
-                    final sub = subtitleOf != null ? _normalize(subtitleOf(item) ?? '') : '';
-                    return normalizedItem.contains(normalizedFilter) || sub.contains(normalizedFilter);
-                  }).toList(growable: false);
+                : items
+                      .where((item) {
+                        final normalizedItem = _normalize(labelOf(item));
+                        final normalizedFilter = _normalize(filter);
+                        final sub = subtitleOf != null
+                            ? _normalize(subtitleOf(item) ?? '')
+                            : '';
+                        return normalizedItem.contains(normalizedFilter) ||
+                            sub.contains(normalizedFilter);
+                      })
+                      .toList(growable: false);
 
             return SafeArea(
               top: false,
@@ -701,7 +752,8 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
                               ? [
                                   IconButton(
                                     icon: const Icon(Icons.close_rounded),
-                                    onPressed: () => setModalState(() => filter = ''),
+                                    onPressed: () =>
+                                        setModalState(() => filter = ''),
                                   ),
                                 ]
                               : null,
@@ -722,10 +774,16 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
                           : ListView.separated(
                               padding: const EdgeInsets.symmetric(vertical: 8),
                               itemCount: filtered.length,
-                              separatorBuilder: (context, index) => const Divider(height: 1, indent: 16, endIndent: 16),
+                              separatorBuilder: (context, index) =>
+                                  const Divider(
+                                    height: 1,
+                                    indent: 16,
+                                    endIndent: 16,
+                                  ),
                               itemBuilder: (context, index) {
                                 final item = filtered[index];
-                                final isSelected = selectedItem != null &&
+                                final isSelected =
+                                    selectedItem != null &&
                                     labelOf(item) == labelOf(selectedItem);
                                 final subText = subtitleOf?.call(item);
 
@@ -741,7 +799,9 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
                                   title: Text(
                                     labelOf(item),
                                     style: TextStyle(
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.w500,
                                     ),
                                   ),
                                   subtitle: subText != null
@@ -751,7 +811,8 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
                                           overflow: TextOverflow.ellipsis,
                                         )
                                       : null,
-                                  onTap: () => Navigator.pop(sheetContext, item),
+                                  onTap: () =>
+                                      Navigator.pop(sheetContext, item),
                                 );
                               },
                             ),
@@ -803,13 +864,15 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
               decoration: BoxDecoration(
                 color: enabled
                     ? colorScheme.surfaceContainerLowest
-                    : colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                    : colorScheme.surfaceContainerHighest.withValues(
+                        alpha: 0.35,
+                      ),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: enabled
                       ? (hasValue
-                          ? colorScheme.outline.withValues(alpha: 0.4)
-                          : colorScheme.outlineVariant)
+                            ? colorScheme.outline.withValues(alpha: 0.4)
+                            : colorScheme.outlineVariant)
                       : colorScheme.outlineVariant.withValues(alpha: 0.3),
                   width: 1.2,
                 ),
@@ -825,7 +888,9 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
                               color: colorScheme.onSurface,
                             )
                           : theme.textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.65),
+                              color: colorScheme.onSurfaceVariant.withValues(
+                                alpha: 0.65,
+                              ),
                             ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -887,9 +952,13 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
                         ),
                       ),
                       IconButton(
-                        tooltip: _isDirectSearchMode ? 'Filtro por departamento' : 'Buscar por nombre',
+                        tooltip: _isDirectSearchMode
+                            ? 'Filtro por departamento'
+                            : 'Buscar por nombre',
                         icon: Icon(
-                          _isDirectSearchMode ? Icons.filter_alt_outlined : Icons.search_rounded,
+                          _isDirectSearchMode
+                              ? Icons.filter_alt_outlined
+                              : Icons.search_rounded,
                           color: colorScheme.primary,
                         ),
                         onPressed: () {
@@ -935,7 +1004,7 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildDropdownCard(
-                  label: 'Departamento de la sala de venta dónde desea retirar los productos',
+                  label: 'Departamento de la sala de venta dónde desea ver los productos',
                   value: _selectedDepartment,
                   placeholder: 'Seleccione el departamento',
                   enabled: true,
@@ -949,7 +1018,7 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
                   },
                 ),
                 _buildDropdownCard(
-                  label: 'Municipio de la sala de venta dónde desea retirar los productos',
+                  label: 'Municipio de la sala de venta dónde desea ver los productos',
                   value: _selectedMunicipality,
                   placeholder: _selectedDepartment == null
                       ? 'Primero seleccione un departamento'
@@ -964,7 +1033,7 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
                   },
                 ),
                 _buildDropdownCard(
-                  label: 'Seleccione la sala de venta dónde retirará los productos',
+                  label: 'Seleccione la sala de venta dónde ver los productos',
                   value: _selectedBranch?.name,
                   placeholder: _selectedMunicipality == null
                       ? 'Primero seleccione un municipio'
@@ -1026,7 +1095,10 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
                               ],
                               const SizedBox(height: 6),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
                                 decoration: BoxDecoration(
                                   color: colorScheme.surfaceContainerHighest,
                                   borderRadius: BorderRadius.circular(6),
@@ -1085,13 +1157,15 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
     final filtered = normalizedQuery.isEmpty
         ? widget.branches
         : widget.branches
-            .where((branch) {
-              return _normalize(branch.name).contains(normalizedQuery) ||
-                  _normalize(branch.address).contains(normalizedQuery) ||
-                  _normalize(_getDepartment(branch)).contains(normalizedQuery) ||
-                  _normalize(_getMunicipality(branch)).contains(normalizedQuery);
-            })
-            .toList(growable: false);
+              .where((branch) {
+                return _normalize(branch.name).contains(normalizedQuery) ||
+                    _normalize(branch.address).contains(normalizedQuery) ||
+                    _normalize(_getDepartment(branch))
+                        .contains(normalizedQuery) ||
+                    _normalize(_getMunicipality(branch))
+                        .contains(normalizedQuery);
+              })
+              .toList(growable: false);
 
     return Column(
       children: [
@@ -1129,16 +1203,22 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
                   itemCount: filtered.length,
                   itemBuilder: (context, index) {
                     final branch = filtered[index];
-                    final selected = branch.id == (_selectedBranch?.id ?? widget.selectedBranchId);
+                    final selected =
+                        branch.id ==
+                        (_selectedBranch?.id ?? widget.selectedBranchId);
                     return ListTile(
                       selected: selected,
                       leading: Icon(
-                        selected ? Icons.storefront_rounded : Icons.storefront_outlined,
+                        selected
+                            ? Icons.storefront_rounded
+                            : Icons.storefront_outlined,
                       ),
                       title: Text(
                         branch.name,
                         style: TextStyle(
-                          fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+                          fontWeight: selected
+                              ? FontWeight.bold
+                              : FontWeight.w500,
                         ),
                       ),
                       subtitle: branch.address.isEmpty

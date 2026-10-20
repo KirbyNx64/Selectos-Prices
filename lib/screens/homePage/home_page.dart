@@ -931,94 +931,97 @@ class _MyHomePageState extends State<MyHomePage>
                 ),
                 const SizedBox(height: 14),
 
-                // ── Grid o Estado de Carga de Productos de Inicio ────────────
-                if (_cargandoProductosInicio)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 40),
-                    child: Center(
-                      child: Column(
-                        children: [
-                          M3ELoadingIndicator(
-                            size: 40,
-                            color: colorScheme.primary,
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                else if (_errorProductosInicio != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 24,
-                      horizontal: 20,
-                    ),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.cloud_off_rounded,
-                            size: 48,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'No se pudieron cargar los productos',
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Inténtalo nuevamente en unos momentos.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: colorScheme.onSurfaceVariant,
-                              fontSize: 13,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          M3EButton.filled(
-                            onPressed: _cargarProductosInicio,
-                            shape: M3EButtonShape.round,
-                            decoration: M3EButtonDecoration(
-                              backgroundColor: WidgetStatePropertyAll(
-                                colorScheme.primary,
-                              ),
-                            ),
-                            label: Text(
-                              'Reintentar',
-                              style: TextStyle(color: colorScheme.onPrimary),
-                            ),
-                            icon: Icon(
-                              Icons.refresh,
-                              color: colorScheme.onPrimary,
-                              size: 18,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                else if (_productosInicio.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 30),
-                    child: Center(
-                      child: Text(
-                        'No hay productos disponibles por el momento.',
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
         ),
-        if (!_cargandoProductosInicio &&
-            _errorProductosInicio == null &&
-            _productosInicio.isNotEmpty) ...[
+
+        // ── Grid o Estado de Carga de Productos de Inicio ────────────
+        if (_cargandoProductosInicio)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: M3ELoadingIndicator(
+                size: 40,
+                color: colorScheme.primary,
+              ),
+            ),
+          )
+        else if (_errorProductosInicio != null)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 24,
+                  horizontal: 20,
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.cloud_off_rounded,
+                        size: 48,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'No se pudieron cargar los productos',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Inténtalo nuevamente en unos momentos.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: colorScheme.onSurfaceVariant,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      M3EButton.filled(
+                        onPressed: _cargarProductosInicio,
+                        shape: M3EButtonShape.round,
+                        decoration: M3EButtonDecoration(
+                          backgroundColor: WidgetStatePropertyAll(
+                            colorScheme.primary,
+                          ),
+                        ),
+                        label: Text(
+                          'Reintentar',
+                          style: TextStyle(color: colorScheme.onPrimary),
+                        ),
+                        icon: Icon(
+                          Icons.refresh,
+                          color: colorScheme.onPrimary,
+                          size: 18,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          )
+        else if (_productosInicio.isEmpty)
+          const SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 30),
+                child: Text(
+                  'No hay productos disponibles por el momento.',
+                ),
+              ),
+            ),
+          )
+        else ...[
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             sliver: SliverGrid(
