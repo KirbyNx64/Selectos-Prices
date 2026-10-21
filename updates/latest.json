@@ -1,9 +1,9 @@
 {
-  "version": "1.0.3",
+  "version": "1.0.4",
   "apk_urls": {
-    "arm64-v8a": "https://github.com/KirbyNx64/Selectos-Prices/releases/download/v1.0.3/Selectos-Prices-v1.0.3-arm64-v8a.apk",
-    "armeabi-v7a": "https://github.com/KirbyNx64/Selectos-Prices/releases/download/v1.0.3/Selectos-Prices-v1.0.3-armeabi-v7a.apk",
-    "x86_64": "https://github.com/KirbyNx64/Selectos-Prices/releases/download/v1.0.3/Selectos-Prices-v1.0.3-x86_64.apk"
+    "arm64-v8a": "https://github.com/KirbyNx64/Selectos-Prices/releases/download/v1.0.4/Selectos-Prices-v1.0.4-arm64-v8a.apk",
+    "armeabi-v7a": "https://github.com/KirbyNx64/Selectos-Prices/releases/download/v1.0.4/Selectos-Prices-v1.0.4-armeabi-v7a.apk",
+    "x86_64": "https://github.com/KirbyNx64/Selectos-Prices/releases/download/v1.0.4/Selectos-Prices-v1.0.4-x86_64.apk"
   },
-  "changelog": "• Nueva función de Favoritos: guarda tus productos preferidos para acceder a ellos al instante.\n• Se mejoro la experiencia de usuario.\n• Correcciones de errores y optimizaciones generales para mayor estabilidad y rendimiento."
+  "changelog": "• Se mejoro la experiencia de usuario."
 }

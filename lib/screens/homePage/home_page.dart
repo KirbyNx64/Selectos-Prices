@@ -41,6 +41,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
+  final ScrollController _categoriesScrollController = ScrollController();
+  final ScrollController _offersScrollController = ScrollController();
+  final ScrollController _cartScrollController = ScrollController();
   final PageController _offerBannerController = PageController();
   late final M3ENavigationBarController _navController;
   Timer? _offerBannerTimer;
@@ -142,6 +145,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     _navController.dispose();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _categoriesScrollController.dispose();
+    _offersScrollController.dispose();
+    _cartScrollController.dispose();
     _searchFocusNode.removeListener(_trackActiveSearch);
     _searchFocusNode.dispose();
     _searchController.dispose();
@@ -169,6 +175,26 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   void _dismissSearch() {
     _consumeBackForActiveSearch = false;
     _searchFocusNode.unfocus();
+  }
+
+  void _scrollActiveSectionToTop(int index) {
+    final controller = switch (index) {
+      0 => _scrollController,
+      1 => _categoriesScrollController,
+      2 => _offersScrollController,
+      3 => _cartScrollController,
+      _ => null,
+    };
+
+    if (controller == null || !controller.hasClients) return;
+    final top = controller.position.minScrollExtent;
+    if (controller.offset <= top) return;
+
+    controller.animateTo(
+      top,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   void _handleSearchTapOutside(PointerDownEvent event) {
@@ -403,6 +429,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               ],
               selectedIndex: barIndex,
               onDestinationSelected: (i) {
+                if (i == barIndex) {
+                  _scrollActiveSectionToTop(i);
+                  return;
+                }
                 if (i == 2 &&
                     !_offerCampaignsLoaded &&
                     !_loadingOfferCampaigns) {
@@ -1071,6 +1101,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       onTap: () => _abrirCategoria(item),
       borderRadius: BorderRadius.circular(22),
       semanticLabel: 'Abrir categoría ${item.nombre}',
+      showInkEffect: false,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1112,6 +1143,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   Widget _buildCategoriasView(ThemeData theme, ColorScheme colorScheme) {
     return GridView.builder(
+      controller: _categoriesScrollController,
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
       physics: const BouncingScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -1127,6 +1159,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           onTap: () => _abrirCategoria(item),
           borderRadius: BorderRadius.circular(22),
           semanticLabel: 'Abrir categoría ${item.nombre}',
+          showInkEffect: false,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1240,6 +1273,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                   ? 4
                   : (constraints.maxWidth >= 480 ? 3 : 2));
         return CustomScrollView(
+          controller: _offersScrollController,
           physics: const BouncingScrollPhysics(),
           slivers: [
             if (_offerBanners.isNotEmpty)
@@ -1504,6 +1538,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           children: [
             Expanded(
               child: ListView.separated(
+                controller: _cartScrollController,
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
                 itemCount: _cart.items.length,
                 separatorBuilder: (_, _) => const SizedBox(height: 10),
@@ -2305,6 +2340,7 @@ class _PressableInkWell extends StatefulWidget {
     required this.semanticLabel,
     required this.child,
     this.pressedScale = 0.94,
+    this.showInkEffect = true,
   });
 
   final VoidCallback onTap;
@@ -2312,6 +2348,7 @@ class _PressableInkWell extends StatefulWidget {
   final String semanticLabel;
   final Widget child;
   final double pressedScale;
+  final bool showInkEffect;
 
   @override
   State<_PressableInkWell> createState() => _PressableInkWellState();
@@ -2333,6 +2370,10 @@ class _PressableInkWellState extends State<_PressableInkWell> {
           onHighlightChanged: (pressed) => setState(() => _pressed = pressed),
           onTap: widget.onTap,
           borderRadius: widget.borderRadius,
+          splashFactory: widget.showInkEffect ? null : NoSplash.splashFactory,
+          overlayColor: widget.showInkEffect
+              ? null
+              : const WidgetStatePropertyAll(Colors.transparent),
           child: widget.child,
         ),
       ),

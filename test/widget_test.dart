@@ -156,6 +156,39 @@ void main() {
     expect(restoredOffset, closeTo(scrollOffset, 0.01));
   });
 
+  testWidgets('Tapping the active navigation section scrolls it to the top', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
+
+    final navigationBar = find.byType(M3ENavigationBar);
+    final categoriesDestination = find.descendant(
+      of: navigationBar,
+      matching: find.text('Categorías'),
+    );
+    await tester.tap(categoriesDestination);
+    await tester.pumpAndSettle();
+
+    final categoriesGrid = find.byType(GridView);
+    await tester.drag(categoriesGrid, const Offset(0, -300));
+    await tester.pumpAndSettle();
+
+    final scrollable = find.descendant(
+      of: categoriesGrid,
+      matching: find.byType(Scrollable),
+    );
+    expect(
+      tester.state<ScrollableState>(scrollable).position.pixels,
+      greaterThan(0),
+    );
+
+    await tester.tap(categoriesDestination);
+    await tester.pumpAndSettle();
+
+    expect(tester.state<ScrollableState>(scrollable).position.pixels, 0);
+  });
+
   testWidgets('Android back closes results search without leaving the screen', (
     WidgetTester tester,
   ) async {
