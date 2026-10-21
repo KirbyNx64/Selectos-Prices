@@ -109,6 +109,53 @@ void main() {
     expect(find.byType(M3ESearchBar), findsOneWidget);
   });
 
+  testWidgets('Navigation sections preserve their scroll position', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
+
+    final navigationBar = find.byType(M3ENavigationBar);
+    await tester.tap(
+      find.descendant(of: navigationBar, matching: find.text('Categorías')),
+    );
+    await tester.pumpAndSettle();
+
+    final categoriesGrid = find.byType(GridView);
+    await tester.drag(categoriesGrid, const Offset(0, -300));
+    await tester.pumpAndSettle();
+    final scrollOffset = tester
+        .state<ScrollableState>(
+          find.descendant(
+            of: categoriesGrid,
+            matching: find.byType(Scrollable),
+          ),
+        )
+        .position
+        .pixels;
+    expect(scrollOffset, greaterThan(0));
+
+    await tester.tap(
+      find.descendant(of: navigationBar, matching: find.text('Inicio')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(of: navigationBar, matching: find.text('Categorías')),
+    );
+    await tester.pumpAndSettle();
+
+    final restoredOffset = tester
+        .state<ScrollableState>(
+          find.descendant(
+            of: find.byType(GridView),
+            matching: find.byType(Scrollable),
+          ),
+        )
+        .position
+        .pixels;
+    expect(restoredOffset, closeTo(scrollOffset, 0.01));
+  });
+
   testWidgets('Android back closes results search without leaving the screen', (
     WidgetTester tester,
   ) async {

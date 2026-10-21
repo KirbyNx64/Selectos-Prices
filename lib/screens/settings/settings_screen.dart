@@ -220,7 +220,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   String get _updateSubtitle {
-    if (_checkingForUpdate) return 'Consultando el último release en GitHub…';
+    if (_checkingForUpdate) {
+      return 'Consultando el último release en GitHub…';
+    }
     if (_downloadingUpdate) {
       final progress = _downloadProgress;
       return progress == null
@@ -237,7 +239,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _checkingForUpdate = true);
     try {
       final update = await _updateService.checkForUpdate();
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       if (!update.updateAvailable) {
         AppSnackbar.success(
           context,
@@ -298,10 +302,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _installUpdate(update);
       }
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       AppSnackbar.error(context, message: _readableUpdateError(error));
     } finally {
-      if (mounted) setState(() => _checkingForUpdate = false);
+      if (mounted) {
+        setState(() => _checkingForUpdate = false);
+      }
     }
   }
 
@@ -318,7 +326,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           .listen(
             _handleOtaEvent,
             onError: (Object error) {
-              if (!mounted) return;
+              if (!mounted) {
+                return;
+              }
               setState(() => _downloadingUpdate = false);
               AppSnackbar.error(
                 context,
@@ -338,7 +348,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _handleOtaEvent(OtaEvent event) {
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     switch (event.status) {
       case OtaStatus.DOWNLOADING:
         final percent = double.tryParse(event.value ?? '');
@@ -404,9 +416,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
 
-    if (selected == null || !context.mounted) return;
+    if (selected == null || !context.mounted) {
+      return;
+    }
     await controller.selectBranch(selected);
-    if (!context.mounted) return;
+    if (!context.mounted) {
+      return;
+    }
     AppSnackbar.success(
       context,
       message: 'Sala seleccionada: ${selected.name}',
@@ -449,18 +465,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
 
-    if (shouldDelete != true || !context.mounted) return;
+    if (shouldDelete != true || !context.mounted) {
+      return;
+    }
 
     try {
       await ShoppingCartRepository.instance.deleteAllLists();
-      if (!context.mounted) return;
+      if (!context.mounted) {
+        return;
+      }
       AppSnackbar.success(
         context,
         message: 'Todas las listas fueron eliminadas',
         icon: Icons.delete_sweep_outlined,
       );
     } catch (_) {
-      if (!context.mounted) return;
+      if (!context.mounted) {
+        return;
+      }
       AppSnackbar.error(context, message: 'No se pudieron eliminar las listas');
     }
   }
@@ -511,7 +533,9 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
   }
 
   String _getDepartment(SelectosBranch branch) {
-    if (branch.department.trim().isNotEmpty) return branch.department.trim();
+    if (branch.department.trim().isNotEmpty) {
+      return branch.department.trim();
+    }
     final addr = branch.address.toLowerCase();
     final name = branch.name.toLowerCase();
     if (addr.contains('sonsonate') ||
@@ -519,45 +543,59 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
         addr.contains('izalco') ||
         addr.contains('juayua') ||
         addr.contains('acajutla') ||
-        addr.contains('armenia'))
+        addr.contains('armenia')) {
       return 'Sonsonate';
+    }
     if (addr.contains('ahuachap') ||
         name.contains('ahuachap') ||
         addr.contains('atiquizaya') ||
-        name.contains('cara sucia'))
+        name.contains('cara sucia')) {
       return 'Ahuachapán';
+    }
     if (addr.contains('cabañas') ||
         addr.contains('ilobasco') ||
-        name.contains('sensuntepeque'))
+        name.contains('sensuntepeque')) {
       return 'Cabañas';
-    if (addr.contains('chalatenango') || name.contains('nueva concepción'))
+    }
+    if (addr.contains('chalatenango') || name.contains('nueva concepción')) {
       return 'Chalatenango';
+    }
     if (addr.contains('cojutepeque') ||
-        (addr.contains('cuscatlán') && !addr.contains('antiguo cuscatlán')))
+        (addr.contains('cuscatlán') && !addr.contains('antiguo cuscatlán'))) {
       return 'Cuscatlán';
-    if (addr.contains('morazán') || name.contains('gotera')) return 'Morazán';
+    }
+    if (addr.contains('morazán') || name.contains('gotera')) {
+      return 'Morazán';
+    }
     if (addr.contains('la paz') ||
         name.contains('zacatecoluca') ||
-        name.contains('olocuilta'))
+        name.contains('olocuilta')) {
       return 'La Paz';
+    }
     if (addr.contains('la unión') ||
         addr.contains('la union') ||
-        name.contains('santa rosa de lima'))
+        name.contains('santa rosa de lima')) {
       return 'La Unión';
-    if (addr.contains('san vicente')) return 'San Vicente';
+    }
+    if (addr.contains('san vicente')) {
+      return 'San Vicente';
+    }
     if (addr.contains('usulután') ||
         addr.contains('usulutan') ||
         name.contains('jiquilisco') ||
-        name.contains('santiago de maría'))
+        name.contains('santiago de maría')) {
       return 'Usulután';
+    }
     if (addr.contains('san miguel') ||
         name.contains('san miguel') ||
-        name.contains('el tránsito'))
+        name.contains('el tránsito')) {
       return 'San Miguel';
+    }
     if (addr.contains('santa ana') ||
         name.contains('chalchuapa') ||
-        name.contains('metapán'))
+        name.contains('metapán')) {
       return 'Santa Ana';
+    }
     if (addr.contains('la libertad') ||
         addr.contains('santa tecla') ||
         addr.contains('antiguo cuscatlán') ||
@@ -565,14 +603,16 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
         addr.contains('lourdes') ||
         addr.contains('colón') ||
         addr.contains('quezaltepeque') ||
-        addr.contains('zaragoza'))
+        addr.contains('zaragoza')) {
       return 'La Libertad';
+    }
     return 'San Salvador';
   }
 
   String _getMunicipality(SelectosBranch branch) {
-    if (branch.municipality.trim().isNotEmpty)
+    if (branch.municipality.trim().isNotEmpty) {
       return branch.municipality.trim();
+    }
     return branch.name;
   }
 
@@ -580,19 +620,25 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
     final set = <String>{};
     for (final b in widget.branches) {
       final d = _getDepartment(b);
-      if (d.isNotEmpty) set.add(d);
+      if (d.isNotEmpty) {
+        set.add(d);
+      }
     }
     final list = set.toList()..sort((a, b) => a.compareTo(b));
     return list;
   }
 
   List<String> get _municipalities {
-    if (_selectedDepartment == null) return const [];
+    if (_selectedDepartment == null) {
+      return const [];
+    }
     final set = <String>{};
     for (final b in widget.branches) {
       if (_getDepartment(b) == _selectedDepartment) {
         final m = _getMunicipality(b);
-        if (m.isNotEmpty) set.add(m);
+        if (m.isNotEmpty) {
+          set.add(m);
+        }
       }
     }
     final list = set.toList()..sort((a, b) => a.compareTo(b));
@@ -600,8 +646,9 @@ class _BranchPickerSheetState extends State<BranchPickerSheet> {
   }
 
   List<SelectosBranch> get _availableBranches {
-    if (_selectedDepartment == null || _selectedMunicipality == null)
+    if (_selectedDepartment == null || _selectedMunicipality == null) {
       return const [];
+    }
     return widget.branches
         .where(
           (b) =>

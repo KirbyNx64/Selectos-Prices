@@ -34,10 +34,8 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   static const int _offerBannerCacheWidth = 1200;
-  static const double _collapsedHomeAppBarHeight = 64;
   static const double _expandedHomeAppBarHeight = 124;
 
   final TextEditingController _searchController = TextEditingController();
@@ -45,7 +43,6 @@ class _MyHomePageState extends State<MyHomePage>
   final ScrollController _scrollController = ScrollController();
   final PageController _offerBannerController = PageController();
   late final M3ENavigationBarController _navController;
-  late final AnimationController _homeAppBarController;
   Timer? _offerBannerTimer;
   int barIndex = 0;
   bool _consumeBackForActiveSearch = false;
@@ -73,13 +70,7 @@ class _MyHomePageState extends State<MyHomePage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _homeAppBarController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-      value: 1,
-    )..addListener(_rebuildHomeAppBar);
-    _navController = M3ENavigationBarController()
-      ..addListener(_syncHomeAppBarVisibility);
+    _navController = M3ENavigationBarController();
     _scrollController.addListener(_onScroll);
     _searchFocusNode.addListener(_trackActiveSearch);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -148,12 +139,7 @@ class _MyHomePageState extends State<MyHomePage>
     WidgetsBinding.instance.removeObserver(this);
     _offerBannerTimer?.cancel();
     _offerBannerController.dispose();
-    _navController
-      ..removeListener(_syncHomeAppBarVisibility)
-      ..dispose();
-    _homeAppBarController
-      ..removeListener(_rebuildHomeAppBar)
-      ..dispose();
+    _navController.dispose();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _searchFocusNode.removeListener(_trackActiveSearch);
@@ -161,20 +147,6 @@ class _MyHomePageState extends State<MyHomePage>
     _searchController.dispose();
     _service.dispose();
     super.dispose();
-  }
-
-  void _syncHomeAppBarVisibility() {
-    final target = _navController.visible ? 1.0 : 0.0;
-    if (_homeAppBarController.value == target) return;
-    _homeAppBarController.animateTo(
-      target,
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOutCubic,
-    );
-  }
-
-  void _rebuildHomeAppBar() {
-    if (mounted) setState(() {});
   }
 
   void _trackActiveSearch() {
@@ -660,12 +632,6 @@ class _MyHomePageState extends State<MyHomePage>
       );
     }
 
-    final appBarProgress = _homeAppBarController.value;
-    final toolbarHeight =
-        _collapsedHomeAppBarHeight +
-        (_expandedHomeAppBarHeight - _collapsedHomeAppBarHeight) *
-            appBarProgress;
-
     return AppBar(
       notificationPredicate: (_) => false,
       elevation: 0,
@@ -677,7 +643,7 @@ class _MyHomePageState extends State<MyHomePage>
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
       ),
       titleSpacing: 12,
-      toolbarHeight: toolbarHeight,
+      toolbarHeight: _expandedHomeAppBarHeight,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -778,72 +744,60 @@ class _MyHomePageState extends State<MyHomePage>
               ],
             ),
           ),
-          ClipRect(
-            child: Align(
-              alignment: Alignment.topCenter,
-              heightFactor: appBarProgress,
-              child: IgnorePointer(
-                ignoring: appBarProgress < 1,
-                child: Opacity(
-                  opacity: appBarProgress,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: M3ESearchBar(
-                          focusNode: _searchFocusNode,
-                          onTapOutside: _handleSearchTapOutside,
-                          margin: 12,
-                          focusedMargin: 0,
-                          expandOnFocus: true,
-                          controller: _searchController,
-                          hintText: '¿Qué estás buscando?',
-                          trailing: [
-                            ValueListenableBuilder<TextEditingValue>(
-                              valueListenable: _searchController,
-                              builder: (context, value, _) {
-                                final hasQuery = value.text.trim().isNotEmpty;
-                                return M3EIconButton(
-                                  icon: Icon(
-                                    hasQuery
-                                        ? Icons.search_rounded
-                                        : Icons.qr_code_scanner_rounded,
-                                  ),
-                                  variant: M3EIconButtonVariant.filled,
-                                  size: M3EIconButtonSize.sm,
-                                  shape: M3EIconButtonShapeVariant.round,
-                                  tooltip: hasQuery
-                                      ? 'Buscar'
-                                      : 'Escanear código de barras',
-                                  onPressed: hasQuery
-                                      ? () => _irAResultados(value.text)
-                                      : () {
-                                          _dismissSearch();
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const BarcodeScannerScreen(),
-                                            ),
-                                          );
-                                        },
-                                );
-                              },
-                            ),
-                          ],
-                          showClearButton: true,
-                          onSubmitted: _irAResultados,
-                          contextMenuBuilder: (context, editableTextState) {
-                            return AdaptiveTextSelectionToolbar.editableText(
-                              editableTextState: editableTextState,
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
+          Row(
+            children: [
+              Expanded(
+                child: M3ESearchBar(
+                  focusNode: _searchFocusNode,
+                  onTapOutside: _handleSearchTapOutside,
+                  margin: 12,
+                  focusedMargin: 0,
+                  expandOnFocus: true,
+                  controller: _searchController,
+                  hintText: '¿Qué estás buscando?',
+                  trailing: [
+                    ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: _searchController,
+                      builder: (context, value, _) {
+                        final hasQuery = value.text.trim().isNotEmpty;
+                        return M3EIconButton(
+                          icon: Icon(
+                            hasQuery
+                                ? Icons.search_rounded
+                                : Icons.qr_code_scanner_rounded,
+                          ),
+                          variant: M3EIconButtonVariant.filled,
+                          size: M3EIconButtonSize.sm,
+                          shape: M3EIconButtonShapeVariant.round,
+                          tooltip: hasQuery
+                              ? 'Buscar'
+                              : 'Escanear código de barras',
+                          onPressed: hasQuery
+                              ? () => _irAResultados(value.text)
+                              : () {
+                                  _dismissSearch();
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const BarcodeScannerScreen(),
+                                    ),
+                                  );
+                                },
+                        );
+                      },
+                    ),
+                  ],
+                  showClearButton: true,
+                  onSubmitted: _irAResultados,
+                  contextMenuBuilder: (context, editableTextState) {
+                    return AdaptiveTextSelectionToolbar.editableText(
+                      editableTextState: editableTextState,
+                    );
+                  },
                 ),
               ),
-            ),
+            ],
           ),
         ],
       ),
@@ -855,17 +809,27 @@ class _MyHomePageState extends State<MyHomePage>
     ThemeData theme,
     ColorScheme colorScheme,
   ) {
-    switch (barIndex) {
-      case 1:
-        return _buildCategoriasView(theme, colorScheme);
-      case 2:
-        return _buildOfertasView(theme, colorScheme);
-      case 3:
-        return _buildCarritoView(theme, colorScheme);
-      case 0:
-      default:
-        return _buildInicioView(theme, colorScheme);
-    }
+    return IndexedStack(
+      index: barIndex,
+      children: [
+        TickerMode(
+          enabled: barIndex == 0,
+          child: _buildInicioView(theme, colorScheme),
+        ),
+        TickerMode(
+          enabled: barIndex == 1,
+          child: _buildCategoriasView(theme, colorScheme),
+        ),
+        TickerMode(
+          enabled: barIndex == 2,
+          child: _buildOfertasView(theme, colorScheme),
+        ),
+        TickerMode(
+          enabled: barIndex == 3,
+          child: _buildCarritoView(theme, colorScheme),
+        ),
+      ],
+    );
   }
 
   Widget _buildInicioView(ThemeData theme, ColorScheme colorScheme) {
