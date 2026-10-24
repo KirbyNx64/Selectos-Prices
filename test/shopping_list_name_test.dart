@@ -27,21 +27,24 @@ void main() {
       expect(list.displayName, 'Supermercado Semanal');
     });
 
-    test('displayName falls back to Lista de compras when name is null or empty', () {
-      final listNull = ShoppingList(
-        id: 3,
-        name: null,
-        createdAt: DateTime(2026, 10, 18, 10, 0),
-      );
-      final listEmpty = ShoppingList(
-        id: 4,
-        name: '   ',
-        createdAt: DateTime(2026, 10, 18, 10, 0),
-      );
+    test(
+      'displayName falls back to Lista de compras when name is null or empty',
+      () {
+        final listNull = ShoppingList(
+          id: 3,
+          name: null,
+          createdAt: DateTime(2026, 10, 18, 10, 0),
+        );
+        final listEmpty = ShoppingList(
+          id: 4,
+          name: '   ',
+          createdAt: DateTime(2026, 10, 18, 10, 0),
+        );
 
-      expect(listNull.displayName, 'Lista de compras');
-      expect(listEmpty.displayName, 'Lista de compras');
-    });
+        expect(listNull.displayName, 'Lista de compras');
+        expect(listEmpty.displayName, 'Lista de compras');
+      },
+    );
 
     test('fromMap parses name correctly when present and when null', () {
       final fromMapWithName = ShoppingList.fromMap({
@@ -59,6 +62,27 @@ void main() {
       expect(fromMapWithName.displayName, 'Parrillada');
       expect(fromMapWithoutName.name, isNull);
       expect(fromMapWithoutName.displayName, 'Lista de compras');
+    });
+
+    test('fromMap restores the saved product sort order', () {
+      final list = ShoppingList.fromMap({
+        'id': 12,
+        'name': 'Compras',
+        'created_at': DateTime(2026, 10, 18).millisecondsSinceEpoch,
+        'sort_order': 'priceDescending',
+      });
+
+      expect(list.sortOrder, ShoppingListSortOrder.priceDescending);
+    });
+
+    test('old lists use alphabetical order by default', () {
+      final list = ShoppingList.fromMap({
+        'id': 13,
+        'name': null,
+        'created_at': DateTime(2026, 10, 18).millisecondsSinceEpoch,
+      });
+
+      expect(list.sortOrder, ShoppingListSortOrder.nameAscending);
     });
   });
 

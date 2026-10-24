@@ -1,24 +1,17 @@
 import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:super_selectos/db/shopping_cart_database.dart';
 import 'package:super_selectos/models/product.dart';
 import 'package:super_selectos/models/shopping_cart_item.dart';
 import 'package:super_selectos/models/shopping_list.dart';
 
-enum ShoppingListSortOrder {
-  nameAscending,
-  nameDescending,
-  priceAscending,
-  priceDescending,
-  addedAscending,
-  addedDescending,
-}
-
 class ShoppingCartRepository extends ChangeNotifier {
   ShoppingCartRepository._();
 
   static final ShoppingCartRepository instance = ShoppingCartRepository._();
+  static const String _selectedListIdKey = 'shopping_cart_selected_list_id';
 
   final ShoppingCartDatabase _database = ShoppingCartDatabase.instance;
   final List<ShoppingCartItem> _items = [];
@@ -56,8 +49,21 @@ class ShoppingCartRepository extends ChangeNotifier {
   double get estimatedTotal =>
       _items.fold(0, (total, item) => total + item.subtotal);
 
-  void setSortOrder(ShoppingListSortOrder sortOrder) {
+  Future<void> setSortOrder(ShoppingListSortOrder sortOrder) async {
     if (_sortOrder == sortOrder) return;
+    await _ensureInitialized();
+    final selectedList = _requireSelectedList();
+    await _database.updateListSortOrder(selectedList.id, sortOrder);
+
+    final updatedList = ShoppingList(
+      id: selectedList.id,
+      createdAt: selectedList.createdAt,
+      name: selectedList.name,
+      sortOrder: sortOrder,
+    );
+    final listIndex = _lists.indexWhere((list) => list.id == selectedList.id);
+    if (listIndex != -1) _lists[listIndex] = updatedList;
+    _selectedList = updatedList;
     _sortOrder = sortOrder;
     _sortItems();
     notifyListeners();
@@ -73,7 +79,16 @@ class ShoppingCartRepository extends ChangeNotifier {
         final list = await _database.createList(DateTime.now());
         _lists.add(list);
       }
-      _selectedList ??= _lists.first;
+      final preferences = await SharedPreferences.getInstance();
+      final savedListId = preferences.getInt(_selectedListIdKey);
+      final savedListIndex = _lists.indexWhere(
+        (list) => list.id == savedListId,
+      );
+      _selectedList = savedListIndex == -1
+          ? _lists.first
+          : _lists[savedListIndex];
+      await preferences.setInt(_selectedListIdKey, _selectedList!.id);
+      _sortOrder = _selectedList!.sortOrder;
       await _reload();
       _initialized = true;
     } finally {
@@ -122,7 +137,9 @@ class ShoppingCartRepository extends ChangeNotifier {
     final list = await _database.createList(DateTime.now(), name: name);
     _lists.insert(0, list);
     _selectedList = list;
+    _sortOrder = list.sortOrder;
     _items.clear();
+    await _saveSelectedListId(list.id);
     notifyListeners();
   }
 
@@ -136,6 +153,7 @@ class ShoppingCartRepository extends ChangeNotifier {
       id: selectedList.id,
       createdAt: selectedList.createdAt,
       name: cleanName,
+      sortOrder: selectedList.sortOrder,
     );
     final listIndex = _lists.indexWhere((list) => list.id == selectedList.id);
     if (listIndex != -1) {
@@ -149,6 +167,8 @@ class ShoppingCartRepository extends ChangeNotifier {
     await _ensureInitialized();
     if (_selectedList?.id == id) return;
     _selectedList = _lists.firstWhere((list) => list.id == id);
+    _sortOrder = _selectedList!.sortOrder;
+    await _saveSelectedListId(id);
     _loading = true;
     notifyListeners();
     try {
@@ -168,6 +188,7 @@ class ShoppingCartRepository extends ChangeNotifier {
       id: selectedList.id,
       createdAt: dateTime,
       name: selectedList.name,
+      sortOrder: selectedList.sortOrder,
     );
     final listIndex = _lists.indexWhere((list) => list.id == selectedList.id);
     _lists[listIndex] = updatedList;
@@ -188,6 +209,8 @@ class ShoppingCartRepository extends ChangeNotifier {
     }
 
     _selectedList = _lists.first;
+    _sortOrder = _selectedList!.sortOrder;
+    await _saveSelectedListId(_selectedList!.id);
     await _reload();
     notifyListeners();
   }
@@ -199,12 +222,19 @@ class ShoppingCartRepository extends ChangeNotifier {
       ..clear()
       ..add(replacement);
     _selectedList = replacement;
+    _sortOrder = replacement.sortOrder;
     _items.clear();
+    await _saveSelectedListId(replacement.id);
     notifyListeners();
   }
 
   Future<void> _ensureInitialized() async {
     if (!_initialized) await initialize();
+  }
+
+  Future<void> _saveSelectedListId(int listId) async {
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setInt(_selectedListIdKey, listId);
   }
 
   Future<void> _reload() async {

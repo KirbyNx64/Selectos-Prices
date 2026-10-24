@@ -1,12 +1,23 @@
+enum ShoppingListSortOrder {
+  nameAscending,
+  nameDescending,
+  priceAscending,
+  priceDescending,
+  addedAscending,
+  addedDescending,
+}
+
 class ShoppingList {
   final int id;
   final String? name;
   final DateTime createdAt;
+  final ShoppingListSortOrder sortOrder;
 
   const ShoppingList({
     required this.id,
     required this.createdAt,
     this.name,
+    this.sortOrder = ShoppingListSortOrder.nameAscending,
   });
 
   String get displayName {
@@ -30,6 +41,10 @@ class ShoppingList {
       id: map['id'] as int,
       name: map['name'] as String?,
       createdAt: DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
+      sortOrder: ShoppingListSortOrder.values.firstWhere(
+        (order) => order.name == map['sort_order'],
+        orElse: () => ShoppingListSortOrder.nameAscending,
+      ),
     );
   }
 }

@@ -11,6 +11,7 @@ import 'package:super_selectos/models/offer_campaign.dart';
 import 'package:super_selectos/models/product.dart';
 import 'package:super_selectos/models/selectos_branch.dart';
 import 'package:super_selectos/models/shopping_cart_item.dart';
+import 'package:super_selectos/models/shopping_list.dart';
 import 'package:super_selectos/screens/categories/subcategories_screen.dart';
 import 'package:super_selectos/screens/favorites/favorites_screen.dart';
 import 'package:super_selectos/screens/homePage/barcode_scanner_screen.dart';
@@ -1917,7 +1918,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     );
 
     if (selected != null) {
-      _cart.setSortOrder(selected);
+      await _cart.setSortOrder(selected);
     }
   }
 

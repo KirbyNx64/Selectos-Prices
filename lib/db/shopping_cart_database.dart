@@ -9,7 +9,7 @@ class ShoppingCartDatabase {
   static final ShoppingCartDatabase instance = ShoppingCartDatabase._();
 
   static const _databaseName = 'selectos_prices.db';
-  static const _databaseVersion = 5;
+  static const _databaseVersion = 6;
   static const _itemsTable = 'shopping_cart';
   static const _listsTable = 'shopping_lists';
 
@@ -51,6 +51,12 @@ class ShoppingCartDatabase {
               'UPDATE $_itemsTable SET added_at = rowid WHERE added_at = 0',
             );
           }
+          if (oldVersion < 6) {
+            await db.execute(
+              "ALTER TABLE $_listsTable ADD COLUMN sort_order TEXT "
+              "NOT NULL DEFAULT 'nameAscending'",
+            );
+          }
         }
       },
     );
@@ -84,6 +90,19 @@ class ShoppingCartDatabase {
     await db.update(
       _listsTable,
       {'created_at': dateTime.millisecondsSinceEpoch},
+      where: 'id = ?',
+      whereArgs: [listId],
+    );
+  }
+
+  Future<void> updateListSortOrder(
+    int listId,
+    ShoppingListSortOrder sortOrder,
+  ) async {
+    final db = await database;
+    await db.update(
+      _listsTable,
+      {'sort_order': sortOrder.name},
       where: 'id = ?',
       whereArgs: [listId],
     );
@@ -198,6 +217,7 @@ class ShoppingCartDatabase {
       CREATE TABLE $_listsTable (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
+        sort_order TEXT NOT NULL DEFAULT 'nameAscending',
         created_at INTEGER NOT NULL
       )
     ''');
