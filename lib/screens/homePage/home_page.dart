@@ -2134,6 +2134,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     final contentColor = item.isChecked
         ? colorScheme.onSurface.withValues(alpha: 0.55)
         : colorScheme.onSurface;
+    final quantityControlColor = item.isChecked
+        ? colorScheme.primary
+        : colorScheme.surfaceContainerHighest;
+    final quantityContentColor = item.isChecked
+        ? colorScheme.onPrimary
+        : colorScheme.onSurface;
     return M3ECard(
       variant: M3ECardVariant.outlined,
       elevation: 0,
@@ -2270,7 +2276,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                       Container(
                         height: 36,
                         decoration: BoxDecoration(
-                          color: colorScheme.surfaceContainerHighest,
+                          color: quantityControlColor,
                           borderRadius: BorderRadius.circular(50),
                         ),
                         child: Row(
@@ -2280,6 +2286,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                               icon: Icons.remove_rounded,
                               tooltip: 'Disminuir cantidad',
                               colorScheme: colorScheme,
+                              foregroundColor: quantityContentColor,
                               onPressed: item.quantity > 1
                                   ? () => _updateCartQuantity(
                                       item,
@@ -2295,7 +2302,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 13,
-                                  color: colorScheme.onSurface,
+                                  color: quantityContentColor,
                                 ),
                               ),
                             ),
@@ -2303,6 +2310,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                               icon: Icons.add_rounded,
                               tooltip: 'Aumentar cantidad',
                               colorScheme: colorScheme,
+                              foregroundColor: quantityContentColor,
                               onPressed: () =>
                                   _updateCartQuantity(item, item.quantity + 1),
                             ),
@@ -2357,6 +2365,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     required IconData icon,
     required String tooltip,
     required ColorScheme colorScheme,
+    required Color foregroundColor,
     required VoidCallback? onPressed,
   }) {
     return Tooltip(
@@ -2373,8 +2382,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               icon,
               size: 16,
               color: onPressed != null
-                  ? colorScheme.onSurface
-                  : colorScheme.onSurface.withValues(alpha: 0.38),
+                  ? foregroundColor
+                  : foregroundColor.withValues(alpha: 0.38),
             ),
           ),
         ),

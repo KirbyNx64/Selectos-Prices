@@ -1,9 +1,9 @@
 {
-  "version": "1.0.4",
+  "version": "1.0.5",
   "apk_urls": {
-    "arm64-v8a": "https://github.com/KirbyNx64/Selectos-Prices/releases/download/v1.0.4/Selectos-Prices-v1.0.4-arm64-v8a.apk",
-    "armeabi-v7a": "https://github.com/KirbyNx64/Selectos-Prices/releases/download/v1.0.4/Selectos-Prices-v1.0.4-armeabi-v7a.apk",
-    "x86_64": "https://github.com/KirbyNx64/Selectos-Prices/releases/download/v1.0.4/Selectos-Prices-v1.0.4-x86_64.apk"
+    "arm64-v8a": "https://github.com/KirbyNx64/Selectos-Prices/releases/download/v1.0.5/Selectos-Prices-v1.0.5-arm64-v8a.apk",
+    "armeabi-v7a": "https://github.com/KirbyNx64/Selectos-Prices/releases/download/v1.0.5/Selectos-Prices-v1.0.5-armeabi-v7a.apk",
+    "x86_64": "https://github.com/KirbyNx64/Selectos-Prices/releases/download/v1.0.5/Selectos-Prices-v1.0.5-x86_64.apk"
   },
-  "changelog": "• Se mejoro la experiencia de usuario."
+  "changelog": "• Marca los productos que ya tomaste y consulta el progreso de tu compra.\n• Ordena tu lista por nombre, precio o momento en que añadiste cada producto."
 }
