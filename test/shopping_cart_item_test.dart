@@ -162,4 +162,32 @@ void main() {
       expect(item.totalSavings, closeTo(3.90, 0.0001));
     });
   });
+
+  group('ShoppingCartItem checked state', () {
+    test('is pending by default', () {
+      expect(itemWithQuantity(1).isChecked, isFalse);
+    });
+
+    test('persists the checked state in its database map', () {
+      final original = ShoppingCartItem(
+        key: 'checked',
+        quantity: 1,
+        isChecked: true,
+        addedAt: 123456,
+        product: const Product(id: 'checked', nombre: 'Producto tomado'),
+      );
+
+      final restored = ShoppingCartItem.fromMap(original.toMap());
+
+      expect(original.toMap()['tomado'], 1);
+      expect(restored.isChecked, isTrue);
+      expect(restored.addedAt, 123456);
+    });
+
+    test('loads old database rows as pending', () {
+      final oldRow = itemWithQuantity(1).toMap()..remove('tomado');
+
+      expect(ShoppingCartItem.fromMap(oldRow).isChecked, isFalse);
+    });
+  });
 }

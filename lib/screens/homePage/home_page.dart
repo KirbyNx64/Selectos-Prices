@@ -25,7 +25,7 @@ import 'package:super_selectos/widgets/app_snackbar.dart';
 import 'package:super_selectos/widgets/app_update_dialog.dart';
 import 'package:super_selectos/widgets/product_card.dart';
 
-enum _ShoppingListEditAction { editName, editDate, editTime, delete }
+enum _ShoppingListEditAction { editName, editDate, editTime, sort, delete }
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -600,6 +600,11 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     label: 'Editar hora',
                     value: _ShoppingListEditAction.editTime,
                     leading: Icon(Icons.schedule_rounded),
+                  ),
+                  M3EMenuEntry(
+                    label: 'Ordenar productos',
+                    value: _ShoppingListEditAction.sort,
+                    leading: Icon(Icons.sort_rounded),
                   ),
                   M3EMenuEntry(
                     label: 'Eliminar lista',
@@ -1540,11 +1545,14 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               child: ListView.separated(
                 controller: _cartScrollController,
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-                itemCount: _cart.items.length,
+                itemCount: _cart.items.length + 1,
                 separatorBuilder: (_, _) => const SizedBox(height: 10),
                 itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return _buildShoppingProgress(theme, colorScheme);
+                  }
                   return _buildShoppingListItem(
-                    _cart.items[index],
+                    _cart.items[index - 1],
                     theme,
                     colorScheme,
                   );
@@ -1685,6 +1693,66 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     );
   }
 
+  Widget _buildShoppingProgress(ThemeData theme, ColorScheme colorScheme) {
+    final total = _cart.totalItems;
+    final checked = _cart.checkedItems;
+    final remaining = _cart.remainingItems;
+    final progress = total == 0 ? 0.0 : checked / total;
+    final finished = remaining == 0;
+
+    return Semantics(
+      label: '$checked de $total productos tomados. $remaining faltantes.',
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(4, 2, 4, 6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  finished ? Icons.task_alt_rounded : Icons.checklist_rounded,
+                  size: 20,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    finished
+                        ? 'Compra completada'
+                        : '$checked de $total tomados',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: finished
+                          ? colorScheme.primary
+                          : colorScheme.onSurface,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                if (!finished)
+                  Text(
+                    '$remaining ${remaining == 1 ? 'falta' : 'faltan'}',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(99),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 5,
+                backgroundColor: colorScheme.surfaceContainerHighest,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _handleShoppingListSelection(int listId) async {
     try {
       if (listId == -1) {
@@ -1771,8 +1839,85 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         await _editSelectedListDate();
       case _ShoppingListEditAction.editTime:
         await _editSelectedListTime();
+      case _ShoppingListEditAction.sort:
+        await _showShoppingListSortOptions();
       case _ShoppingListEditAction.delete:
         await _confirmDeleteSelectedList();
+    }
+  }
+
+  Future<void> _showShoppingListSortOptions() async {
+    final options = <(ShoppingListSortOrder, String, IconData)>[
+      (
+        ShoppingListSortOrder.nameAscending,
+        'Nombre: A a Z',
+        Icons.sort_by_alpha_rounded,
+      ),
+      (
+        ShoppingListSortOrder.nameDescending,
+        'Nombre: Z a A',
+        Icons.sort_by_alpha_rounded,
+      ),
+      (
+        ShoppingListSortOrder.priceAscending,
+        'Precio más bajo',
+        Icons.arrow_upward_rounded,
+      ),
+      (
+        ShoppingListSortOrder.priceDescending,
+        'Precio más alto',
+        Icons.arrow_downward_rounded,
+      ),
+      (
+        ShoppingListSortOrder.addedAscending,
+        'Primero añadido',
+        Icons.first_page_rounded,
+      ),
+      (
+        ShoppingListSortOrder.addedDescending,
+        'Último añadido',
+        Icons.last_page_rounded,
+      ),
+    ];
+
+    final selected = await showModalBottomSheet<ShoppingListSortOrder>(
+      context: context,
+      showDragHandle: true,
+      useSafeArea: true,
+      builder: (context) {
+        final colorScheme = Theme.of(context).colorScheme;
+        return ListView(
+          shrinkWrap: true,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 4, 24, 12),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Ordenar productos',
+                  style: Theme.of(context).textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+            for (final option in options)
+              ListTile(
+                leading: Icon(option.$3),
+                title: Text(option.$2),
+                selected: option.$1 == _cart.sortOrder,
+                trailing: option.$1 == _cart.sortOrder
+                    ? Icon(Icons.check_rounded, color: colorScheme.primary)
+                    : null,
+                onTap: () => Navigator.pop(context, option.$1),
+              ),
+            const SizedBox(height: 8),
+          ],
+        );
+      },
+    );
+
+    if (selected != null) {
+      _cart.setSortOrder(selected);
     }
   }
 
@@ -1986,10 +2131,15 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     final deleteIconColor = isDarkMode
         ? colorScheme.onErrorContainer
         : colorScheme.onError;
+    final contentColor = item.isChecked
+        ? colorScheme.onSurface.withValues(alpha: 0.55)
+        : colorScheme.onSurface;
     return M3ECard(
       variant: M3ECardVariant.outlined,
       elevation: 0,
-      color: colorScheme.surfaceContainerLowest,
+      color: item.isChecked
+          ? colorScheme.primaryContainer.withValues(alpha: 0.18)
+          : colorScheme.surfaceContainerLowest,
       borderRadius: BorderRadius.circular(18),
       border: BorderSide(
         color: colorScheme.outlineVariant.withValues(alpha: 0.6),
@@ -2010,196 +2160,195 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         ),
         onPressed: () => _removeCartItem(item),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-                color: colorScheme.surfaceContainerLowest,
-              ),
-              child: product.imagen?.isNotEmpty ?? false
-                  ? CachedNetworkImage(
-                      imageUrl: product.imagen!,
-                      fadeInDuration: Duration.zero,
-                      fadeOutDuration: Duration.zero,
-                      fit: BoxFit.contain,
-                      errorWidget: (_, _, _) => const Icon(
-                        Icons.image_not_supported_outlined,
-                        color: Colors.grey,
-                      ),
-                    )
-                  : const Icon(Icons.image_outlined, color: Colors.grey),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product.nombre,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                _buildCheckedVisual(item, colorScheme),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '\$${item.unitPrice.toStringAsFixed(2)} c/u',
-                        style: TextStyle(
-                          color: item.unitDiscount > 0
-                              ? colorScheme.primary
-                              : colorScheme.onSurfaceVariant,
-                          fontSize: 12,
-                          fontWeight: item.unitDiscount > 0
-                              ? FontWeight.w700
+                        product.nombre,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: contentColor,
+                          decoration: item.isChecked
+                              ? TextDecoration.lineThrough
                               : null,
                         ),
                       ),
-                      if (item.unitDiscount > 0) ...[
-                        const SizedBox(width: 6),
-                        Text(
-                          '\$${item.regularUnitPrice.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
-                            fontSize: 11,
-                            decoration: TextDecoration.lineThrough,
-                            decorationColor: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  if (item.unitDiscount > 0) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      '-\$${item.unitDiscount.toStringAsFixed(2)} de descuento',
-                      style: TextStyle(
-                        color: colorScheme.error,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                  if (quantityPromotion != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      '${quantityPromotion.quantity} por '
-                      '\$${quantityPromotion.price.toStringAsFixed(2)}'
-                      '${hasAppliedPromotion ? ' · Oferta aplicada' : ''}',
-                      style: TextStyle(
-                        color: hasAppliedPromotion
-                            ? colorScheme.primary
-                            : colorScheme.error,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ] else if (takeAndPayPromotion != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      '${takeAndPayPromotion.takeQuantity}x'
-                      '${takeAndPayPromotion.payQuantity}'
-                      '${hasAppliedPromotion ? ' · Oferta aplicada' : ''}',
-                      style: TextStyle(
-                        color: hasAppliedPromotion
-                            ? colorScheme.primary
-                            : colorScheme.error,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ] else if (secondUnitDiscountPromotion != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      '2ª unidad -${secondUnitDiscountPromotion.discountPercent}%'
-                      '${hasAppliedPromotion ? ' · Oferta aplicada' : ''}',
-                      style: TextStyle(
-                        color: hasAppliedPromotion
-                            ? colorScheme.primary
-                            : colorScheme.error,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 8),
-                  Container(
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(50),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildQuantityButton(
-                          icon: Icons.remove_rounded,
-                          tooltip: 'Disminuir cantidad',
-                          colorScheme: colorScheme,
-                          onPressed: item.quantity > 1
-                              ? () =>
-                                    _updateCartQuantity(item, item.quantity - 1)
-                              : null,
-                        ),
-                        SizedBox(
-                          width: 34,
-                          child: Text(
-                            '${item.quantity}',
-                            textAlign: TextAlign.center,
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Text(
+                            '\$${item.unitPrice.toStringAsFixed(2)} c/u',
                             style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                              color: colorScheme.onSurface,
+                              color: item.unitDiscount > 0
+                                  ? colorScheme.primary
+                                  : colorScheme.onSurfaceVariant,
+                              fontSize: 12,
+                              fontWeight: item.unitDiscount > 0
+                                  ? FontWeight.w700
+                                  : null,
                             ),
                           ),
-                        ),
-                        _buildQuantityButton(
-                          icon: Icons.add_rounded,
-                          tooltip: 'Aumentar cantidad',
-                          colorScheme: colorScheme,
-                          onPressed: () =>
-                              _updateCartQuantity(item, item.quantity + 1),
+                          if (item.unitDiscount > 0) ...[
+                            const SizedBox(width: 6),
+                            Text(
+                              '\$${item.regularUnitPrice.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                color: colorScheme.onSurfaceVariant,
+                                fontSize: 11,
+                                decoration: TextDecoration.lineThrough,
+                                decorationColor: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      if (item.unitDiscount > 0) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          '-\$${item.unitDiscount.toStringAsFixed(2)} de descuento',
+                          style: TextStyle(
+                            color: colorScheme.error,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ],
+                      if (quantityPromotion != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          '${quantityPromotion.quantity} por '
+                          '\$${quantityPromotion.price.toStringAsFixed(2)}'
+                          '${hasAppliedPromotion ? ' · Oferta aplicada' : ''}',
+                          style: TextStyle(
+                            color: hasAppliedPromotion
+                                ? colorScheme.primary
+                                : colorScheme.error,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ] else if (takeAndPayPromotion != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          '${takeAndPayPromotion.takeQuantity}x'
+                          '${takeAndPayPromotion.payQuantity}'
+                          '${hasAppliedPromotion ? ' · Oferta aplicada' : ''}',
+                          style: TextStyle(
+                            color: hasAppliedPromotion
+                                ? colorScheme.primary
+                                : colorScheme.error,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ] else if (secondUnitDiscountPromotion != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          '2ª unidad -${secondUnitDiscountPromotion.discountPercent}%'
+                          '${hasAppliedPromotion ? ' · Oferta aplicada' : ''}',
+                          style: TextStyle(
+                            color: hasAppliedPromotion
+                                ? colorScheme.primary
+                                : colorScheme.error,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 8),
+                      Container(
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildQuantityButton(
+                              icon: Icons.remove_rounded,
+                              tooltip: 'Disminuir cantidad',
+                              colorScheme: colorScheme,
+                              onPressed: item.quantity > 1
+                                  ? () => _updateCartQuantity(
+                                      item,
+                                      item.quantity - 1,
+                                    )
+                                  : null,
+                            ),
+                            SizedBox(
+                              width: 34,
+                              child: Text(
+                                '${item.quantity}',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                            _buildQuantityButton(
+                              icon: Icons.add_rounded,
+                              tooltip: 'Aumentar cantidad',
+                              colorScheme: colorScheme,
+                              onPressed: () =>
+                                  _updateCartQuantity(item, item.quantity + 1),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (item.totalSavings > 0)
+                      Text(
+                        '\$${item.regularSubtotal.toStringAsFixed(2)}',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontSize: 12,
+                          color: colorScheme.onSurfaceVariant,
+                          decoration: TextDecoration.lineThrough,
+                          decorationColor: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    Text(
+                      '\$${item.subtotal.toStringAsFixed(2)}',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontSize: 17,
+                        color: item.totalSavings > 0
+                            ? colorScheme.primary
+                            : null,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                if (item.totalSavings > 0)
-                  Text(
-                    '\$${item.regularSubtotal.toStringAsFixed(2)}',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      fontSize: 12,
-                      color: colorScheme.onSurfaceVariant,
-                      decoration: TextDecoration.lineThrough,
-                      decorationColor: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                Text(
-                  '\$${item.subtotal.toStringAsFixed(2)}',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontSize: 17,
-                    color: item.totalSavings > 0 ? colorScheme.primary : null,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 104,
+            child: _buildCheckedHitTarget(item),
+          ),
+        ],
       ),
     );
   }
@@ -2233,12 +2382,110 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     );
   }
 
+  Widget _buildCheckedVisual(ShoppingCartItem item, ColorScheme colorScheme) {
+    final product = item.product;
+
+    return SizedBox(
+      width: 76,
+      height: 76,
+      child: Stack(
+        children: [
+          Align(
+            alignment: Alignment.topRight,
+            child: Container(
+              width: 64,
+              height: 64,
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                color: colorScheme.surfaceContainerLowest,
+              ),
+              child: product.imagen?.isNotEmpty ?? false
+                  ? CachedNetworkImage(
+                      imageUrl: product.imagen!,
+                      fadeInDuration: Duration.zero,
+                      fadeOutDuration: Duration.zero,
+                      fit: BoxFit.contain,
+                      errorWidget: (_, _, _) => const Icon(
+                        Icons.image_not_supported_outlined,
+                        color: Colors.grey,
+                      ),
+                    )
+                  : const Icon(Icons.image_outlined, color: Colors.grey),
+            ),
+          ),
+          Positioned(
+            left: 0,
+            bottom: 0,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: item.isChecked
+                    ? colorScheme.primary
+                    : colorScheme.surfaceContainerLowest,
+                shape: BoxShape.circle,
+                border: item.isChecked
+                    ? null
+                    : Border.all(color: colorScheme.outline, width: 1.5),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x26000000),
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(
+                item.isChecked ? Icons.check_rounded : null,
+                size: 24,
+                color: colorScheme.onPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCheckedHitTarget(ShoppingCartItem item) {
+    final label = item.isChecked
+        ? 'Marcar como pendiente'
+        : 'Marcar como tomado';
+
+    return Semantics(
+      button: true,
+      checked: item.isChecked,
+      label: label,
+      child: Tooltip(
+        message: label,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _updateCartChecked(item, !item.isChecked),
+        ),
+      ),
+    );
+  }
+
   Future<void> _updateCartQuantity(ShoppingCartItem item, int quantity) async {
     try {
       await _cart.updateQuantity(item.key, quantity);
     } catch (_) {
       if (!mounted) return;
       AppSnackbar.error(context, message: 'No se pudo actualizar la cantidad');
+    }
+  }
+
+  Future<void> _updateCartChecked(ShoppingCartItem item, bool isChecked) async {
+    try {
+      await _cart.updateChecked(item.key, isChecked);
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackbar.error(
+        context,
+        message: 'No se pudo actualizar el estado del producto',
+      );
     }
   }
 

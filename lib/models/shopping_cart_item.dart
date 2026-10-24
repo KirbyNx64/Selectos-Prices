@@ -120,11 +120,15 @@ class ShoppingCartItem {
   final String key;
   final Product product;
   final int quantity;
+  final bool isChecked;
+  final int addedAt;
 
   const ShoppingCartItem({
     required this.key,
     required this.product,
     required this.quantity,
+    this.isChecked = false,
+    this.addedAt = 0,
   });
 
   double get unitPrice => product.precioFinal ?? product.precio ?? 0;
@@ -226,6 +230,8 @@ class ShoppingCartItem {
       'codigo_barra': product.codigoBarra,
       'categoria': product.categoria,
       'cantidad': quantity,
+      'tomado': isChecked ? 1 : 0,
+      'added_at': addedAt,
     };
   }
 
@@ -240,6 +246,8 @@ class ShoppingCartItem {
     return ShoppingCartItem(
       key: map['product_key'] as String,
       quantity: map['cantidad'] as int,
+      isChecked: (map['tomado'] as int? ?? 0) == 1,
+      addedAt: map['added_at'] as int? ?? 0,
       product: Product(
         id: map['product_id'] as String? ?? '',
         nombre: map['nombre'] as String? ?? '',

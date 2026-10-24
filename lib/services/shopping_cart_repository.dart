@@ -6,6 +6,15 @@ import 'package:super_selectos/models/product.dart';
 import 'package:super_selectos/models/shopping_cart_item.dart';
 import 'package:super_selectos/models/shopping_list.dart';
 
+enum ShoppingListSortOrder {
+  nameAscending,
+  nameDescending,
+  priceAscending,
+  priceDescending,
+  addedAscending,
+  addedDescending,
+}
+
 class ShoppingCartRepository extends ChangeNotifier {
   ShoppingCartRepository._();
 
@@ -17,6 +26,7 @@ class ShoppingCartRepository extends ChangeNotifier {
   ShoppingList? _selectedList;
   bool _initialized = false;
   bool _loading = false;
+  ShoppingListSortOrder _sortOrder = ShoppingListSortOrder.nameAscending;
 
   UnmodifiableListView<ShoppingCartItem> get items =>
       UnmodifiableListView(_items);
@@ -27,7 +37,15 @@ class ShoppingCartRepository extends ChangeNotifier {
 
   bool get loading => _loading;
 
+  ShoppingListSortOrder get sortOrder => _sortOrder;
+
   int get totalItems => _items.fold(0, (total, item) => total + item.quantity);
+
+  int get checkedItems => _items
+      .where((item) => item.isChecked)
+      .fold(0, (total, item) => total + item.quantity);
+
+  int get remainingItems => totalItems - checkedItems;
 
   double get purchaseTotal =>
       _items.fold(0, (total, item) => total + item.regularSubtotal);
@@ -37,6 +55,13 @@ class ShoppingCartRepository extends ChangeNotifier {
 
   double get estimatedTotal =>
       _items.fold(0, (total, item) => total + item.subtotal);
+
+  void setSortOrder(ShoppingListSortOrder sortOrder) {
+    if (_sortOrder == sortOrder) return;
+    _sortOrder = sortOrder;
+    _sortItems();
+    notifyListeners();
+  }
 
   Future<void> initialize() async {
     if (_initialized || _loading) return;
@@ -67,6 +92,13 @@ class ShoppingCartRepository extends ChangeNotifier {
   Future<void> updateQuantity(String key, int quantity) async {
     await _ensureInitialized();
     await _database.updateQuantity(_requireSelectedList().id, key, quantity);
+    await _reload();
+    notifyListeners();
+  }
+
+  Future<void> updateChecked(String key, bool isChecked) async {
+    await _ensureInitialized();
+    await _database.updateChecked(_requireSelectedList().id, key, isChecked);
     await _reload();
     notifyListeners();
   }
@@ -185,6 +217,46 @@ class ShoppingCartRepository extends ChangeNotifier {
     _items
       ..clear()
       ..addAll(storedItems);
+    _sortItems();
+  }
+
+  void _sortItems() {
+    int compareNames(ShoppingCartItem a, ShoppingCartItem b) => a.product.nombre
+        .toLowerCase()
+        .compareTo(b.product.nombre.toLowerCase());
+
+    int withNameFallback(
+      ShoppingCartItem a,
+      ShoppingCartItem b,
+      int comparison,
+    ) => comparison != 0 ? comparison : compareNames(a, b);
+
+    _items.sort((a, b) {
+      return switch (_sortOrder) {
+        ShoppingListSortOrder.nameAscending => compareNames(a, b),
+        ShoppingListSortOrder.nameDescending => compareNames(b, a),
+        ShoppingListSortOrder.priceAscending => withNameFallback(
+          a,
+          b,
+          a.unitPrice.compareTo(b.unitPrice),
+        ),
+        ShoppingListSortOrder.priceDescending => withNameFallback(
+          a,
+          b,
+          b.unitPrice.compareTo(a.unitPrice),
+        ),
+        ShoppingListSortOrder.addedAscending => withNameFallback(
+          a,
+          b,
+          a.addedAt.compareTo(b.addedAt),
+        ),
+        ShoppingListSortOrder.addedDescending => withNameFallback(
+          a,
+          b,
+          b.addedAt.compareTo(a.addedAt),
+        ),
+      };
+    });
   }
 
   Future<void> _loadLists() async {
